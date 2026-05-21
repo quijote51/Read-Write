@@ -1897,7 +1897,7 @@ function renderVajEvento(){
   <div class="card" style="margin-bottom:12px;background:var(--info-bg);border-color:var(--info-text)">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <div>
-        <div style="font-size:14px;font-weight:500;color:var(--info-text)">📋 Ficha vajilla · ${ev.nombre}</div>
+        <div style="font-size:14px;font-weight:500;color:var(--info-text)"><i class="ti ti-tools-kitchen"></i> Ficha vajilla · ${ev.nombre}</div>
         <div style="font-size:12px;color:var(--info-text);opacity:.8">${fmtFecha(ev.fecha)} · ${ev.hora} · ${ev.pax} pax · ${ev.lugar} · ${tipoServicio}</div>
       </div>
       <div style="text-align:right">
@@ -2604,14 +2604,16 @@ function renderEventos(){
     const chips=(ev.platos||[]).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:var(--radius);padding:2px 8px;color:var(--text-secondary);display:inline-block;margin:2px;border-left:3px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${p.nombre}</span>`).join('');
     const infHTML=ev.infantil?.ninos?`<div style="margin-top:5px;font-size:12px;background:var(--success-bg);color:var(--success-text);padding:3px 8px;border-radius:var(--radius);display:inline-block"><i class="ti ti-heart"></i> ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''} · Menú infantil${ev.infantil.precio_nino?' · '+ev.infantil.precio_nino+'€/niño':''}</div>`:'';
     const notaHTML=ev.notas?`<div style="margin-top:5px;font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);padding:4px 8px;border-radius:var(--radius);border-left:2px solid var(--border-md)"><i class="ti ti-note"></i> ${ev.notas}</div>`:'';
-    return`<div class="card">
+    const evColor=getTipoColor(ev.tipo);
+    return`<div class="card" style="border-left:4px solid ${evColor}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
         <div style="flex:1;min-width:200px">
           <div style="font-size:15px;font-weight:500">${ev.nombre}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
-            <i class="ti ti-calendar"></i> ${fmtFecha(ev.fecha)} · ${ev.hora} &nbsp;|&nbsp;
-            <i class="ti ti-users"></i> ${ev.pax} pax · ${ev.lugar} · ${TIPO_LABEL[ev.tipo]||ev.tipo}
-            ${ev.precio_venta?` · <b>${ev.precio_venta}€/pax</b>`:''}
+            <i class="ti ti-calendar"></i> ${fmtFecha(ev.fecha)} · ${ev.hora} &nbsp;·&nbsp;
+            <i class="ti ti-users"></i> ${ev.pax} pax · ${ev.lugar} &nbsp;·&nbsp;
+            <span style="color:${evColor}">${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
+            ${ev.precio_venta?` &nbsp;·&nbsp; <b>${ev.precio_venta}€/pax</b>`:''}
           </div>
         </div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
@@ -2624,7 +2626,7 @@ function renderEventos(){
       </div>
       ${alerg}${infHTML}${notaHTML}
       ${algHTML?`<div style="margin-top:5px">${algHTML}</div>`:''}
-      <div style="margin-top:7px">${chips}</div>
+      ${chips?`<div style="margin-top:7px">${chips}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -2795,15 +2797,15 @@ function renderProd(){
   cont.innerHTML=`
   <div class="ficha-print" style="margin-bottom:12px;padding:10px;background:#f9f9f9;border:1px solid #ddd;border-radius:6px;border-left:4px solid #1a1a1a">
     <div style="font-size:16px;font-weight:bold;margin-bottom:4px">${ev.nombre}</div>
-    <div style="font-size:12px;color:#555;display:flex;gap:16px;flex-wrap:wrap">
-      <span>📅 ${fmtFecha(ev.fecha)} · ${ev.hora}</span>
-      <span>👥 ${pax} personas${ev.infantil?.ninos?' + '+ev.infantil.ninos+' niños':''}</span>
-      <span>📍 ${ev.lugar}</span>
-      <span>🍽️ ${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
+    <div style="font-size:12px;color:var(--text-secondary);display:flex;gap:16px;flex-wrap:wrap">
+      <span><i class="ti ti-calendar"></i> ${fmtFecha(ev.fecha)} · ${ev.hora}</span>
+      <span><i class="ti ti-users"></i> ${pax} personas${ev.infantil?.ninos?' + '+ev.infantil.ninos+' niños':''}</span>
+      <span><i class="ti ti-map-pin"></i> ${ev.lugar}</span>
+      <span><i class="ti ti-tools-kitchen-2"></i> ${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
     </div>
   </div>
   <div class="stat-g">
-    <div class="stat"><div class="stat-l">Personas</div><div class="stat-v">${pax}${ev.infantil?.ninos?`<span style="font-size:13px;color:var(--success-text)"> +${ev.infantil.ninos}👶</span>`:''}</div></div>
+    <div class="stat"><div class="stat-l">Personas</div><div class="stat-v">${pax}${ev.infantil?.ninos?`<span style="font-size:13px;color:var(--success-text)"> +${ev.infantil.ninos}<i class="ti ti-heart" style="font-size:12px"></i></span>`:''}</div></div>
     <div class="stat"><div class="stat-l">Factor</div><div class="stat-v">${f.toFixed(1)}×</div></div>
     <div class="stat"><div class="stat-l">Platos distintos</div><div class="stat-v">${ev.platos.length}</div></div>
     <div class="stat"><div class="stat-l">Raciones totales</div><div class="stat-v">${total}</div></div>
