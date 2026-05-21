@@ -55,7 +55,7 @@ async function dbSave(tabla, localKey, valor){
 function mostrarSync(ok){
   const el = document.getElementById('sync-indicator');
   if(el){
-    el.textContent = ok ? '☁️ Sincronizado' : '⚠️ Sin conexión';
+    el.innerHTML = ok ? '<i class="ti ti-cloud-check"></i> Sincronizado' : '<i class="ti ti-wifi-off"></i> Sin conexión';
     el.style.color = ok ? 'rgba(255,255,255,.4)' : 'rgba(255,165,0,.7)';
   }
 }
@@ -70,8 +70,8 @@ async function checkSupabase(){
 }
 </script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;font-size:15px}
 :root{
   --bg-primary:#ffffff;--bg-secondary:#f5f4f0;--bg-tertiary:#eeede9;
   --text-primary:#1a1a1a;--text-secondary:#6b6a66;--text-tertiary:#9b9a96;
@@ -81,6 +81,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   --danger-bg:#fcebeb;--danger-text:#a32d2d;
   --success-bg:#eaf3de;--success-text:#3b6d11;
   --radius:8px;--radius-lg:12px;
+  --negro:#1a1a1a;--blanco:#ffffff;--gold:#c9a84c;
+  --shadow-xs:0 1px 2px rgba(0,0,0,.05);
+  --shadow-sm:0 1px 4px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.1),0 2px 4px rgba(0,0,0,.05);
+  --t:150ms ease;
 }
 @media(prefers-color-scheme:dark){
   :root{
@@ -91,39 +96,60 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     --warn-bg:#4a2e08;--warn-text:#f5c070;
     --danger-bg:#4a1515;--danger-text:#f08080;
     --success-bg:#1a3a0a;--success-text:#90c860;
+    --negro:#f0efe9;--blanco:#1e1e1c;
+    --shadow-sm:0 1px 4px rgba(0,0,0,.2),0 1px 2px rgba(0,0,0,.15);
+    --shadow-md:0 4px 16px rgba(0,0,0,.3),0 2px 4px rgba(0,0,0,.2);
   }
 }
-.app{max-width:900px;margin:0 auto;padding:1rem}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg-secondary);color:var(--text-primary);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+.app{max-width:960px;margin:0 auto;padding:1rem}
 header{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:.5px solid var(--border)}
 header h1{font-size:18px;font-weight:500;color:var(--text-primary)}
 header span{font-size:13px;color:var(--text-secondary)}
-.tabs{display:flex;gap:4px;margin-bottom:1.5rem;border-bottom:.5px solid var(--border);flex-wrap:wrap}
-.tab{padding:8px 13px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text-secondary);border-bottom:2px solid transparent;margin-bottom:-1px}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;margin-bottom:1.5rem;border-bottom:.5px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 13px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text-secondary);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;border-radius:var(--radius) var(--radius) 0 0;font-family:inherit;flex-shrink:0;transition:color var(--t),background var(--t)}
+.tab:hover{color:var(--text-primary);background:var(--bg-tertiary)}
 .tab.active{color:var(--text-primary);border-bottom:2px solid var(--text-primary);font-weight:500}
+
 .sec{display:none}.sec.active{display:block}
-.card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px}
-.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--radius)}
+
+/* ── CARDS ── */
+.card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--shadow-xs)}
+
+/* ── BADGES ── */
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--radius);font-weight:500;letter-spacing:.01em}
 .b-warn{background:var(--warn-bg);color:var(--warn-text)}
 .b-danger{background:var(--danger-bg);color:var(--danger-text)}
 .b-success{background:var(--success-bg);color:var(--success-text)}
 .b-info{background:var(--info-bg);color:var(--info-text)}
-.alg-tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;margin:1px;background:var(--danger-bg);color:var(--danger-text)}
+.alg-tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;margin:1px;background:var(--danger-bg);color:var(--danger-text);font-weight:500}
 .cat-F{background:#e6f1fb;color:#185fa5}.cat-C{background:#faece7;color:#993c1d}
 .cat-P{background:#eaf3de;color:#3b6d11}.cat-M{background:#eeedfe;color:#534ab7}
+
+/* ── RECIPE + VAJILLA GRIDS ── */
 .receta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-.receta-card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer}
+.receta-card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:border-color var(--t),box-shadow var(--t),transform 200ms ease}
+.receta-card:hover{border-color:var(--border-md);box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .vaj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:12px}
-.vaj-card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:border-color .15s}
-.vaj-card:hover{border-color:var(--border-md)}
+.vaj-card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:border-color var(--t),box-shadow var(--t)}
+.vaj-card:hover{border-color:var(--border-md);box-shadow:var(--shadow-sm)}
 .vaj-img{width:100%;height:110px;object-fit:cover;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;font-size:32px}
 .vaj-body{padding:.6rem}
 .vaj-nombre{font-size:12px;font-weight:500;color:var(--text-primary);line-height:1.3;margin-bottom:3px}
 .vaj-stock-ok{font-size:11px;color:var(--success-text)}
 .vaj-stock-warn{font-size:11px;color:var(--danger-text)}
-.receta-card:hover{border-color:var(--border-md)}
 .receta-emoji{width:100%;height:130px;display:flex;align-items:center;justify-content:center;font-size:48px;background:var(--bg-secondary)}
 .receta-body{padding:.75rem}
 .receta-nombre{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px;line-height:1.3}
+
+/* ── SCALE BAR + TABLES ── */
 .scale-bar{display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding:.75rem;background:var(--bg-secondary);border-radius:var(--radius)}
 .ing-table{width:100%;border-collapse:collapse;font-size:13px}
 .ing-table th{text-align:left;padding:6px 8px;font-size:12px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border)}
@@ -131,31 +157,59 @@ header span{font-size:13px;color:var(--text-secondary)}
 .ptable{width:100%;border-collapse:collapse;font-size:13px}
 .ptable th{text-align:left;padding:7px 10px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-size:12px}
 .ptable td{padding:7px 10px;border-bottom:.5px solid var(--border);color:var(--text-primary);vertical-align:top}
-.cat-hdr{font-size:11px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;padding:8px 10px 3px;background:var(--bg-secondary)}
+.ptable tbody tr{transition:background var(--t)}
+.ptable tbody tr:hover td{background:var(--bg-secondary)}
+.cat-hdr{font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;padding:8px 10px 3px;background:var(--bg-secondary)}
+
+/* ── STATS ── */
 .stat-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:1rem}
-.stat{background:var(--bg-secondary);border-radius:var(--radius);padding:.8rem}
-.stat-l{font-size:12px;color:var(--text-secondary);margin-bottom:3px}
-.stat-v{font-size:20px;font-weight:500;color:var(--text-primary)}
-.empty{text-align:center;color:var(--text-secondary);padding:2rem;font-size:14px}
-.fg{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
-.fg label{font-size:12px;color:var(--text-secondary)}
-input,select,textarea{font-size:13px;background:var(--bg-primary);color:var(--text-primary);border:.5px solid var(--border-md);border-radius:var(--radius);padding:7px 10px;width:100%}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#378add}
+.stat{background:var(--bg-secondary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:.875rem 1rem}
+.stat-l{font-size:12px;color:var(--text-secondary);margin-bottom:3px;font-weight:500}
+.stat-v{font-size:21px;font-weight:600;color:var(--text-primary);letter-spacing:-.02em}
+
+.empty{text-align:center;color:var(--text-secondary);padding:2.5rem 2rem;font-size:14px}
+
+/* ── FORMS ── */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg label{font-size:12px;color:var(--text-secondary);font-weight:500}
+input,select,textarea{font-size:13px;background:var(--bg-primary);color:var(--text-primary);border:.5px solid var(--border-md);border-radius:var(--radius);padding:8px 10px;width:100%;font-family:inherit;transition:border-color var(--t),box-shadow var(--t)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#378add;box-shadow:0 0 0 3px rgba(55,138,221,.12)}
 textarea{resize:vertical;min-height:65px}
-.btn{padding:8px 18px;font-size:13px;cursor:pointer;border-radius:var(--radius)}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 18px;font-size:13px;cursor:pointer;border-radius:var(--radius);font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:all var(--t)}
 .btn-p{background:var(--text-primary);color:var(--bg-primary);border:none}
-.btn-sec{background:none;border:.5px solid var(--border-md);color:var(--text-primary);cursor:pointer;padding:7px 14px;font-size:13px;border-radius:var(--radius)}
-.btn-d{background:none;border:.5px solid var(--danger-text);color:var(--danger-text);font-size:12px;padding:3px 9px;border-radius:var(--radius);cursor:pointer}
+.btn-p:hover{opacity:.82;box-shadow:var(--shadow-sm)}
+.btn-p:active{opacity:.96;transform:translateY(1px)}
+.btn-sec{background:none;border:.5px solid var(--border-md);color:var(--text-primary);cursor:pointer;padding:7px 14px;font-size:13px;border-radius:var(--radius);font-family:inherit;font-weight:400;transition:all var(--t)}
+.btn-sec:hover{background:var(--bg-secondary)}
+.btn-sec:active{transform:translateY(1px)}
+.btn-d{background:none;border:.5px solid var(--danger-text);color:var(--danger-text);font-size:12px;padding:3px 9px;border-radius:var(--radius);cursor:pointer;font-family:inherit;transition:all var(--t)}
+.btn-d:hover{background:var(--danger-bg)}
+
+/* ── ALLERGEN CHECKBOXES ── */
 .alg-cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:5px;margin-top:5px}
-.alg-cb{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:var(--radius);border:.5px solid var(--border);background:var(--bg-primary)}
+.alg-cb{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:var(--radius);border:.5px solid var(--border);background:var(--bg-primary);transition:all var(--t)}
+.alg-cb:hover{border-color:var(--border-md);background:var(--bg-secondary)}
 .alg-cb.sel{background:var(--danger-bg);border-color:var(--danger-text)}
-.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;color:var(--text-secondary);margin-bottom:1rem;background:none;border:none;padding:0}
-.ev-check{display:flex;align-items:center;gap:6px;padding:6px 8px;border:.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:13px;background:var(--bg-primary);margin-bottom:4px}
+
+/* ── NAVIGATION ── */
+.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;color:var(--text-secondary);margin-bottom:1rem;background:none;border:none;padding:0;font-family:inherit;transition:color var(--t)}
+.back-btn:hover{color:var(--text-primary)}
+.ev-check{display:flex;align-items:center;gap:6px;padding:6px 8px;border:.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:13px;background:var(--bg-primary);margin-bottom:4px;transition:all var(--t)}
+.ev-check:hover{background:var(--bg-secondary)}
 .ev-check.sel{background:var(--success-bg);border-color:var(--success-text)}
+
+/* ── ROLE CARDS (modal) ── */
+.rol-card{padding:1rem;border:.5px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;text-align:left;background:var(--bg-primary);transition:all var(--t)}
+.rol-card:hover{background:var(--bg-secondary);border-color:var(--border-md);box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.rol-card-icon{font-size:1.25rem;color:var(--text-secondary);display:block;margin-bottom:8px}
+
+/* ── LAYOUT HELPERS ── */
 .form-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .form-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:600px){.form-2,.form-3{grid-template-columns:1fr}.receta-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
-.btn-print{background:#1a1a1a;color:#fff;border:none;padding:8px 18px;font-size:13px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn-print{background:#1a1a1a;color:#fff;border:none;padding:8px 18px;font-size:13px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-weight:500;transition:background var(--t)}
 .btn-print:hover{background:#333}
 
 /* ===== ESTILOS DE IMPRESIÓN ===== */
@@ -212,9 +266,9 @@ textarea{resize:vertical;min-height:65px}
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
-    <span id="sync-indicator" style="font-size:10px;color:rgba(255,255,255,.3)">☁️ Conectando...</span>
+    <span id="sync-indicator" style="font-size:10px;color:rgba(255,255,255,.3);display:inline-flex;align-items:center;gap:4px"><i class="ti ti-cloud"></i> Conectando...</span>
     <button onclick="abrirSelectorRol()" id="rol-btn" style="background:rgba(255,255,255,.08);border:none;border-radius:6px;padding:5px 12px;color:rgba(255,255,255,.7);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px">
-      <span id="rol-icon-header">👤</span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down"></i>
+      <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down"></i>
     </button>
     <button onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" style="background:rgba(255,255,255,.08);border:none;border-radius:6px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:12px"><i class="ti ti-settings"></i></button>
   </div>
@@ -227,32 +281,32 @@ textarea{resize:vertical;min-height:65px}
     <div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:1.25rem">¿Cuál es tu rol hoy?</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 
-      <div onclick="seleccionarRol('chef')" style="padding:1rem;border:.5px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;text-align:left" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='var(--bg-primary)'">
-        <div style="font-size:1.5rem;margin-bottom:5px">👨‍🍳</div>
+      <div onclick="seleccionarRol('chef')" class="rol-card">
+        <i class="ti ti-chef-hat rol-card-icon"></i>
         <div style="font-size:13px;font-weight:500;margin-bottom:2px">Chef</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Producción · Recetario · Pantalla cocina · Compras</div>
       </div>
 
-      <div onclick="seleccionarRol('sala')" style="padding:1rem;border:.5px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;text-align:left" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='var(--bg-primary)'">
-        <div style="font-size:1.5rem;margin-bottom:5px">🍽️</div>
+      <div onclick="seleccionarRol('sala')" class="rol-card">
+        <i class="ti ti-tools-kitchen-2 rol-card-icon"></i>
         <div style="font-size:13px;font-weight:500;margin-bottom:2px">Sala / Maître</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Bebidas · Vajilla · Eventos hoy</div>
       </div>
 
-      <div onclick="seleccionarRol('eventos')" style="padding:1rem;border:.5px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;text-align:left" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='var(--bg-primary)'">
-        <div style="font-size:1.5rem;margin-bottom:5px">📋</div>
+      <div onclick="seleccionarRol('eventos')" class="rol-card">
+        <i class="ti ti-calendar-event rol-card-icon"></i>
         <div style="font-size:13px;font-weight:500;margin-bottom:2px">Jefa de eventos</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Eventos · Calendario · Plantillas · Escandallo</div>
       </div>
 
-      <div onclick="seleccionarRol('direccion')" style="padding:1rem;border:.5px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;text-align:left" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='var(--bg-primary)'">
-        <div style="font-size:1.5rem;margin-bottom:5px">📊</div>
+      <div onclick="seleccionarRol('direccion')" class="rol-card">
+        <i class="ti ti-chart-bar rol-card-icon"></i>
         <div style="font-size:13px;font-weight:500;margin-bottom:2px">Dirección</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Dashboard · Historial · Escandallo · Calendario</div>
       </div>
 
-      <div onclick="seleccionarRol('admin')" style="padding:1rem;border:.5px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;text-align:left;grid-column:span 2" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='var(--bg-primary)'">
-        <div style="font-size:1.5rem;margin-bottom:5px">⚙️</div>
+      <div onclick="seleccionarRol('admin')" class="rol-card" style="grid-column:span 2">
+        <i class="ti ti-settings rol-card-icon"></i>
         <div style="font-size:13px;font-weight:500;margin-bottom:2px">Administración</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Acceso completo a todos los módulos</div>
       </div>
@@ -779,7 +833,7 @@ textarea{resize:vertical;min-height:65px}
 
   <!-- Hotel -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;font-size:11px">🏨 Datos del hotel</div>
+    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-building"></i> Datos del hotel</div>
     <div class="form-2" style="margin-bottom:10px">
       <div class="fg" style="margin-bottom:0"><label>Nombre del hotel</label><input type="text" id="aj-hotel-nombre" placeholder="Seda Club Hotel"/></div>
       <div class="fg" style="margin-bottom:0"><label>Ciudad</label><input type="text" id="aj-hotel-ciudad" placeholder="Granada"/></div>
@@ -794,7 +848,7 @@ textarea{resize:vertical;min-height:65px}
 
   <!-- Lugares -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">📍 Lugares del hotel</div>
+    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-map-pin"></i> Lugares del hotel</div>
     <div id="aj-lugares-lista"></div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <input type="text" id="aj-lugar-nuevo" placeholder="Ej: Jardín, Terraza interior..." style="flex:1;font-size:13px"/>
@@ -804,7 +858,7 @@ textarea{resize:vertical;min-height:65px}
 
   <!-- Tipos de servicio -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:8px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">🍽️ Tipos de servicio</div>
+    <div style="font-size:11px;font-weight:500;margin-bottom:8px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-tools-kitchen-2"></i> Tipos de servicio</div>
     <div id="aj-tipos-lista"></div>
     <div class="form-3" style="margin-top:8px">
       <div class="fg" style="margin-bottom:0"><label>Nombre</label><input type="text" id="aj-tipo-nom" placeholder="Brunch"/></div>
@@ -816,7 +870,7 @@ textarea{resize:vertical;min-height:65px}
 
   <!-- Exportar / Importar -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">💾 Datos</div>
+    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-database"></i> Datos</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn-sec" style="font-size:12px" onclick="exportarDatos()"><i class="ti ti-download"></i> Exportar todos los datos</button>
       <button class="btn-sec" style="font-size:12px" onclick="ge('import-file').click()"><i class="ti ti-upload"></i> Importar datos</button>
@@ -894,7 +948,7 @@ textarea{resize:vertical;min-height:65px}
 
     <!-- MENÚ INFANTIL -->
     <div style="margin-top:12px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius);border:.5px solid var(--border)">
-      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text-primary)">🧒 Menú infantil (opcional)</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text-primary)"><i class="ti ti-heart"></i> Menú infantil (opcional)</div>
       <div class="form-2" style="margin-bottom:10px">
         <div class="fg" style="margin-bottom:0">
           <label>Número de niños</label>
@@ -1060,7 +1114,7 @@ const RECETAS_BASE=[
 
 function ge(id){return document.getElementById(id)}
 function algLabel(id){return ALERGENOS.find(a=>a.id===id)?.label||id}
-function algIcon(id){return ALERGENOS.find(a=>a.id===id)?.icon||'⚠️'}
+function algIcon(id){return ALERGENOS.find(a=>a.id===id)?.icon||'<i class="ti ti-alert-triangle"></i>'}
 function fmtFecha(f){const[y,m,d]=f.split('-');const mes=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];return d+' '+mes[+m]+' '+y}
 function getBadge(fecha){const hoy=new Date();hoy.setHours(0,0,0,0);const d=new Date(fecha+'T00:00:00');const diff=Math.round((d-hoy)/86400000);if(diff<0)return'<span class="badge b-info">Pasado</span>';if(diff===0)return'<span class="badge b-danger">HOY</span>';if(diff===1)return'<span class="badge b-warn">Mañana</span>';if(diff<=7)return'<span class="badge b-warn">En '+diff+' días</span>';return'<span class="badge b-success">En '+diff+' días</span>'}
 
@@ -1180,11 +1234,11 @@ function showTab(name,btn){
 
 /* ===== SELECTOR DE ROL ===== */
 const ROLES = {
-  chef:      {icon:'👨‍🍳', nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina']},
-  sala:      {icon:'🍽️',  nombre:'Sala / Maître',  tabs:['dashboard','bebidas','vajilla','eventos']},
-  eventos:   {icon:'📋',  nombre:'Jefa de eventos',tabs:['dashboard','eventos','calendario','plantillas','escandallo','nuevo']},
-  direccion: {icon:'📊',  nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos']},
-  admin:     {icon:'⚙️',  nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','ajustes','nuevo']}
+  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina']},
+  sala:      {icon:'<i class="ti ti-tools-kitchen-2"></i>',  nombre:'Sala / Maître',  tabs:['dashboard','bebidas','vajilla','eventos']},
+  eventos:   {icon:'<i class="ti ti-calendar-event"></i>',   nombre:'Jefa de eventos',tabs:['dashboard','eventos','calendario','plantillas','escandallo','nuevo']},
+  direccion: {icon:'<i class="ti ti-chart-bar"></i>',        nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos']},
+  admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','ajustes','nuevo']}
 };
 
 let rolActual = localStorage.getItem('seda_rol') || null;
@@ -1206,7 +1260,7 @@ function aplicarRol(rol){
   // Actualizar cabecera
   const iconEl = ge('rol-icon-header');
   const nomEl  = ge('rol-nombre-header');
-  if(iconEl) iconEl.textContent = r.icon;
+  if(iconEl) iconEl.innerHTML = r.icon;
   if(nomEl)  nomEl.textContent  = r.nombre;
   // Mostrar/ocultar tabs
   document.querySelectorAll('.tab[data-tab]').forEach(btn=>{
@@ -1352,7 +1406,7 @@ function getPersonal(){try{return JSON.parse(localStorage.getItem('seda_personal
 function savePersonal(p){try{localStorage.setItem('seda_personal',JSON.stringify(p))}catch{}}
 let personal=getPersonal();
 
-const ROL_ICONS={chef:'👨‍🍳',cocinero:'🍳',maitre:'🍽️',sala:'👔',barra:'🍸',extra:'⭐'};
+const ROL_ICONS={chef:'<i class="ti ti-chef-hat"></i>',cocinero:'<i class="ti ti-flame"></i>',maitre:'<i class="ti ti-star"></i>',sala:'<i class="ti ti-users"></i>',barra:'<i class="ti ti-bottle"></i>',extra:'<i class="ti ti-user-plus"></i>'};
 const ROL_LABELS={chef:'Chef',cocinero:'Cocinero',maitre:'Maître',sala:'Sala',barra:'Barra',extra:'Extra'};
 
 function initPersonal(){
@@ -1421,7 +1475,7 @@ function renderPersonalEvento(){
       ${personal.map(p=>`
         <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--radius);border:.5px solid var(--border);cursor:pointer;background:${ev.personal_ids.includes(p.id)?'var(--success-bg)':'var(--bg-primary)'};color:${ev.personal_ids.includes(p.id)?'var(--success-text)':'var(--text-primary)'}"
           onclick="togglePersonalEvento(${evId},'${p.id}')">
-          <span style="font-size:14px">${ROL_ICONS[p.rol]||'👤'}</span>
+          <span style="font-size:14px">${ROL_ICONS[p.rol]||'<i class="ti ti-user"></i>'}</span>
           <span style="font-size:12px;font-weight:500">${p.nombre}</span>
           ${ev.personal_ids.includes(p.id)?'<i class="ti ti-check" style="font-size:11px"></i>':''}
         </div>`).join('')}
@@ -1485,7 +1539,7 @@ function guardarAjustesHotel(){
   saveAjustes(ajustes);
   const cabecera=ge('header-hotel-nombre');
   if(cabecera)cabecera.textContent=`${ajustes.hotel_nombre} · ${ajustes.hotel_ciudad}`;
-  const btn=event.target;btn.textContent='✅ Guardado';setTimeout(()=>btn.innerHTML='<i class="ti ti-check"></i> Guardar datos del hotel',1500);
+  const btn=event.target;btn.innerHTML='<i class="ti ti-check"></i> Guardado';setTimeout(()=>btn.innerHTML='<i class="ti ti-check"></i> Guardar datos del hotel',1500);
 }
 
 function renderAjustesLugares(){
@@ -1631,7 +1685,7 @@ function renderCompras(){
     cont.innerHTML='<div class="empty">No hay recetas vinculadas a estos eventos.<br><small>Vincula recetas en el Recetario para generar la lista automáticamente.</small></div>';return;
   }
 
-  const provCats={carnico:'🥩',pescado:'🐟',verdura:'🥦',lacteo:'🥛',panaderia:'🥐',otros:'📦'};
+  const provCats={carnico:'<i class="ti ti-meat"></i>',pescado:'<i class="ti ti-fish"></i>',verdura:'<i class="ti ti-leaf"></i>',lacteo:'<i class="ti ti-egg"></i>',panaderia:'<i class="ti ti-bread"></i>',otros:'<i class="ti ti-package"></i>'};
   const catLabel={carnico:'Cárnico',pescado:'Pescadero',verdura:'Fruta y verdura',lacteo:'Lácteos y huevos',panaderia:'Panadería',otros:'Otros'};
 
   // Agrupar por categoría de proveedor
@@ -1654,7 +1708,7 @@ function renderCompras(){
   Object.entries(porCat).forEach(([cat,ings])=>{
     html+=`<div class="card" style="padding:0;overflow:hidden;margin-bottom:10px">
       <div style="padding:8px 12px;background:var(--bg-secondary);font-size:12px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">
-        ${provCats[cat]||'📦'} ${catLabel[cat]||cat}
+        ${provCats[cat]||'<i class="ti ti-package"></i>'} ${catLabel[cat]||cat}
       </div>
       <table class="ptable">
         <thead><tr><th>Ingrediente</th><th style="text-align:right">Cantidad</th><th>Ud.</th></tr></thead>
@@ -1725,7 +1779,7 @@ function renderPantallaCocina(){
 
   ${ev.infantil?.ninos?`
   <div style="margin-bottom:1rem">
-    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:#1D9E75;margin-bottom:8px;text-transform:uppercase;border-bottom:2px solid #1D9E75;padding-bottom:4px">🧒 MENÚ INFANTIL — ${ev.infantil.ninos} NIÑOS</div>
+    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:#1D9E75;margin-bottom:8px;text-transform:uppercase;border-bottom:2px solid #1D9E75;padding-bottom:4px"><i class="ti ti-heart"></i> MENÚ INFANTIL — ${ev.infantil.ninos} NIÑOS</div>
     ${(ev.infantil.platos||[]).map(pid=>{
       const p=PLATOS_INFANTIL.find(x=>x.id===pid); if(!p)return'';
       return`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;border-left:4px solid #1D9E75">
@@ -1747,12 +1801,12 @@ function toggleFullscreen(){
 
 /* ===== VAJILLA ===== */
 const VAJ_CATS = {
-  menaje_coctel: {icon:'🥄', label:'Menaje cóctel'},
-  platos:        {icon:'🍽️', label:'Platos'},
-  copas:         {icon:'🥂', label:'Copas y vasos'},
-  cubiertos:     {icon:'🍴', label:'Cubiertos'},
-  bandejas:      {icon:'🫙', label:'Bandejas y fuentes'},
-  otros:         {icon:'📦', label:'Otros'}
+  menaje_coctel: {icon:'<i class="ti ti-spoon"></i>',          label:'Menaje cóctel'},
+  platos:        {icon:'<i class="ti ti-tools-kitchen-2"></i>', label:'Platos'},
+  copas:         {icon:'<i class="ti ti-glass-full"></i>',      label:'Copas y vasos'},
+  cubiertos:     {icon:'<i class="ti ti-tools-kitchen"></i>',   label:'Cubiertos'},
+  bandejas:      {icon:'<i class="ti ti-border-all"></i>',      label:'Bandejas y fuentes'},
+  otros:         {icon:'<i class="ti ti-package"></i>',         label:'Otros'}
 };
 
 const VAJ_STOCK_DEFAULT = [
@@ -1861,7 +1915,7 @@ function renderVajEvento(){
       </div>
       ${alertas.map(v=>`
         <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid var(--border);font-size:13px">
-          <span>${VAJ_CATS[v.cat]?.icon||'📦'} ${v.nombre}</span>
+          <span>${VAJ_CATS[v.cat]?.icon||'<i class="ti ti-package"></i>'} ${v.nombre}</span>
           <span style="color:var(--danger-text);font-weight:500">
             Necesario: ${v.necesario} · Stock: ${v.stock} · <span style="color:var(--danger-text)">Faltan ${v.falta}</span>
           </span>
@@ -2066,7 +2120,7 @@ function renderVajConfig(){
       </tr></thead>
       <tbody>
         ${vajilla.map(v=>`<tr>
-          <td style="font-weight:500">${VAJ_CATS[v.cat]?.icon||'📦'} ${v.nombre}</td>
+          <td style="font-weight:500">${VAJ_CATS[v.cat]?.icon||'<i class="ti ti-package"></i>'} ${v.nombre}</td>
           <td style="text-align:center;font-size:12px;color:var(--text-secondary)">${VAJ_CATS[v.cat]?.label||v.cat}</td>
           <td style="text-align:center">
             <input type="number" value="${v.factor_coctel}" min="0" step="0.5" style="width:60px;font-size:13px;text-align:center"
@@ -2548,7 +2602,7 @@ function renderEventos(){
     const alerg=ev.alergias_txt?`<div style="margin-top:5px;font-size:12px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:'';
     const algHTML=(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
     const chips=(ev.platos||[]).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:var(--radius);padding:2px 8px;color:var(--text-secondary);display:inline-block;margin:2px;border-left:3px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${p.nombre}</span>`).join('');
-    const infHTML=ev.infantil?.ninos?`<div style="margin-top:5px;font-size:12px;background:var(--success-bg);color:var(--success-text);padding:3px 8px;border-radius:var(--radius);display:inline-block">🧒 ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''} · Menú infantil${ev.infantil.precio_nino?' · '+ev.infantil.precio_nino+'€/niño':''}</div>`:'';
+    const infHTML=ev.infantil?.ninos?`<div style="margin-top:5px;font-size:12px;background:var(--success-bg);color:var(--success-text);padding:3px 8px;border-radius:var(--radius);display:inline-block"><i class="ti ti-heart"></i> ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''} · Menú infantil${ev.infantil.precio_nino?' · '+ev.infantil.precio_nino+'€/niño':''}</div>`:'';
     const notaHTML=ev.notas?`<div style="margin-top:5px;font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);padding:4px 8px;border-radius:var(--radius);border-left:2px solid var(--border-md)"><i class="ti ti-note"></i> ${ev.notas}</div>`:'';
     return`<div class="card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
@@ -2724,7 +2778,7 @@ function renderProd(){
   // Sección menú infantil
   const infHTML=ev.infantil?.ninos?`
   <div class="card" style="border:.5px solid var(--success-text);margin-top:10px">
-    <div style="font-size:13px;font-weight:500;color:var(--success-text);margin-bottom:8px">🧒 Menú infantil — ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''}</div>
+    <div style="font-size:13px;font-weight:500;color:var(--success-text);margin-bottom:8px"><i class="ti ti-heart"></i> Menú infantil — ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''}</div>
     <table class="ptable">
       <thead><tr><th>Plato</th><th>Alérgenos</th><th style="text-align:right">Uds.</th></tr></thead>
       <tbody>
@@ -3046,9 +3100,9 @@ function margenColor(margen){
 }
 
 function margenLabel(margen){
-  if(margen >= 65) return '✅ Excelente';
-  if(margen >= 45) return '⚠️ Aceptable';
-  return '❌ Bajo';
+  if(margen >= 65) return '<span style="color:var(--success-text)"><i class="ti ti-circle-check"></i> Excelente</span>';
+  if(margen >= 45) return '<span style="color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> Aceptable</span>';
+  return '<span style="color:var(--danger-text)"><i class="ti ti-circle-x"></i> Bajo</span>';
 }
 
 function switchEsc(tab, btn){
@@ -3257,12 +3311,12 @@ function resetPrecios(){
 
 
 const PROV_CATS={
-  carnico:{icon:'🥩',label:'Cárnico',keywords:['carne','vacuno','cerdo','pollo','jamón','ibérico','presa','paletilla','cordero','carrillera','foie','pato','mousse de pato','lomo']},
-  pescado:{icon:'🐟',label:'Pescadero',keywords:['salmón','bacalao','langostino','atún','crustáceo','marisco','pescado','nori','tartar de atún','berberecho','molusco']},
-  verdura:{icon:'🥦',label:'Fruta y verdura',keywords:['tomate','cebolla','ajo','espinaca','zanahoria','patata','boniato','aguacate','mango','limón','lima','rúcula','apio','chalota','pimiento','guisante','melón','fruta']},
-  lacteo:{icon:'🥛',label:'Lácteos y huevos',keywords:['leche','mantequilla','nata','queso','huevo','yema','clara','lacteo','lácteo','crema','yogurt','kefir','requesón']},
-  panaderia:{icon:'🥐',label:'Panadería',keywords:['pan','harina','brioche','croissant','cruasán','masa','galleta','tartaleta','sablé','pasta brick','wonton','blinis','pan rallado']},
-  otros:{icon:'🏪',label:'Otros',keywords:[]}
+  carnico: {icon:'<i class="ti ti-meat"></i>',      label:'Cárnico',keywords:['carne','vacuno','cerdo','pollo','jamón','ibérico','presa','paletilla','cordero','carrillera','foie','pato','mousse de pato','lomo']},
+  pescado: {icon:'<i class="ti ti-fish"></i>',       label:'Pescadero',keywords:['salmón','bacalao','langostino','atún','crustáceo','marisco','pescado','nori','tartar de atún','berberecho','molusco']},
+  verdura: {icon:'<i class="ti ti-leaf"></i>',       label:'Fruta y verdura',keywords:['tomate','cebolla','ajo','espinaca','zanahoria','patata','boniato','aguacate','mango','limón','lima','rúcula','apio','chalota','pimiento','guisante','melón','fruta']},
+  lacteo:  {icon:'<i class="ti ti-egg"></i>',        label:'Lácteos y huevos',keywords:['leche','mantequilla','nata','queso','huevo','yema','clara','lacteo','lácteo','crema','yogurt','kefir','requesón']},
+  panaderia:{icon:'<i class="ti ti-bread"></i>',     label:'Panadería',keywords:['pan','harina','brioche','croissant','cruasán','masa','galleta','tartaleta','sablé','pasta brick','wonton','blinis','pan rallado']},
+  otros:   {icon:'<i class="ti ti-package"></i>',    label:'Otros',keywords:[]}
 };
 
 function getProv(){try{return JSON.parse(localStorage.getItem('seda_prov')||'null')}catch{return null}}
@@ -3638,7 +3692,7 @@ function renderBebEvento(){
           </div>`).join('')}
         ${tieneBarraLibre?`
           <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:.75rem;text-align:center;border:.5px solid var(--border-md)">
-            <div style="font-size:24px">🍸</div>
+            <i class="ti ti-glass-full" style="font-size:24px;color:var(--text-secondary)"></i>
             <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-top:4px">Barra libre</div>
             <div style="font-size:11px;color:var(--text-secondary)">Servicio incluido</div>
           </div>`:''}
@@ -3846,8 +3900,8 @@ function initDashboard(){
         </div>
       </div>
     </div>`;
-  }).join(''):`<div class="card" style="text-align:center;color:var(--text-secondary);padding:1.5rem">
-    <div style="font-size:32px;margin-bottom:6px">✨</div>
+  }).join(''):`<div class="card" style="text-align:center;color:var(--text-secondary);padding:2rem">
+    <i class="ti ti-calendar-off" style="font-size:2rem;opacity:.3;display:block;margin-bottom:8px"></i>
     <div style="font-size:14px">No hay eventos hoy</div>
   </div>`}
 
@@ -4016,11 +4070,11 @@ _Seda Club · Sistema de gestión_`;
 
     <!-- Sub-tabs -->
     <div style="display:flex;gap:4px;margin-bottom:1rem;border-bottom:.5px solid var(--border);flex-wrap:wrap">
-      <button class="tab active" id="conf-tab-cliente" onclick="switchConf('cliente',this)" style="font-size:12px">👤 Cliente</button>
-      <button class="tab" id="conf-tab-maitre" onclick="switchConf('maitre',this)" style="font-size:12px">🍽️ Maître</button>
-      <button class="tab" id="conf-tab-jefa" onclick="switchConf('jefa',this)" style="font-size:12px">📋 Jefa eventos</button>
-      <button class="tab" id="conf-tab-cocina" onclick="switchConf('cocina',this)" style="font-size:12px">👨‍🍳 Cocina</button>
-      <button class="tab" id="conf-tab-config" onclick="switchConf('config',this)" style="font-size:12px">⚙️ Contactos</button>
+      <button class="tab active" id="conf-tab-cliente" onclick="switchConf('cliente',this)" style="font-size:12px"><i class="ti ti-user"></i> Cliente</button>
+      <button class="tab" id="conf-tab-maitre" onclick="switchConf('maitre',this)" style="font-size:12px"><i class="ti ti-tools-kitchen-2"></i> Maître</button>
+      <button class="tab" id="conf-tab-jefa" onclick="switchConf('jefa',this)" style="font-size:12px"><i class="ti ti-calendar-event"></i> Jefa eventos</button>
+      <button class="tab" id="conf-tab-cocina" onclick="switchConf('cocina',this)" style="font-size:12px"><i class="ti ti-chef-hat"></i> Cocina</button>
+      <button class="tab" id="conf-tab-config" onclick="switchConf('config',this)" style="font-size:12px"><i class="ti ti-address-book"></i> Contactos</button>
     </div>
 
     <!-- CLIENTE -->
