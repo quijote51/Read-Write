@@ -137,7 +137,23 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 .tab:hover{color:var(--text-primary);background:var(--bg-tertiary)}
 .tab.active{color:var(--text-primary);border-bottom:2px solid var(--text-primary);font-weight:500}
 
-.sec{display:none}.sec.active{display:block}
+.sec{display:block}
+.sec.active{display:block}
+
+/* ── ACCORDION ── */
+.acc-item{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:6px;overflow:hidden;transition:border-color var(--t),box-shadow var(--t)}
+.acc-item.open{border-color:var(--border-md);box-shadow:var(--shadow-sm)}
+.acc-header{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;font-size:14px;font-weight:500;width:100%;background:none;border:none;color:var(--text-primary);font-family:inherit;text-align:left;transition:background var(--t);user-select:none;-webkit-tap-highlight-color:transparent}
+.acc-header:hover{background:var(--bg-secondary)}
+.acc-item.open .acc-header{background:var(--bg-secondary)}
+.acc-header-icon{color:var(--text-secondary);font-size:16px;flex-shrink:0}
+.acc-item.open .acc-header-icon{color:var(--text-primary)}
+.acc-chevron{margin-left:auto;transition:transform 280ms cubic-bezier(.4,0,.2,1);color:var(--text-secondary);font-size:13px;flex-shrink:0}
+.acc-item.open .acc-chevron{transform:rotate(180deg)}
+.acc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows 320ms cubic-bezier(.4,0,.2,1)}
+.acc-item.open .acc-body{grid-template-rows:1fr}
+.acc-body-inner{overflow:hidden;min-height:0}
+.acc-content{padding:.875rem 1.25rem 1.25rem}
 
 /* ── CARDS ── */
 .card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--shadow-xs)}
@@ -1229,11 +1245,62 @@ if(!eventos.length){
   saveEv(eventos);
 }
 
-function showTab(name,btn){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
-  ge('tab-'+name).classList.add('active');
-  if(btn)btn.classList.add('active');
+/* ── ACCORDION ── */
+const ACC_TABS = {
+  dashboard:  {icon:'ti-layout-dashboard', label:'Inicio'},
+  eventos:    {icon:'ti-calendar-event',    label:'Eventos'},
+  calendario: {icon:'ti-calendar-month',    label:'Calendario'},
+  produccion: {icon:'ti-list-check',        label:'Producción'},
+  conjunta:   {icon:'ti-stack-2',           label:'Conjunta'},
+  recetario:  {icon:'ti-book',              label:'Recetario'},
+  pedidos:    {icon:'ti-brand-whatsapp',    label:'Pedidos'},
+  escandallo: {icon:'ti-coin-euro',         label:'Escandallo'},
+  bebidas:    {icon:'ti-bottle',            label:'Bebidas'},
+  plantillas: {icon:'ti-template',          label:'Plantillas'},
+  vajilla:    {icon:'ti-tools-kitchen',     label:'Vajilla'},
+  compras:    {icon:'ti-shopping-cart',     label:'Compras'},
+  cocina:     {icon:'ti-chef-hat',          label:'Pantalla cocina'},
+  historial:  {icon:'ti-chart-bar',         label:'Historial'},
+  personal:   {icon:'ti-users',             label:'Personal'},
+  ajustes:    {icon:'ti-settings',          label:'Ajustes'},
+  nuevo:      {icon:'ti-plus',              label:'Nuevo evento'},
+};
+
+function initAccordion(){
+  const tabsBar = ge('tabs-bar');
+  if(tabsBar) tabsBar.style.display='none';
+  const container = document.querySelector('.app');
+  document.querySelectorAll('.sec[id^="tab-"]').forEach(sec=>{
+    const name = sec.id.replace('tab-','');
+    const meta = ACC_TABS[name];
+    if(!meta) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'acc-item';
+    wrapper.dataset.tab = name;
+    wrapper.id = 'acc-'+name;
+    const header = document.createElement('button');
+    header.className = 'acc-header';
+    header.setAttribute('aria-expanded','false');
+    header.setAttribute('aria-controls','acc-body-'+name);
+    header.innerHTML = `<i class="ti ${meta.icon} acc-header-icon"></i><span>${meta.label}</span><i class="ti ti-chevron-down acc-chevron"></i>`;
+    header.onclick = ()=>toggleAccordion(name);
+    const body = document.createElement('div');
+    body.className = 'acc-body';
+    body.id = 'acc-body-'+name;
+    const inner = document.createElement('div');
+    inner.className = 'acc-body-inner';
+    const content = document.createElement('div');
+    content.className = 'acc-content';
+    sec.parentNode.insertBefore(wrapper,sec);
+    content.appendChild(sec);
+    inner.appendChild(content);
+    body.appendChild(inner);
+    wrapper.appendChild(header);
+    wrapper.appendChild(body);
+  });
+}
+
+function callTabInit(name){
   if(name==='produccion')fillProdSel();
   if(name==='conjunta')initConjunta();
   if(name==='recetario')renderRecetario();
@@ -1251,6 +1318,34 @@ function showTab(name,btn){
   if(name==='historial')initHistorial();
   if(name==='personal')initPersonal();
   if(name==='ajustes')initAjustes();
+}
+
+function toggleAccordion(name){
+  const item=ge('acc-'+name);
+  if(!item)return;
+  if(item.classList.contains('open')){
+    item.classList.remove('open');
+    const hdr=item.querySelector('.acc-header');
+    if(hdr)hdr.setAttribute('aria-expanded','false');
+  } else {
+    openAccordion(name);
+  }
+}
+
+function openAccordion(name){
+  const item=ge('acc-'+name);
+  if(!item||item.style.display==='none')return;
+  if(!item.classList.contains('open')){
+    item.classList.add('open');
+    const hdr=item.querySelector('.acc-header');
+    if(hdr)hdr.setAttribute('aria-expanded','true');
+    callTabInit(name);
+  }
+  setTimeout(()=>item.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+}
+
+function showTab(name,btn){
+  openAccordion(name);
 }
 
 /* ===== SELECTOR DE ROL ===== */
@@ -1278,22 +1373,19 @@ function seleccionarRol(rol){
 function aplicarRol(rol){
   const r = ROLES[rol];
   if(!r) return;
-  // Actualizar cabecera
   const iconEl = ge('rol-icon-header');
   const nomEl  = ge('rol-nombre-header');
   if(iconEl) iconEl.innerHTML = r.icon;
-  if(nomEl)  nomEl.textContent  = r.nombre;
-  // Mostrar/ocultar tabs
-  document.querySelectorAll('.tab[data-tab]').forEach(btn=>{
-    const tab = btn.dataset.tab;
-    btn.style.display = r.tabs.includes(tab) ? '' : 'none';
+  if(nomEl)  nomEl.textContent = r.nombre;
+  // Mostrar/ocultar accordion items
+  document.querySelectorAll('.acc-item[data-tab]').forEach(item=>{
+    const tab = item.dataset.tab;
+    const show = r.tabs.includes(tab);
+    item.style.display = show ? '' : 'none';
+    if(!show && item.classList.contains('open')) toggleAccordion(tab);
   });
-  // Si la pestaña activa no está en el rol, ir al dashboard
-  const activeTab = document.querySelector('.tab.active')?.dataset.tab;
-  if(activeTab && !r.tabs.includes(activeTab)){
-    const first = document.querySelector(`.tab[data-tab="${r.tabs[0]}"]`);
-    if(first) showTab(r.tabs[0], first);
-  }
+  // Abrir dashboard si está en el rol
+  if(r.tabs.includes('dashboard')) openAccordion('dashboard');
 }
 
 
@@ -4249,9 +4341,13 @@ window.addEventListener('DOMContentLoaded', async function(){
   if(cab&&ajustes.hotel_nombre)cab.textContent=`${ajustes.hotel_nombre} · ${ajustes.hotel_ciudad||''}`;
   const selLugar=ge('n-lugar');
   if(selLugar&&ajustes.lugares?.length)selLugar.innerHTML=ajustes.lugares.map(l=>`<option>${l}</option>`).join('');
+  initAccordion();
   if(rolActual && ROLES[rolActual]){ aplicarRol(rolActual); }
-  else { setTimeout(()=>ge('rol-modal').style.display='flex', 300); }
-  initDashboard();
+  else {
+    // Sin rol: mostrar todas las secciones y abrir dashboard
+    openAccordion('dashboard');
+    setTimeout(()=>ge('rol-modal').style.display='flex', 400);
+  }
 });
 
 </script>
