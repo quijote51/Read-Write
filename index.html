@@ -2,7 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Gestión de cocina y eventos · Seda Club Hotel Granada">
+<meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e1e1c" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Oído Cocina · Seda Club Hotel</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <!-- Supabase SDK -->
@@ -70,7 +75,7 @@ async function checkSupabase(){
 }
 </script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display+SC:wght@400;700&family=Karla:wght@300;400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg-primary:#ffffff;--bg-secondary:#f5f4f0;--bg-tertiary:#eeede9;
@@ -102,14 +107,28 @@ async function checkSupabase(){
   }
 }
 body{
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-family:'Karla','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   background:var(--bg-secondary);color:var(--text-primary);
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
 }
+.font-display{font-family:'Playfair Display SC','Georgia',serif}
 .app{max-width:960px;margin:0 auto;padding:1rem}
 header{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:.5px solid var(--border)}
 header h1{font-size:18px;font-weight:500;color:var(--text-primary)}
 header span{font-size:13px;color:var(--text-secondary)}
+
+/* ── TABLE OVERFLOW ── */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-lg)}
+
+/* ── FOCUS RINGS (keyboard nav) ── */
+.btn:focus-visible,.btn-sec:focus-visible,.btn-d:focus-visible,.tab:focus-visible,.btn-print:focus-visible,button:focus-visible{outline:2px solid #378add;outline-offset:2px;border-radius:var(--radius)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
+
+/* ── REDUCED MOTION ── */
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+/* ── KEYFRAMES ── */
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── TABS ── */
 .tabs{display:flex;gap:2px;margin-bottom:1.5rem;border-bottom:.5px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -154,8 +173,9 @@ header span{font-size:13px;color:var(--text-secondary)}
 .ing-table{width:100%;border-collapse:collapse;font-size:13px}
 .ing-table th{text-align:left;padding:6px 8px;font-size:12px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border)}
 .ing-table td{padding:6px 8px;border-bottom:.5px solid var(--border);color:var(--text-primary)}
-.ptable{width:100%;border-collapse:collapse;font-size:13px}
-.ptable th{text-align:left;padding:7px 10px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-size:12px}
+.ptable-outer{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ptable{width:100%;border-collapse:collapse;font-size:13px;min-width:480px}
+.ptable th{text-align:left;padding:7px 10px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-size:12px;white-space:nowrap}
 .ptable td{padding:7px 10px;border-bottom:.5px solid var(--border);color:var(--text-primary);vertical-align:top}
 .ptable tbody tr{transition:background var(--t)}
 .ptable tbody tr:hover td{background:var(--bg-secondary)}
@@ -241,6 +261,7 @@ textarea{resize:vertical;min-height:65px}
 </style>
 </head>
 <body>
+<a href="#main-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999" onfocus="this.style.cssText='position:fixed;left:1rem;top:1rem;width:auto;height:auto;overflow:visible;z-index:9999;padding:8px 16px;background:var(--negro);color:var(--blanco);border-radius:var(--radius);font-size:13px;font-weight:500'">Saltar al contenido</a>
 <div class="print-header" style="margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:10px">
   <div style="display:flex;justify-content:space-between;align-items:flex-end">
     <div>
@@ -254,30 +275,30 @@ textarea{resize:vertical;min-height:65px}
   <span>Seda Club Hotel · Plaza de la Trinidad · Granada</span>
   <span id="print-page">Impreso el <span id="print-date-foot"></span></span>
 </div>
-<div class="app">
+<div class="app" id="main-content" role="main">
 <header style="background:var(--negro);color:var(--blanco);padding:.875rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
   <div style="display:flex;align-items:center;gap:12px">
     <div style="width:34px;height:34px;border:1.5px solid #c9a84c;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
       <span style="font-family:'Georgia',serif;font-size:1rem;font-weight:900;color:var(--blanco);font-style:italic">O<span style="color:#c9a84c">í</span></span>
     </div>
     <div>
-      <div style="font-family:'Georgia',serif;font-size:1.05rem;font-weight:700;color:var(--blanco);line-height:1.1">O<span style="color:#c9a84c;font-style:italic">í</span>do <span style="letter-spacing:.12em;font-size:.7rem;font-family:monospace;color:#c9a84c">COCINA</span></div>
+      <div style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.05rem;font-weight:700;color:var(--blanco);line-height:1.1">O<span style="color:#c9a84c;font-style:italic">í</span>do <span style="letter-spacing:.12em;font-size:.7rem;font-family:monospace;color:#c9a84c">COCINA</span></div>
       <div style="font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.04em;margin-top:1px" id="header-hotel-nombre">Seda Club Hotel · Granada</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
     <span id="sync-indicator" style="font-size:10px;color:rgba(255,255,255,.3);display:inline-flex;align-items:center;gap:4px"><i class="ti ti-cloud"></i> Conectando...</span>
-    <button onclick="abrirSelectorRol()" id="rol-btn" style="background:rgba(255,255,255,.08);border:none;border-radius:6px;padding:5px 12px;color:rgba(255,255,255,.7);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px">
+    <button onclick="abrirSelectorRol()" id="rol-btn" aria-label="Cambiar rol" aria-haspopup="dialog" style="background:rgba(255,255,255,.08);border:none;border-radius:6px;padding:5px 12px;color:rgba(255,255,255,.7);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px">
       <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down"></i>
     </button>
-    <button onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" style="background:rgba(255,255,255,.08);border:none;border-radius:6px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:12px"><i class="ti ti-settings"></i></button>
+    <button onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" aria-label="Ajustes" style="background:rgba(255,255,255,.08);border:none;border-radius:6px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:12px;min-height:34px;min-width:34px"><i class="ti ti-settings"></i></button>
   </div>
 </header>
 
 <!-- MODAL SELECTOR DE ROL -->
-<div id="rol-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1002;align-items:center;justify-content:center;padding:1rem">
+<div id="rol-modal" role="dialog" aria-modal="true" aria-labelledby="rol-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1002;align-items:center;justify-content:center;padding:1rem">
   <div style="background:var(--bg-primary);border-radius:var(--radius-lg);padding:1.5rem;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)">
-    <div style="font-family:'Georgia',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px;text-align:center">O<span style="color:#c9a84c;font-style:italic">í</span>do Cocina</div>
+    <div id="rol-modal-titulo" style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px;text-align:center">O<span style="color:#c9a84c;font-style:italic">í</span>do Cocina</div>
     <div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:1.25rem">¿Cuál es tu rol hoy?</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 
@@ -372,9 +393,9 @@ textarea{resize:vertical;min-height:65px}
 <div class="sec" id="tab-calendario">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
     <div style="display:flex;align-items:center;gap:8px">
-      <button onclick="cambiarMes(-1)" style="background:none;border:.5px solid var(--border-md);border-radius:var(--radius);padding:6px 10px;cursor:pointer;color:var(--text-primary);font-size:14px">‹</button>
+      <button onclick="cambiarMes(-1)" aria-label="Mes anterior" style="background:none;border:.5px solid var(--border-md);border-radius:var(--radius);padding:6px 10px;cursor:pointer;color:var(--text-primary);font-size:14px;min-height:36px;min-width:36px">‹</button>
       <div style="font-size:16px;font-weight:500;min-width:160px;text-align:center" id="cal-titulo"></div>
-      <button onclick="cambiarMes(1)" style="background:none;border:.5px solid var(--border-md);border-radius:var(--radius);padding:6px 10px;cursor:pointer;color:var(--text-primary);font-size:14px">›</button>
+      <button onclick="cambiarMes(1)" aria-label="Mes siguiente" style="background:none;border:.5px solid var(--border-md);border-radius:var(--radius);padding:6px 10px;cursor:pointer;color:var(--text-primary);font-size:14px;min-height:36px;min-width:36px">›</button>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button onclick="irHoy()" class="btn-sec" style="font-size:12px"><i class="ti ti-calendar"></i> Hoy</button>
@@ -898,9 +919,9 @@ textarea{resize:vertical;min-height:65px}
 
   <div class="card">
     <div class="form-3" style="margin-bottom:10px">
-      <div class="fg" style="margin-bottom:0"><label>Nombre / cliente</label><input type="text" id="n-nom" placeholder="Cumpleaños Ana"/></div>
-      <div class="fg" style="margin-bottom:0"><label>Fecha</label><input type="date" id="n-fecha"/></div>
-      <div class="fg" style="margin-bottom:0"><label>Hora</label><input type="time" id="n-hora"/></div>
+      <div class="fg" style="margin-bottom:0"><label for="n-nom">Nombre / cliente</label><input type="text" id="n-nom" autocomplete="off" placeholder="Cumpleaños Ana"/></div>
+      <div class="fg" style="margin-bottom:0"><label for="n-fecha">Fecha</label><input type="date" id="n-fecha" autocomplete="off"/></div>
+      <div class="fg" style="margin-bottom:0"><label for="n-hora">Hora</label><input type="time" id="n-hora" autocomplete="off"/></div>
     </div>
     <div class="form-3" style="margin-bottom:10px">
       <div class="fg" style="margin-bottom:0"><label>Pax</label><input type="number" id="n-pax" min="1" placeholder="25"/></div>
@@ -1352,7 +1373,7 @@ function renderHistorial(){
 
   <div class="card" style="padding:0;overflow:hidden">
     <div style="padding:10px 12px;background:var(--bg-secondary);font-size:12px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Todos los eventos</div>
-    <table class="ptable">
+    <div class="ptable-outer"><table class="ptable">
       <thead><tr>
         <th>Evento</th><th>Fecha</th><th style="text-align:right">Pax</th>
         <th style="text-align:right">Ingresos</th><th style="text-align:right">Coste</th><th style="text-align:right">Margen</th>
@@ -1372,7 +1393,7 @@ function renderHistorial(){
           </tr>`;
         }).join('')}
       </tbody>
-    </table>
+    </table></div>
   </div>`;
 
   cont.innerHTML=html;
@@ -2618,10 +2639,10 @@ function renderEventos(){
         </div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
           ${getBadge(ev.fecha)}
-          <button onclick="editarEvento(${ev.id})" style="font-size:11px;padding:3px 9px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer"><i class="ti ti-edit"></i></button>
-          <button onclick="duplicarEvento(${ev.id})" style="font-size:11px;padding:3px 9px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer"><i class="ti ti-copy"></i></button>
-          <button onclick="editarNota(${ev.id})" style="font-size:11px;padding:3px 9px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer"><i class="ti ti-note"></i></button>
-          <button class="btn-d" onclick="eliminarEv(${ev.id})" style="font-size:11px;padding:3px 9px"><i class="ti ti-trash"></i></button>
+          <button onclick="editarEvento(${ev.id})" aria-label="Editar evento" style="font-size:11px;padding:5px 10px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer;min-height:32px"><i class="ti ti-edit"></i></button>
+          <button onclick="duplicarEvento(${ev.id})" aria-label="Duplicar evento" style="font-size:11px;padding:5px 10px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer;min-height:32px"><i class="ti ti-copy"></i></button>
+          <button onclick="editarNota(${ev.id})" aria-label="Añadir nota" style="font-size:11px;padding:5px 10px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer;min-height:32px"><i class="ti ti-note"></i></button>
+          <button class="btn-d" onclick="eliminarEv(${ev.id})" aria-label="Eliminar evento" style="font-size:11px;padding:5px 10px;min-height:32px"><i class="ti ti-trash"></i></button>
         </div>
       </div>
       ${alerg}${infHTML}${notaHTML}
@@ -2732,6 +2753,8 @@ function guardarEvento(){
   const precio_venta=parseFloat(ge('n-precio-venta')?.value)||0;
   const alergenos_menu=[...ge('alg-selector').querySelectorAll('.alg-cb.sel')].map(el=>{const lbl=el.querySelector('span:last-child').textContent.trim();return ALERGENOS.find(a=>a.label===lbl)?.id}).filter(Boolean);
   if(!nombre||!fecha||!pax){alert('Nombre, fecha y pax son obligatorios.');return;}
+  const btn=ge('n-guardar-btn');
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin .8s linear infinite"></i> Guardando...';}
   function pp(txt,def){return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([FCPMfcpm]):(.+)/);return m?{cat:m[1].toUpperCase(),nombre:m[2].trim(),alg:[]}:{cat:def,nombre:l,alg:[]}})}
   const platos=[...pp(ge('n-fr').value,'F'),...pp(ge('n-ca').value,'C'),...pp(ge('n-po').value,'P'),...pp(ge('n-pr').value,'M')];
   const ninos=parseInt(ge('n-ninos').value)||0;
