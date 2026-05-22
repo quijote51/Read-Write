@@ -113,7 +113,8 @@ body{
 }
 .font-display{font-family:'Playfair Display SC','Georgia',serif}
 .app{max-width:960px;margin:0 auto;padding:1rem}
-header{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:.5px solid var(--border)}
+header{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;padding-bottom:1rem;position:relative}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.7) 25%,rgba(201,168,76,1) 50%,rgba(201,168,76,.7) 75%,transparent)}
 header h1{font-size:18px;font-weight:500;color:var(--text-primary)}
 header span{font-size:13px;color:var(--text-secondary)}
 
@@ -142,12 +143,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 
 /* ── ACCORDION ── */
 .acc-item{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:6px;overflow:hidden;transition:border-color var(--t),box-shadow var(--t)}
-.acc-item.open{border-color:var(--border-md);box-shadow:var(--shadow-sm)}
+.acc-item.open{border-color:rgba(201,168,76,.4);border-left-color:var(--gold);border-left-width:3px;box-shadow:var(--shadow-sm),0 0 0 0 transparent}
 .acc-header{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;font-size:14px;font-weight:500;width:100%;background:none;border:none;color:var(--text-primary);font-family:inherit;text-align:left;transition:background var(--t);user-select:none;-webkit-tap-highlight-color:transparent}
 .acc-header:hover{background:var(--bg-secondary)}
 .acc-item.open .acc-header{background:var(--bg-secondary)}
-.acc-header-icon{color:var(--text-secondary);font-size:16px;flex-shrink:0}
-.acc-item.open .acc-header-icon{color:var(--text-primary)}
+.acc-header-icon{color:var(--text-secondary);font-size:16px;flex-shrink:0;transition:color var(--t)}
+.acc-item.open .acc-header-icon{color:var(--gold)}
 .acc-chevron{margin-left:auto;transition:transform 280ms cubic-bezier(.4,0,.2,1);color:var(--text-secondary);font-size:13px;flex-shrink:0}
 .acc-item.open .acc-chevron{transform:rotate(180deg)}
 .acc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows 320ms cubic-bezier(.4,0,.2,1)}
@@ -199,9 +200,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 
 /* ── STATS ── */
 .stat-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:1rem}
-.stat{background:var(--bg-secondary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:.875rem 1rem}
-.stat-l{font-size:12px;color:var(--text-secondary);margin-bottom:3px;font-weight:500}
-.stat-v{font-size:21px;font-weight:600;color:var(--text-primary);letter-spacing:-.02em}
+.stat{background:var(--bg-primary);border:.5px solid var(--border);border-top:2px solid var(--gold);border-radius:var(--radius-lg);padding:.875rem 1rem;box-shadow:var(--shadow-xs);transition:box-shadow var(--t)}
+.stat:hover{box-shadow:var(--shadow-sm)}
+.stat-l{font-size:11.5px;color:var(--text-secondary);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.stat-v{font-size:22px;font-weight:700;color:var(--text-primary);letter-spacing:-.03em;line-height:1}
 
 .empty{text-align:center;color:var(--text-secondary);padding:2.5rem 2rem;font-size:14px}
 
@@ -236,10 +238,21 @@ textarea{resize:vertical;min-height:65px}
 .ev-check:hover{background:var(--bg-secondary)}
 .ev-check.sel{background:var(--success-bg);border-color:var(--success-text)}
 
+/* ── ROLE MODAL (premium dark) ── */
+.rol-modal-inner{background:linear-gradient(155deg,#1c1a12 0%,#0d0c08 60%,#0a0904 100%);border-radius:20px;padding:2rem;max-width:420px;width:100%;box-shadow:0 50px 120px rgba(0,0,0,.9),0 0 0 1px rgba(201,168,76,.18),inset 0 1px 0 rgba(201,168,76,.12)}
+.rol-modal-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.22);border-radius:100px;padding:3px 12px;font-size:9.5px;letter-spacing:.12em;color:rgba(201,168,76,.8);margin-bottom:16px}
+.rol-modal-title{font-family:'Playfair Display SC','Georgia',serif;font-size:1.85rem;font-weight:700;color:#f5f0e6;line-height:1.05;margin-bottom:6px}
+.rol-modal-sub{font-size:12px;color:rgba(255,255,255,.28);letter-spacing:.03em}
+.rol-modal-divider{display:flex;align-items:center;gap:10px;margin:1.25rem 0}
+.rol-modal-divider span{flex:1;height:.5px;background:rgba(255,255,255,.07)}
+.rol-modal-divider i{font-size:8px;color:rgba(201,168,76,.45)}
 /* ── ROLE CARDS (modal) ── */
-.rol-card{padding:1rem;border:.5px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;text-align:left;background:var(--bg-primary);transition:all var(--t)}
-.rol-card:hover{background:var(--bg-secondary);border-color:var(--border-md);box-shadow:var(--shadow-sm);transform:translateY(-1px)}
-.rol-card-icon{font-size:1.25rem;color:var(--text-secondary);display:block;margin-bottom:8px}
+.rol-card{padding:1rem;border:1px solid rgba(255,255,255,.07);border-radius:12px;cursor:pointer;text-align:left;background:rgba(255,255,255,.04);transition:background 180ms ease,border-color 180ms ease,transform 180ms ease,box-shadow 180ms ease}
+.rol-card:hover{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.38);box-shadow:0 8px 28px rgba(0,0,0,.45);transform:translateY(-2px)}
+.rol-card:active{transform:translateY(0);box-shadow:none}
+.rol-card-icon{font-size:1.4rem;color:#c9a84c;display:block;margin-bottom:10px}
+.rol-card-name{font-size:13px;font-weight:600;margin-bottom:3px;color:rgba(255,255,255,.88)}
+.rol-card-desc{font-size:11px;color:rgba(255,255,255,.32);line-height:1.5}
 
 /* ── LAYOUT HELPERS ── */
 .form-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -312,40 +325,44 @@ textarea{resize:vertical;min-height:65px}
 </header>
 
 <!-- MODAL SELECTOR DE ROL -->
-<div id="rol-modal" role="dialog" aria-modal="true" aria-labelledby="rol-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1002;align-items:center;justify-content:center;padding:1rem">
-  <div style="background:var(--bg-primary);border-radius:var(--radius-lg);padding:1.5rem;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)">
-    <div id="rol-modal-titulo" style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px;text-align:center">O<span style="color:#c9a84c;font-style:italic">í</span>do Cocina</div>
-    <div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:1.25rem">¿Cuál es tu rol hoy?</div>
+<div id="rol-modal" role="dialog" aria-modal="true" aria-labelledby="rol-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1002;align-items:center;justify-content:center;padding:1rem">
+  <div class="rol-modal-inner">
+    <div style="text-align:center">
+      <div class="rol-modal-badge"><i class="ti ti-building"></i> SEDA CLUB HOTEL · GRANADA</div>
+      <div id="rol-modal-titulo" class="rol-modal-title">O<span style="color:#c9a84c">í</span>do Cocina</div>
+      <div class="rol-modal-sub">¿Cuál es tu rol hoy?</div>
+    </div>
+    <div class="rol-modal-divider"><span></span><i class="ti ti-diamond-filled"></i><span></span></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 
       <div onclick="seleccionarRol('chef')" class="rol-card">
         <i class="ti ti-chef-hat rol-card-icon"></i>
-        <div style="font-size:13px;font-weight:500;margin-bottom:2px">Chef</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Producción · Recetario · Pantalla cocina · Compras</div>
+        <div class="rol-card-name">Chef</div>
+        <div class="rol-card-desc">Producción · Recetario · Pantalla cocina · Compras</div>
       </div>
 
       <div onclick="seleccionarRol('sala')" class="rol-card">
         <i class="ti ti-tools-kitchen-2 rol-card-icon"></i>
-        <div style="font-size:13px;font-weight:500;margin-bottom:2px">Sala / Maître</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Bebidas · Vajilla · Eventos hoy</div>
+        <div class="rol-card-name">Sala / Maître</div>
+        <div class="rol-card-desc">Bebidas · Vajilla · Eventos hoy</div>
       </div>
 
       <div onclick="seleccionarRol('eventos')" class="rol-card">
         <i class="ti ti-calendar-event rol-card-icon"></i>
-        <div style="font-size:13px;font-weight:500;margin-bottom:2px">Jefa de eventos</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Eventos · Calendario · Plantillas · Escandallo</div>
+        <div class="rol-card-name">Jefa de eventos</div>
+        <div class="rol-card-desc">Eventos · Calendario · Plantillas · Escandallo</div>
       </div>
 
       <div onclick="seleccionarRol('direccion')" class="rol-card">
         <i class="ti ti-chart-bar rol-card-icon"></i>
-        <div style="font-size:13px;font-weight:500;margin-bottom:2px">Dirección</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Dashboard · Historial · Escandallo · Calendario</div>
+        <div class="rol-card-name">Dirección</div>
+        <div class="rol-card-desc">Dashboard · Historial · Escandallo · Calendario</div>
       </div>
 
       <div onclick="seleccionarRol('admin')" class="rol-card" style="grid-column:span 2">
         <i class="ti ti-settings rol-card-icon"></i>
-        <div style="font-size:13px;font-weight:500;margin-bottom:2px">Administración</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Acceso completo a todos los módulos</div>
+        <div class="rol-card-name">Administración</div>
+        <div class="rol-card-desc">Acceso completo a todos los módulos</div>
       </div>
 
     </div>
@@ -3957,13 +3974,15 @@ function initDashboard(){
   const diasSemana=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const fechaLabel=`${diasSemana[hoy.getDay()]}, ${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+  const hora=hoy.getHours();
+  const saludo=hora<13?'Buenos días':hora<21?'Buenas tardes':'Buenas noches';
 
   let html=`
   <!-- Fecha y accesos rápidos -->
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px">
     <div>
-      <div style="font-size:13px;color:var(--text-secondary)">${fechaLabel}</div>
-      <div style="font-size:20px;font-weight:500;color:var(--text-primary)">Buenos días 👋</div>
+      <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px">${fechaLabel}</div>
+      <div style="font-size:1.4rem;font-weight:600;color:var(--text-primary);font-family:'Playfair Display SC','Georgia',serif">${saludo}</div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button onclick="showTab('nuevo',document.querySelectorAll('.tab')[10])" class="btn btn-p" style="font-size:12px"><i class="ti ti-plus"></i> Nuevo evento</button>
