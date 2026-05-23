@@ -223,12 +223,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 .stat-v{font-size:22px;font-weight:700;color:var(--text-primary);letter-spacing:-.03em;line-height:1}
 
 .empty{text-align:center;color:var(--text-secondary);padding:2.5rem 2rem;font-size:14px}
+.sec-label{font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sec-label::after{content:'';flex:1;height:.5px;background:var(--border)}
 
 /* ── FORMS ── */
 .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
 .fg label{font-size:12px;color:var(--text-secondary);font-weight:500}
 input,select,textarea{font-size:13px;background:var(--bg-primary);color:var(--text-primary);border:.5px solid var(--border-md);border-radius:var(--radius);padding:8px 10px;width:100%;font-family:inherit;transition:border-color var(--t),box-shadow var(--t)}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#378add;box-shadow:0 0 0 3px rgba(55,138,221,.12)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.14)}
 textarea{resize:vertical;min-height:65px}
 
 /* ── BUTTONS ── */
@@ -4041,9 +4043,7 @@ function initDashboard(){
   </div>`:''}
 
   <!-- Eventos HOY -->
-  <div style="font-size:13px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
-    <i class="ti ti-calendar-event"></i> Hoy
-  </div>
+  <div class="sec-label"><i class="ti ti-calendar-event"></i> Hoy</div>
   ${evHoy.length?evHoy.map(ev=>{
     const color=getTipoColor(ev.tipo);
     const vajAlerta=calcVajEvento(ev).some(v=>!v.ok);
@@ -4084,24 +4084,26 @@ function initDashboard(){
 
   <!-- Próximos 7 días -->
   ${evSemana.length?`
-  <div style="font-size:13px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 8px">
-    <i class="ti ti-calendar-week"></i> Próximos 7 días
-  </div>
+  <div class="sec-label" style="margin:1.25rem 0 8px"><i class="ti ti-calendar-week"></i> Próximos 7 días</div>
   ${evSemana.map(ev=>{
     const color=getTipoColor(ev.tipo);
     const diff=Math.round((new Date(ev.fecha+'T00:00:00')-hoy)/86400000);
-    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;border-left:3px solid ${color}">
-      <div style="min-width:45px;text-align:center">
-        <div style="font-size:18px;font-weight:500;color:var(--text-primary)">${new Date(ev.fecha+'T00:00:00').getDate()}</div>
-        <div style="font-size:10px;color:var(--text-secondary)">${['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][new Date(ev.fecha+'T00:00:00').getMonth()+1]}</div>
-      </div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:500">${ev.nombre}</div>
-        <div style="font-size:11px;color:var(--text-secondary)">${ev.hora} · ${ev.pax} pax · ${ev.lugar}</div>
-      </div>
-      <div style="display:flex;gap:5px;align-items:center">
-        <span style="font-size:11px;padding:2px 7px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary)">En ${diff} día${diff>1?'s':''}</span>
-        <button onclick="mostrarConfirmacion(${ev.id})" style="font-size:11px;padding:3px 9px;border-radius:var(--radius);background:var(--success-bg);color:var(--success-text);border:none;cursor:pointer"><i class="ti ti-send"></i></button>
+    const [,sm,sd]=ev.fecha.split('-');
+    const mesC2=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return`<div class="ev-card" style="border-left:3px solid ${color}">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px">
+        <div class="ev-card-date" style="border-top:2px solid ${color};width:38px">
+          <div class="ev-card-date-day" style="font-size:17px">${Number(sd)}</div>
+          <div class="ev-card-date-mon">${mesC2[Number(sm)]}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev.nombre}</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${ev.hora} · ${ev.pax} pax · ${ev.lugar}</div>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+          ${getBadge(ev.fecha)}
+          <button onclick="mostrarConfirmacion(${ev.id})" class="btn-icon success" style="padding:4px 9px"><i class="ti ti-send"></i></button>
+        </div>
       </div>
     </div>`;
   }).join('')}`:''}
