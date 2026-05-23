@@ -170,7 +170,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 .acc-content{padding:.875rem 1.25rem 1.25rem}
 
 /* ── CARDS ── */
-.card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--shadow-xs)}
+.card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--shadow-xs);transition:box-shadow var(--t),border-color var(--t)}
 
 /* ── BADGES ── */
 .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--radius);font-weight:500;letter-spacing:.01em}
@@ -1596,17 +1596,20 @@ function renderPersonalLista(){
   cont.innerHTML=roles.map(rol=>{
     const items=personal.filter(p=>p.rol===rol);
     if(!items.length)return'';
-    return`<div style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">${ROL_ICONS[rol]} ${ROL_LABELS[rol]}</div>
-      ${items.map(p=>`
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:5px">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:500">${p.nombre}</div>
-            ${p.tel?`<div style="font-size:11px;color:var(--text-secondary)">${p.tel}</div>`:''}
+    return`<div style="margin-bottom:12px">
+      <div class="sec-label">${ROL_ICONS[rol]} ${ROL_LABELS[rol]} <span style="font-weight:400;font-size:10px;text-transform:none;letter-spacing:0;color:var(--text-tertiary)">${items.length} persona${items.length>1?'s':''}</span></div>
+      ${items.map(p=>{
+        const initials=p.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        return`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:5px;transition:border-color var(--t),box-shadow var(--t)">
+          <div style="width:34px;height:34px;border-radius:50%;background:var(--bg-secondary);border:.5px solid var(--border-md);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-secondary);flex-shrink:0">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.nombre}</div>
+            ${p.tel?`<div style="font-size:11px;color:var(--text-secondary)">${p.tel}</div>`:``}
           </div>
-          ${p.tel?`<a href="https://wa.me/${p.tel}" target="_blank" style="font-size:11px;padding:3px 9px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none"><i class="ti ti-brand-whatsapp"></i></a>`:''}
-          <button class="btn-d" style="font-size:11px;padding:3px 7px" onclick="eliminarPersonal('${p.id}')"><i class="ti ti-trash"></i></button>
-        </div>`).join('')}
+          ${p.tel?`<a href="https://wa.me/${p.tel.replace(/\D/g,'')}" target="_blank" class="btn-icon success" style="text-decoration:none;color:var(--success-text)"><i class="ti ti-brand-whatsapp"></i></a>`:''}
+          <button class="btn-icon danger" style="padding:5px 8px" onclick="eliminarPersonal('${p.id}')"><i class="ti ti-trash"></i></button>
+        </div>`;
+      }).join('')}
     </div>`;
   }).join('');
 }
