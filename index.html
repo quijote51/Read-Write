@@ -2,9 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Gestión de cocina y eventos · Seda Club Hotel Granada">
+<meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1e1e1c" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Oído Cocina · Seda Club Hotel</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -70,7 +77,7 @@ async function checkSupabase(){
 }
 </script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display+SC:wght@400;700&family=Karla:wght@300;400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg-primary:#ffffff;--bg-secondary:#f5f4f0;--bg-tertiary:#eeede9;
@@ -102,26 +109,70 @@ async function checkSupabase(){
   }
 }
 body{
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-family:'Karla','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   background:var(--bg-secondary);color:var(--text-primary);
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
 }
+.font-display{font-family:'Playfair Display SC','Georgia',serif}
 .app{max-width:960px;margin:0 auto;padding:1rem}
-header{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:.5px solid var(--border)}
+header{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;padding-bottom:1rem;position:relative}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.7) 25%,rgba(201,168,76,1) 50%,rgba(201,168,76,.7) 75%,transparent)}
 header h1{font-size:18px;font-weight:500;color:var(--text-primary)}
 header span{font-size:13px;color:var(--text-secondary)}
+
+/* ── TABLE OVERFLOW ── */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-lg)}
+
+/* ── FOCUS RINGS (keyboard nav) ── */
+.btn:focus-visible,.btn-sec:focus-visible,.btn-d:focus-visible,.tab:focus-visible,.btn-print:focus-visible,button:focus-visible{outline:2px solid #378add;outline-offset:2px;border-radius:var(--radius)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
+
+/* ── REDUCED MOTION ── */
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+/* ── KEYFRAMES ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── ACCORDION CONTENT FADE-IN ── */
+@keyframes accFadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.acc-item.open .acc-content{animation:accFadeIn 240ms ease forwards}
+@media(prefers-reduced-motion:reduce){.acc-item.open .acc-content{animation:none}}
 
 /* ── TABS ── */
 .tabs{display:flex;gap:2px;margin-bottom:1.5rem;border-bottom:.5px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{padding:8px 13px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text-secondary);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;border-radius:var(--radius) var(--radius) 0 0;font-family:inherit;flex-shrink:0;transition:color var(--t),background var(--t)}
 .tab:hover{color:var(--text-primary);background:var(--bg-tertiary)}
-.tab.active{color:var(--text-primary);border-bottom:2px solid var(--text-primary);font-weight:500}
+.tab.active{color:var(--text-primary);border-bottom:2px solid var(--gold);font-weight:600}
+/* ── SUB-TABS (inside sections) ── */
+.sub-tabs{display:flex;gap:3px;padding:3px;background:var(--bg-secondary);border-radius:var(--radius-lg);margin-bottom:1rem;width:fit-content;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.sub-tabs::-webkit-scrollbar{display:none}
+.sub-tab{padding:5px 12px;font-size:12px;cursor:pointer;border:none;background:transparent;color:var(--text-secondary);border-radius:var(--radius);font-family:inherit;font-weight:500;white-space:nowrap;transition:all var(--t);display:inline-flex;align-items:center;gap:5px}
+.sub-tab:hover{color:var(--text-primary);background:var(--bg-tertiary)}
+.sub-tab.active{background:var(--bg-primary);color:var(--text-primary);box-shadow:var(--shadow-xs);font-weight:600}
 
-.sec{display:none}.sec.active{display:block}
+.sec{display:block}
+.sec.active{display:block}
+
+/* ── ACCORDION ── */
+.acc-item{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:6px;overflow:hidden;transition:border-color var(--t),box-shadow var(--t)}
+.acc-item.open{border-color:rgba(201,168,76,.4);border-left-color:var(--gold);border-left-width:3px;box-shadow:var(--shadow-sm),0 0 0 0 transparent}
+.acc-header{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;font-size:14px;font-weight:500;width:100%;background:none;border:none;color:var(--text-primary);font-family:inherit;text-align:left;transition:background var(--t);user-select:none;-webkit-tap-highlight-color:transparent}
+.acc-header:hover{background:var(--bg-secondary)}
+.acc-item.open .acc-header{background:var(--bg-secondary)}
+.acc-header-icon{color:var(--text-secondary);font-size:16px;flex-shrink:0;transition:color var(--t)}
+.acc-item.open .acc-header-icon{color:var(--gold)}
+.acc-header span{transition:color var(--t);font-weight:500}
+.acc-item.open .acc-header span{color:var(--text-primary)}
+.acc-chevron{margin-left:auto;transition:transform 280ms cubic-bezier(.4,0,.2,1);color:var(--text-secondary);font-size:13px;flex-shrink:0}
+.acc-item.open .acc-chevron{transform:rotate(180deg);color:var(--gold)}
+.acc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows 320ms cubic-bezier(.4,0,.2,1)}
+.acc-item.open .acc-body{grid-template-rows:1fr}
+.acc-body-inner{overflow:hidden;min-height:0}
+.acc-content{padding:.875rem 1.25rem 1.25rem}
 
 /* ── CARDS ── */
-.card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--shadow-xs)}
+.card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--shadow-xs);transition:box-shadow var(--t),border-color var(--t)}
 
 /* ── BADGES ── */
 .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--radius);font-weight:500;letter-spacing:.01em}
@@ -133,7 +184,24 @@ header span{font-size:13px;color:var(--text-secondary)}
 .cat-F{background:#e6f1fb;color:#185fa5}.cat-C{background:#faece7;color:#993c1d}
 .cat-P{background:#eaf3de;color:#3b6d11}.cat-M{background:#eeedfe;color:#534ab7}
 
-/* ── RECIPE + VAJILLA GRIDS ── */
+/* ── EVENT CARDS ── */
+.ev-card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px;overflow:hidden;transition:border-color var(--t),box-shadow var(--t)}
+.ev-card:hover{box-shadow:var(--shadow-md);border-color:var(--border-md)}
+.ev-card-top{display:flex;align-items:flex-start;gap:12px;padding:13px 14px 11px}
+.ev-card-date{width:42px;flex-shrink:0;text-align:center;background:var(--bg-secondary);border-radius:var(--radius);padding:6px 4px}
+.ev-card-date-day{font-size:19px;font-weight:700;color:var(--text-primary);line-height:1}
+.ev-card-date-mon{font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.ev-card-body{flex:1;min-width:0}
+.ev-card-name{font-size:15px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev-card-meta{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;flex-wrap:wrap;line-height:1.5}
+.ev-card-footer{display:flex;gap:4px;align-items:center;padding:7px 12px;border-top:.5px solid var(--border);background:var(--bg-secondary)}
+/* ── ICON BUTTONS ── */
+.btn-icon{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);padding:5px 10px;font-size:12px;color:var(--text-secondary);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:inherit;font-weight:400;transition:all var(--t);min-height:30px;white-space:nowrap}
+.btn-icon:hover{background:var(--bg-tertiary);color:var(--text-primary);border-color:var(--border-md)}
+.btn-icon.danger{color:var(--danger-text);border-color:rgba(163,45,45,.3)}
+.btn-icon.danger:hover{background:var(--danger-bg);border-color:var(--danger-text)}
+.btn-icon.success{color:var(--success-text);border-color:rgba(59,109,17,.3)}
+.btn-icon.success:hover{background:var(--success-bg);border-color:var(--success-text)}
 .receta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
 .receta-card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:border-color var(--t),box-shadow var(--t),transform 200ms ease}
 .receta-card:hover{border-color:var(--border-md);box-shadow:var(--shadow-md);transform:translateY(-1px)}
@@ -154,8 +222,9 @@ header span{font-size:13px;color:var(--text-secondary)}
 .ing-table{width:100%;border-collapse:collapse;font-size:13px}
 .ing-table th{text-align:left;padding:6px 8px;font-size:12px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border)}
 .ing-table td{padding:6px 8px;border-bottom:.5px solid var(--border);color:var(--text-primary)}
-.ptable{width:100%;border-collapse:collapse;font-size:13px}
-.ptable th{text-align:left;padding:7px 10px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-size:12px}
+.ptable-outer{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ptable{width:100%;border-collapse:collapse;font-size:13px;min-width:480px}
+.ptable th{text-align:left;padding:7px 10px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-size:12px;white-space:nowrap}
 .ptable td{padding:7px 10px;border-bottom:.5px solid var(--border);color:var(--text-primary);vertical-align:top}
 .ptable tbody tr{transition:background var(--t)}
 .ptable tbody tr:hover td{background:var(--bg-secondary)}
@@ -163,17 +232,22 @@ header span{font-size:13px;color:var(--text-secondary)}
 
 /* ── STATS ── */
 .stat-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:1rem}
-.stat{background:var(--bg-secondary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:.875rem 1rem}
-.stat-l{font-size:12px;color:var(--text-secondary);margin-bottom:3px;font-weight:500}
-.stat-v{font-size:21px;font-weight:600;color:var(--text-primary);letter-spacing:-.02em}
+.stat{background:var(--bg-primary);border:.5px solid var(--border);border-top:2px solid var(--gold);border-radius:var(--radius-lg);padding:.875rem 1rem;box-shadow:var(--shadow-xs);transition:box-shadow var(--t)}
+.stat:hover{box-shadow:var(--shadow-sm)}
+.stat-l{font-size:11.5px;color:var(--text-secondary);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.stat-v{font-size:22px;font-weight:700;color:var(--text-primary);letter-spacing:-.03em;line-height:1}
 
-.empty{text-align:center;color:var(--text-secondary);padding:2.5rem 2rem;font-size:14px}
+.empty{text-align:center;color:var(--text-secondary);padding:2.5rem 2rem;font-size:14px;background:var(--bg-secondary);border-radius:var(--radius-lg);border:.5px dashed var(--border-md);line-height:1.6}
+.sec-label{font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sec-label::after{content:'';flex:1;height:.5px;background:var(--border)}
+.form-sec{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 8px;display:flex;align-items:center;gap:7px}
+.form-sec::before{content:'';width:3px;height:11px;background:var(--gold);border-radius:2px;flex-shrink:0}
 
 /* ── FORMS ── */
 .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
 .fg label{font-size:12px;color:var(--text-secondary);font-weight:500}
 input,select,textarea{font-size:13px;background:var(--bg-primary);color:var(--text-primary);border:.5px solid var(--border-md);border-radius:var(--radius);padding:8px 10px;width:100%;font-family:inherit;transition:border-color var(--t),box-shadow var(--t)}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#378add;box-shadow:0 0 0 3px rgba(55,138,221,.12)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.14)}
 textarea{resize:vertical;min-height:65px}
 
 /* ── BUTTONS ── */
@@ -200,15 +274,59 @@ textarea{resize:vertical;min-height:65px}
 .ev-check:hover{background:var(--bg-secondary)}
 .ev-check.sel{background:var(--success-bg);border-color:var(--success-text)}
 
+/* ── ROLE MODAL (premium dark) ── */
+.rol-modal-inner{background:linear-gradient(155deg,#1c1a12 0%,#0d0c08 60%,#0a0904 100%);border-radius:20px;padding:2rem;max-width:420px;width:100%;box-shadow:0 50px 120px rgba(0,0,0,.9),0 0 0 1px rgba(201,168,76,.18),inset 0 1px 0 rgba(201,168,76,.12)}
+.rol-modal-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.22);border-radius:100px;padding:3px 12px;font-size:9.5px;letter-spacing:.12em;color:rgba(201,168,76,.8);margin-bottom:16px}
+.rol-modal-title{font-family:'Playfair Display SC','Georgia',serif;font-size:1.85rem;font-weight:700;color:#f5f0e6;line-height:1.05;margin-bottom:6px}
+.rol-modal-sub{font-size:12px;color:rgba(255,255,255,.28);letter-spacing:.03em}
+.rol-modal-divider{display:flex;align-items:center;gap:10px;margin:1.25rem 0}
+.rol-modal-divider span{flex:1;height:.5px;background:rgba(255,255,255,.07)}
+.rol-modal-divider i{font-size:8px;color:rgba(201,168,76,.45)}
 /* ── ROLE CARDS (modal) ── */
-.rol-card{padding:1rem;border:.5px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;text-align:left;background:var(--bg-primary);transition:all var(--t)}
-.rol-card:hover{background:var(--bg-secondary);border-color:var(--border-md);box-shadow:var(--shadow-sm);transform:translateY(-1px)}
-.rol-card-icon{font-size:1.25rem;color:var(--text-secondary);display:block;margin-bottom:8px}
+.rol-card{padding:1rem;border:1px solid rgba(255,255,255,.07);border-radius:12px;cursor:pointer;text-align:left;background:rgba(255,255,255,.04);transition:background 180ms ease,border-color 180ms ease,transform 180ms ease,box-shadow 180ms ease}
+.rol-card:hover{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.38);box-shadow:0 8px 28px rgba(0,0,0,.45);transform:translateY(-2px)}
+.rol-card:active{transform:translateY(0);box-shadow:none}
+.rol-card-icon{font-size:1.4rem;color:#c9a84c;display:block;margin-bottom:10px}
+.rol-card-name{font-size:13px;font-weight:600;margin-bottom:3px;color:rgba(255,255,255,.88)}
+.rol-card-desc{font-size:11px;color:rgba(255,255,255,.32);line-height:1.5}
 
 /* ── LAYOUT HELPERS ── */
 .form-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .form-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:600px){.form-2,.form-3{grid-template-columns:1fr}.receta-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+
+/* ── GLOBAL SEARCH OVERLAY ── */
+#search-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:1100;display:none;align-items:flex-start;justify-content:center;padding:80px 1rem 2rem}
+#search-overlay.open{display:flex}
+.search-box{width:100%;max-width:600px;background:var(--bg-primary);border-radius:var(--radius-lg);box-shadow:0 32px 80px rgba(0,0,0,.45),0 0 0 1px rgba(201,168,76,.2);overflow:hidden}
+.search-input-wrap{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:.5px solid var(--border)}
+.search-input-wrap i{font-size:18px;color:var(--text-secondary);flex-shrink:0}
+#search-input{border:none;background:transparent;font-size:16px;color:var(--text-primary);flex:1;outline:none;font-family:inherit;box-shadow:none!important}
+.search-kbd{font-size:10px;color:var(--text-tertiary);background:var(--bg-secondary);border:.5px solid var(--border);border-radius:4px;padding:2px 6px;white-space:nowrap}
+#search-results{max-height:380px;overflow-y:auto;padding:6px}
+.sr-group{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-tertiary);padding:8px 10px 4px}
+.sr-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;transition:background var(--t)}
+.sr-item:hover,.sr-item.selected{background:var(--bg-secondary)}
+.sr-item i{font-size:15px;color:var(--text-secondary);flex-shrink:0;width:18px;text-align:center}
+.sr-item-main{font-size:13px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-item-sub{font-size:11px;color:var(--text-secondary);white-space:nowrap}
+.sr-empty{text-align:center;color:var(--text-secondary);padding:2rem;font-size:13px}
+
+/* ── HISTORIAL CHART ── */
+.hist-chart-wrap{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem}
+.hist-chart-title{font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between}
+
+/* ── KDS BUMP ── */
+.kds-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:4px;transition:all var(--t)}
+.kds-row.bumped{opacity:.4;background:var(--bg-secondary)}
+.kds-row.bumped .kds-name{text-decoration:line-through;color:var(--text-tertiary)}
+.kds-qty{border-radius:var(--radius);padding:4px 14px;font-size:26px;font-weight:800;min-width:64px;text-align:center;letter-spacing:-.02em;color:#fff;transition:all var(--t);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.kds-qty:active{transform:scale(.94)}
+.kds-row.bumped .kds-qty{opacity:.5;font-size:16px}
+.kds-bump-check{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--t);flex-shrink:0;margin-right:4px}
+.kds-row.bumped .kds-bump-check{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4)}
+.kds-reset-btn{font-size:11px;padding:4px 10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);border-radius:var(--radius);cursor:pointer;transition:all var(--t)}
+.kds-reset-btn:hover{background:rgba(255,255,255,.2);color:rgba(255,255,255,.9)}
 .btn-print{background:#1a1a1a;color:#fff;border:none;padding:8px 18px;font-size:13px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-weight:500;transition:background var(--t)}
 .btn-print:hover{background:#333}
 
@@ -241,6 +359,7 @@ textarea{resize:vertical;min-height:65px}
 </style>
 </head>
 <body>
+<a href="#main-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999" onfocus="this.style.cssText='position:fixed;left:1rem;top:1rem;width:auto;height:auto;overflow:visible;z-index:9999;padding:8px 16px;background:var(--negro);color:var(--blanco);border-radius:var(--radius);font-size:13px;font-weight:500'">Saltar al contenido</a>
 <div class="print-header" style="margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:10px">
   <div style="display:flex;justify-content:space-between;align-items:flex-end">
     <div>
@@ -254,61 +373,80 @@ textarea{resize:vertical;min-height:65px}
   <span>Seda Club Hotel · Plaza de la Trinidad · Granada</span>
   <span id="print-page">Impreso el <span id="print-date-foot"></span></span>
 </div>
-<div class="app">
+<div class="app" id="main-content" role="main">
 <header style="background:var(--negro);color:var(--blanco);padding:.875rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
   <div style="display:flex;align-items:center;gap:12px">
-    <div style="width:34px;height:34px;border:1.5px solid #c9a84c;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-      <span style="font-family:'Georgia',serif;font-size:1rem;font-weight:900;color:var(--blanco);font-style:italic">O<span style="color:#c9a84c">í</span></span>
+    <!-- Brand mark: diamond with gold border -->
+    <div style="width:36px;height:36px;border:1.5px solid #c9a84c;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(201,168,76,.08);position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,.12) 0%,transparent 60%)"></div>
+      <span style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.1rem;font-weight:700;color:#fff;position:relative">O<span style="color:#c9a84c">í</span></span>
     </div>
     <div>
-      <div style="font-family:'Georgia',serif;font-size:1.05rem;font-weight:700;color:var(--blanco);line-height:1.1">O<span style="color:#c9a84c;font-style:italic">í</span>do <span style="letter-spacing:.12em;font-size:.7rem;font-family:monospace;color:#c9a84c">COCINA</span></div>
-      <div style="font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.04em;margin-top:1px" id="header-hotel-nombre">Seda Club Hotel · Granada</div>
+      <div style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.05rem;font-weight:700;color:var(--blanco);line-height:1.15;letter-spacing:.01em">O<span style="color:#c9a84c">í</span>do <span style="letter-spacing:.18em;font-size:.65rem;font-family:'Karla',sans-serif;font-weight:600;color:rgba(201,168,76,.9);vertical-align:middle">COCINA</span></div>
+      <div style="font-size:9.5px;color:rgba(255,255,255,.28);letter-spacing:.07em;margin-top:1px;text-transform:uppercase" id="header-hotel-nombre">Seda Club Hotel · Granada</div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <span id="sync-indicator" style="font-size:10px;color:rgba(255,255,255,.3);display:inline-flex;align-items:center;gap:4px"><i class="ti ti-cloud"></i> Conectando...</span>
-    <button onclick="abrirSelectorRol()" id="rol-btn" style="background:rgba(255,255,255,.08);border:none;border-radius:6px;padding:5px 12px;color:rgba(255,255,255,.7);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px">
-      <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down"></i>
+  <div style="display:flex;align-items:center;gap:6px">
+    <span id="sync-indicator" style="font-size:10px;color:rgba(255,255,255,.28);display:inline-flex;align-items:center;gap:4px"><i class="ti ti-cloud"></i> Conectando...</span>
+    <button onclick="abrirBusqueda()" aria-label="Buscar (Ctrl+K)" title="Buscar (Ctrl+K)" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:13px;min-height:34px;min-width:34px;transition:background 150ms ease"><i class="ti ti-search"></i></button>
+    <button onclick="abrirSelectorRol()" id="rol-btn" aria-label="Cambiar rol" aria-haspopup="dialog" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,.75);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px;transition:background 150ms ease">
+      <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down" style="font-size:11px;opacity:.6"></i>
     </button>
-    <button onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" style="background:rgba(255,255,255,.08);border:none;border-radius:6px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:12px"><i class="ti ti-settings"></i></button>
+    <button onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" aria-label="Ajustes" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:13px;min-height:34px;min-width:34px;transition:background 150ms ease"><i class="ti ti-settings"></i></button>
   </div>
 </header>
 
+<!-- GLOBAL SEARCH OVERLAY -->
+<div id="search-overlay" role="dialog" aria-modal="true" aria-label="Buscar" onclick="if(event.target===this)cerrarBusqueda()">
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <i class="ti ti-search"></i>
+      <input id="search-input" type="search" placeholder="Buscar eventos, platos, personal..." autocomplete="off" oninput="renderBusqueda()" onkeydown="navBusqueda(event)">
+      <span class="search-kbd">Esc</span>
+    </div>
+    <div id="search-results"><div class="sr-empty">Escribe para buscar…</div></div>
+  </div>
+</div>
+
 <!-- MODAL SELECTOR DE ROL -->
-<div id="rol-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1002;align-items:center;justify-content:center;padding:1rem">
-  <div style="background:var(--bg-primary);border-radius:var(--radius-lg);padding:1.5rem;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)">
-    <div style="font-family:'Georgia',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px;text-align:center">O<span style="color:#c9a84c;font-style:italic">í</span>do Cocina</div>
-    <div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:1.25rem">¿Cuál es tu rol hoy?</div>
+<div id="rol-modal" role="dialog" aria-modal="true" aria-labelledby="rol-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1002;align-items:center;justify-content:center;padding:1rem">
+  <div class="rol-modal-inner">
+    <div style="text-align:center">
+      <div class="rol-modal-badge"><i class="ti ti-building"></i> SEDA CLUB HOTEL · GRANADA</div>
+      <div id="rol-modal-titulo" class="rol-modal-title">O<span style="color:#c9a84c">í</span>do Cocina</div>
+      <div class="rol-modal-sub">¿Cuál es tu rol hoy?</div>
+    </div>
+    <div class="rol-modal-divider"><span></span><i class="ti ti-diamond-filled"></i><span></span></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 
       <div onclick="seleccionarRol('chef')" class="rol-card">
         <i class="ti ti-chef-hat rol-card-icon"></i>
-        <div style="font-size:13px;font-weight:500;margin-bottom:2px">Chef</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Producción · Recetario · Pantalla cocina · Compras</div>
+        <div class="rol-card-name">Chef</div>
+        <div class="rol-card-desc">Producción · Recetario · Pantalla cocina · Compras</div>
       </div>
 
       <div onclick="seleccionarRol('sala')" class="rol-card">
         <i class="ti ti-tools-kitchen-2 rol-card-icon"></i>
-        <div style="font-size:13px;font-weight:500;margin-bottom:2px">Sala / Maître</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Bebidas · Vajilla · Eventos hoy</div>
+        <div class="rol-card-name">Sala / Maître</div>
+        <div class="rol-card-desc">Bebidas · Vajilla · Eventos hoy</div>
       </div>
 
       <div onclick="seleccionarRol('eventos')" class="rol-card">
         <i class="ti ti-calendar-event rol-card-icon"></i>
-        <div style="font-size:13px;font-weight:500;margin-bottom:2px">Jefa de eventos</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Eventos · Calendario · Plantillas · Escandallo</div>
+        <div class="rol-card-name">Jefa de eventos</div>
+        <div class="rol-card-desc">Eventos · Calendario · Plantillas · Escandallo</div>
       </div>
 
       <div onclick="seleccionarRol('direccion')" class="rol-card">
         <i class="ti ti-chart-bar rol-card-icon"></i>
-        <div style="font-size:13px;font-weight:500;margin-bottom:2px">Dirección</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Dashboard · Historial · Escandallo · Calendario</div>
+        <div class="rol-card-name">Dirección</div>
+        <div class="rol-card-desc">Dashboard · Historial · Escandallo · Calendario</div>
       </div>
 
       <div onclick="seleccionarRol('admin')" class="rol-card" style="grid-column:span 2">
         <i class="ti ti-settings rol-card-icon"></i>
-        <div style="font-size:13px;font-weight:500;margin-bottom:2px">Administración</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.4">Acceso completo a todos los módulos</div>
+        <div class="rol-card-name">Administración</div>
+        <div class="rol-card-desc">Acceso completo a todos los módulos</div>
       </div>
 
     </div>
@@ -372,9 +510,9 @@ textarea{resize:vertical;min-height:65px}
 <div class="sec" id="tab-calendario">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
     <div style="display:flex;align-items:center;gap:8px">
-      <button onclick="cambiarMes(-1)" style="background:none;border:.5px solid var(--border-md);border-radius:var(--radius);padding:6px 10px;cursor:pointer;color:var(--text-primary);font-size:14px">‹</button>
+      <button onclick="cambiarMes(-1)" aria-label="Mes anterior" style="background:none;border:.5px solid var(--border-md);border-radius:var(--radius);padding:6px 10px;cursor:pointer;color:var(--text-primary);font-size:14px;min-height:36px;min-width:36px">‹</button>
       <div style="font-size:16px;font-weight:500;min-width:160px;text-align:center" id="cal-titulo"></div>
-      <button onclick="cambiarMes(1)" style="background:none;border:.5px solid var(--border-md);border-radius:var(--radius);padding:6px 10px;cursor:pointer;color:var(--text-primary);font-size:14px">›</button>
+      <button onclick="cambiarMes(1)" aria-label="Mes siguiente" style="background:none;border:.5px solid var(--border-md);border-radius:var(--radius);padding:6px 10px;cursor:pointer;color:var(--text-primary);font-size:14px;min-height:36px;min-width:36px">›</button>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button onclick="irHoy()" class="btn-sec" style="font-size:12px"><i class="ti ti-calendar"></i> Hoy</button>
@@ -551,10 +689,10 @@ textarea{resize:vertical;min-height:65px}
 
 <!-- ESCANDALLO -->
 <div class="sec" id="tab-escandallo">
-  <div class="tabs" style="margin-bottom:1rem;border-bottom:.5px solid var(--border)">
-    <button class="tab active" id="esc-tab-evento" onclick="switchEsc('evento',this)"><i class="ti ti-calendar-stats"></i> Por evento</button>
-    <button class="tab" id="esc-tab-plato" onclick="switchEsc('plato',this)"><i class="ti ti-tools-kitchen-2"></i> Por plato</button>
-    <button class="tab" id="esc-tab-precios" onclick="switchEsc('precios',this)"><i class="ti ti-tag"></i> Precios ingredientes</button>
+  <div class="sub-tabs">
+    <button class="sub-tab active" id="esc-tab-evento" onclick="switchEsc('evento',this)"><i class="ti ti-calendar-stats"></i> Por evento</button>
+    <button class="sub-tab" id="esc-tab-plato" onclick="switchEsc('plato',this)"><i class="ti ti-tools-kitchen-2"></i> Por plato</button>
+    <button class="sub-tab" id="esc-tab-precios" onclick="switchEsc('precios',this)"><i class="ti ti-tag"></i> Precios ingredientes</button>
   </div>
 
   <!-- Escandallo por evento -->
@@ -591,9 +729,9 @@ textarea{resize:vertical;min-height:65px}
 <div class="sec" id="tab-bebidas">
 
   <!-- Sub-tabs -->
-  <div style="display:flex;gap:4px;margin-bottom:1rem;border-bottom:.5px solid var(--border)">
-    <button class="tab active" id="beb-tab-evento" onclick="switchBeb('evento',this)"><i class="ti ti-calendar-event"></i> Por evento</button>
-    <button class="tab" id="beb-tab-bodega" onclick="switchBeb('bodega',this)"><i class="ti ti-building-store"></i> Bodega base</button>
+  <div class="sub-tabs">
+    <button class="sub-tab active" id="beb-tab-evento" onclick="switchBeb('evento',this)"><i class="ti ti-calendar-event"></i> Por evento</button>
+    <button class="sub-tab" id="beb-tab-bodega" onclick="switchBeb('bodega',this)"><i class="ti ti-building-store"></i> Bodega base</button>
   </div>
 
   <!-- Por evento -->
@@ -683,10 +821,10 @@ textarea{resize:vertical;min-height:65px}
 
 <!-- VAJILLA -->
 <div class="sec" id="tab-vajilla">
-  <div class="tabs" style="margin-bottom:1rem;border-bottom:.5px solid var(--border)">
-    <button class="tab active" id="vaj-tab-evento" onclick="switchVaj('evento',this)"><i class="ti ti-calendar-event"></i> Por evento</button>
-    <button class="tab" id="vaj-tab-stock" onclick="switchVaj('stock',this)"><i class="ti ti-package"></i> Stock del hotel</button>
-    <button class="tab" id="vaj-tab-config" onclick="switchVaj('config',this)"><i class="ti ti-settings"></i> Configurar dotación</button>
+  <div class="sub-tabs">
+    <button class="sub-tab active" id="vaj-tab-evento" onclick="switchVaj('evento',this)"><i class="ti ti-calendar-event"></i> Por evento</button>
+    <button class="sub-tab" id="vaj-tab-stock" onclick="switchVaj('stock',this)"><i class="ti ti-package"></i> Stock del hotel</button>
+    <button class="sub-tab" id="vaj-tab-config" onclick="switchVaj('config',this)"><i class="ti ti-settings"></i> Configurar dotación</button>
   </div>
 
   <!-- Por evento — ficha para encargado -->
@@ -829,11 +967,11 @@ textarea{resize:vertical;min-height:65px}
 
 <!-- AJUSTES -->
 <div class="sec" id="tab-ajustes">
-  <div style="font-size:16px;font-weight:500;margin-bottom:1.5rem"><i class="ti ti-settings"></i> Ajustes del sistema</div>
+  <div class="sec-label" style="margin-bottom:1.5rem;font-size:14px;font-weight:600;letter-spacing:.04em"><i class="ti ti-settings"></i> Ajustes del sistema</div>
 
   <!-- Hotel -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-building"></i> Datos del hotel</div>
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-building"></i> Datos del hotel</div>
     <div class="form-2" style="margin-bottom:10px">
       <div class="fg" style="margin-bottom:0"><label>Nombre del hotel</label><input type="text" id="aj-hotel-nombre" placeholder="Seda Club Hotel"/></div>
       <div class="fg" style="margin-bottom:0"><label>Ciudad</label><input type="text" id="aj-hotel-ciudad" placeholder="Granada"/></div>
@@ -848,7 +986,7 @@ textarea{resize:vertical;min-height:65px}
 
   <!-- Lugares -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-map-pin"></i> Lugares del hotel</div>
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-map-pin"></i> Lugares del hotel</div>
     <div id="aj-lugares-lista"></div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <input type="text" id="aj-lugar-nuevo" placeholder="Ej: Jardín, Terraza interior..." style="flex:1;font-size:13px"/>
@@ -858,7 +996,7 @@ textarea{resize:vertical;min-height:65px}
 
   <!-- Tipos de servicio -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:8px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-tools-kitchen-2"></i> Tipos de servicio</div>
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-tools-kitchen-2"></i> Tipos de servicio</div>
     <div id="aj-tipos-lista"></div>
     <div class="form-3" style="margin-top:8px">
       <div class="fg" style="margin-bottom:0"><label>Nombre</label><input type="text" id="aj-tipo-nom" placeholder="Brunch"/></div>
@@ -870,7 +1008,7 @@ textarea{resize:vertical;min-height:65px}
 
   <!-- Exportar / Importar -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-database"></i> Datos</div>
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-database"></i> Datos y copias de seguridad</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn-sec" style="font-size:12px" onclick="exportarDatos()"><i class="ti ti-download"></i> Exportar todos los datos</button>
       <button class="btn-sec" style="font-size:12px" onclick="ge('import-file').click()"><i class="ti ti-upload"></i> Importar datos</button>
@@ -897,10 +1035,11 @@ textarea{resize:vertical;min-height:65px}
   </div>
 
   <div class="card">
+    <div class="form-sec">Información del evento</div>
     <div class="form-3" style="margin-bottom:10px">
-      <div class="fg" style="margin-bottom:0"><label>Nombre / cliente</label><input type="text" id="n-nom" placeholder="Cumpleaños Ana"/></div>
-      <div class="fg" style="margin-bottom:0"><label>Fecha</label><input type="date" id="n-fecha"/></div>
-      <div class="fg" style="margin-bottom:0"><label>Hora</label><input type="time" id="n-hora"/></div>
+      <div class="fg" style="margin-bottom:0"><label for="n-nom">Nombre / cliente</label><input type="text" id="n-nom" autocomplete="off" placeholder="Cumpleaños Ana"/></div>
+      <div class="fg" style="margin-bottom:0"><label for="n-fecha">Fecha</label><input type="date" id="n-fecha" autocomplete="off"/></div>
+      <div class="fg" style="margin-bottom:0"><label for="n-hora">Hora</label><input type="time" id="n-hora" autocomplete="off"/></div>
     </div>
     <div class="form-3" style="margin-bottom:10px">
       <div class="fg" style="margin-bottom:0"><label>Pax</label><input type="number" id="n-pax" min="1" placeholder="25"/></div>
@@ -912,6 +1051,8 @@ textarea{resize:vertical;min-height:65px}
         <select id="n-lugar"><option>Azotea</option><option>Restaurante Clandestino</option><option>Salón privado</option></select>
       </div>
     </div>
+
+    <div class="form-sec">Producción y precio</div>
     <div class="form-2" style="margin-bottom:10px">
       <div class="fg" style="margin-bottom:0">
         <label>Factor de producción <span style="color:var(--text-secondary);font-weight:300">(uds. por persona)</span></label>
@@ -934,7 +1075,9 @@ textarea{resize:vertical;min-height:65px}
         <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">Para calcular el margen en el escandallo</div>
       </div>
     </div>
-    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Platos: uno por línea · <b>F:</b> frío · <b>C:</b> caliente · <b>P:</b> postre · <b>M:</b> principal</p>
+
+    <div class="form-sec">Menú</div>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Un plato por línea · <b>F:</b> frío · <b>C:</b> caliente · <b>P:</b> postre · <b>M:</b> principal</p>
     <div class="form-2" style="margin-bottom:10px">
       <div class="fg" style="margin-bottom:0"><label>Aperitivos fríos</label><textarea id="n-fr" placeholder="F:Ensaladilla rusa de langostinos&#10;F:Tartar de salmón con mango"></textarea></div>
       <div class="fg" style="margin-bottom:0"><label>Aperitivos calientes</label><textarea id="n-ca" placeholder="C:Pastela Moruna&#10;C:Croquetas de pollo y jamón ibérico"></textarea></div>
@@ -943,12 +1086,14 @@ textarea{resize:vertical;min-height:65px}
       <div class="fg" style="margin-bottom:0"><label>Postres</label><textarea id="n-po" placeholder="P:Bocaditos de lemon pie"></textarea></div>
       <div class="fg" style="margin-bottom:0"><label>Platos principales</label><textarea id="n-pr" placeholder="M:Presa ibérica con puré de boniato"></textarea></div>
     </div>
+
+    <div class="form-sec">Alergias y alérgenos</div>
     <div class="fg"><label>Alergias de clientes</label><input type="text" id="n-alerg-txt" placeholder="Ej: 1 pax huevo · 2 pax gluten"/></div>
     <div class="fg"><label>Alérgenos presentes en el menú</label><div class="alg-cb-grid" id="alg-selector"></div></div>
 
     <!-- MENÚ INFANTIL -->
-    <div style="margin-top:12px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius);border:.5px solid var(--border)">
-      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text-primary)"><i class="ti ti-heart"></i> Menú infantil (opcional)</div>
+    <div style="margin-top:14px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius);border:.5px solid var(--border)">
+      <div class="form-sec" style="margin-top:0"><i class="ti ti-heart" style="color:var(--gold)"></i> Menú infantil (opcional)</div>
       <div class="form-2" style="margin-bottom:10px">
         <div class="fg" style="margin-bottom:0">
           <label>Número de niños</label>
@@ -963,8 +1108,8 @@ textarea{resize:vertical;min-height:65px}
       <div id="n-platos-infantil" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px"></div>
     </div>
 
-    <div id="n-edit-aviso" style="display:none;padding:8px 12px;background:var(--warn-bg);color:var(--warn-text);border-radius:var(--radius);font-size:13px;margin-bottom:8px"></div>
-    <button class="btn btn-p" style="margin-top:12px" id="n-guardar-btn" onclick="guardarEvento()">Guardar evento</button>
+    <div id="n-edit-aviso" style="display:none;padding:8px 12px;background:var(--warn-bg);color:var(--warn-text);border-radius:var(--radius);font-size:13px;margin-top:12px"></div>
+    <button class="btn btn-p" style="margin-top:16px;width:100%;justify-content:center;padding:12px 18px;font-size:14px;font-weight:600;border-radius:var(--radius-lg)" id="n-guardar-btn" onclick="guardarEvento()"><i class="ti ti-check"></i> Guardar evento</button>
   </div>
 </div>
 </div>
@@ -1134,6 +1279,8 @@ function saveRec(r){try{localStorage.setItem('seda_rec',JSON.stringify(r))}catch
 
 let eventos=getEv();
 let recetas=getRec()||JSON.parse(JSON.stringify(RECETAS_BASE));
+// KDS bump state: { eventId_dishKey: true }
+const kdsBumped={};
 if(!getRec())saveRec(recetas);
 
 // Cargar eventos demo si no hay ninguno
@@ -1208,11 +1355,62 @@ if(!eventos.length){
   saveEv(eventos);
 }
 
-function showTab(name,btn){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
-  ge('tab-'+name).classList.add('active');
-  if(btn)btn.classList.add('active');
+/* ── ACCORDION ── */
+const ACC_TABS = {
+  dashboard:  {icon:'ti-layout-dashboard', label:'Inicio'},
+  eventos:    {icon:'ti-calendar-event',    label:'Eventos'},
+  calendario: {icon:'ti-calendar-month',    label:'Calendario'},
+  produccion: {icon:'ti-list-check',        label:'Producción'},
+  conjunta:   {icon:'ti-stack-2',           label:'Conjunta'},
+  recetario:  {icon:'ti-book',              label:'Recetario'},
+  pedidos:    {icon:'ti-brand-whatsapp',    label:'Pedidos'},
+  escandallo: {icon:'ti-coin-euro',         label:'Escandallo'},
+  bebidas:    {icon:'ti-bottle',            label:'Bebidas'},
+  plantillas: {icon:'ti-template',          label:'Plantillas'},
+  vajilla:    {icon:'ti-tools-kitchen',     label:'Vajilla'},
+  compras:    {icon:'ti-shopping-cart',     label:'Compras'},
+  cocina:     {icon:'ti-chef-hat',          label:'Pantalla cocina'},
+  historial:  {icon:'ti-chart-bar',         label:'Historial'},
+  personal:   {icon:'ti-users',             label:'Personal'},
+  ajustes:    {icon:'ti-settings',          label:'Ajustes'},
+  nuevo:      {icon:'ti-plus',              label:'Nuevo evento'},
+};
+
+function initAccordion(){
+  const tabsBar = ge('tabs-bar');
+  if(tabsBar) tabsBar.style.display='none';
+  const container = document.querySelector('.app');
+  document.querySelectorAll('.sec[id^="tab-"]').forEach(sec=>{
+    const name = sec.id.replace('tab-','');
+    const meta = ACC_TABS[name];
+    if(!meta) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'acc-item';
+    wrapper.dataset.tab = name;
+    wrapper.id = 'acc-'+name;
+    const header = document.createElement('button');
+    header.className = 'acc-header';
+    header.setAttribute('aria-expanded','false');
+    header.setAttribute('aria-controls','acc-body-'+name);
+    header.innerHTML = `<i class="ti ${meta.icon} acc-header-icon"></i><span>${meta.label}</span><i class="ti ti-chevron-down acc-chevron"></i>`;
+    header.onclick = ()=>toggleAccordion(name);
+    const body = document.createElement('div');
+    body.className = 'acc-body';
+    body.id = 'acc-body-'+name;
+    const inner = document.createElement('div');
+    inner.className = 'acc-body-inner';
+    const content = document.createElement('div');
+    content.className = 'acc-content';
+    sec.parentNode.insertBefore(wrapper,sec);
+    content.appendChild(sec);
+    inner.appendChild(content);
+    body.appendChild(inner);
+    wrapper.appendChild(header);
+    wrapper.appendChild(body);
+  });
+}
+
+function callTabInit(name){
   if(name==='produccion')fillProdSel();
   if(name==='conjunta')initConjunta();
   if(name==='recetario')renderRecetario();
@@ -1230,6 +1428,34 @@ function showTab(name,btn){
   if(name==='historial')initHistorial();
   if(name==='personal')initPersonal();
   if(name==='ajustes')initAjustes();
+}
+
+function toggleAccordion(name){
+  const item=ge('acc-'+name);
+  if(!item)return;
+  if(item.classList.contains('open')){
+    item.classList.remove('open');
+    const hdr=item.querySelector('.acc-header');
+    if(hdr)hdr.setAttribute('aria-expanded','false');
+  } else {
+    openAccordion(name);
+  }
+}
+
+function openAccordion(name){
+  const item=ge('acc-'+name);
+  if(!item||item.style.display==='none')return;
+  if(!item.classList.contains('open')){
+    item.classList.add('open');
+    const hdr=item.querySelector('.acc-header');
+    if(hdr)hdr.setAttribute('aria-expanded','true');
+    callTabInit(name);
+  }
+  setTimeout(()=>item.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+}
+
+function showTab(name,btn){
+  openAccordion(name);
 }
 
 /* ===== SELECTOR DE ROL ===== */
@@ -1257,22 +1483,19 @@ function seleccionarRol(rol){
 function aplicarRol(rol){
   const r = ROLES[rol];
   if(!r) return;
-  // Actualizar cabecera
   const iconEl = ge('rol-icon-header');
   const nomEl  = ge('rol-nombre-header');
   if(iconEl) iconEl.innerHTML = r.icon;
-  if(nomEl)  nomEl.textContent  = r.nombre;
-  // Mostrar/ocultar tabs
-  document.querySelectorAll('.tab[data-tab]').forEach(btn=>{
-    const tab = btn.dataset.tab;
-    btn.style.display = r.tabs.includes(tab) ? '' : 'none';
+  if(nomEl)  nomEl.textContent = r.nombre;
+  // Mostrar/ocultar accordion items
+  document.querySelectorAll('.acc-item[data-tab]').forEach(item=>{
+    const tab = item.dataset.tab;
+    const show = r.tabs.includes(tab);
+    item.style.display = show ? '' : 'none';
+    if(!show && item.classList.contains('open')) toggleAccordion(tab);
   });
-  // Si la pestaña activa no está en el rol, ir al dashboard
-  const activeTab = document.querySelector('.tab.active')?.dataset.tab;
-  if(activeTab && !r.tabs.includes(activeTab)){
-    const first = document.querySelector(`.tab[data-tab="${r.tabs[0]}"]`);
-    if(first) showTab(r.tabs[0], first);
-  }
+  // Abrir dashboard si está en el rol
+  if(r.tabs.includes('dashboard')) openAccordion('dashboard');
 }
 
 
@@ -1319,6 +1542,17 @@ function renderHistorial(){
   }));
   const topPlatos=Object.entries(platoCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
 
+  // Build chart data (oldest→newest for the trend line)
+  const evsChronological=[...evsFiltrados].sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const chartLabels=evsChronological.map(e=>e.nombre.length>18?e.nombre.slice(0,16)+'…':e.nombre);
+  const chartIngresos=evsChronological.map(e=>(e.precio_venta||0)*e.pax);
+  const chartMargen=evsChronological.map(e=>{
+    const ing=(e.precio_venta||0)*e.pax;
+    const cos=calcCosteEvento(e).totalCoste;
+    return ing>0?parseFloat(((ing-cos)/ing*100).toFixed(1)):null;
+  });
+  const hasFinancial=chartIngresos.some(v=>v>0);
+
   let html=`
   <div class="stat-g" style="margin-bottom:1.5rem">
     <div class="stat"><div class="stat-l">Eventos</div><div class="stat-v">${evsFiltrados.length}</div></div>
@@ -1329,6 +1563,18 @@ function renderHistorial(){
       <div class="stat-v" style="color:${totalIngresos>0?margenColor(margenMedio):'var(--text-primary)'}">${totalIngresos>0?margenMedio.toFixed(1)+'%':'—'}</div>
     </div>
   </div>
+
+  ${hasFinancial && evsChronological.length >= 2 ? `
+  <div class="hist-chart-wrap">
+    <div class="hist-chart-title">
+      <span><i class="ti ti-trending-up" style="color:var(--gold);margin-right:5px"></i>Tendencia de ingresos y margen</span>
+      <span style="display:flex;gap:14px;font-size:11px;font-weight:400">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:2px;background:#c9a84c;display:inline-block;border-radius:2px"></span>Ingresos (€)</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:2px;background:#378ADD;display:inline-block;border-radius:2px;border-style:dashed"></span>Margen (%)</span>
+      </span>
+    </div>
+    <canvas id="hist-chart" height="140"></canvas>
+  </div>` : ''}
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem">
     <div class="card">
@@ -1352,7 +1598,7 @@ function renderHistorial(){
 
   <div class="card" style="padding:0;overflow:hidden">
     <div style="padding:10px 12px;background:var(--bg-secondary);font-size:12px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Todos los eventos</div>
-    <table class="ptable">
+    <div class="ptable-outer"><table class="ptable">
       <thead><tr>
         <th>Evento</th><th>Fecha</th><th style="text-align:right">Pax</th>
         <th style="text-align:right">Ingresos</th><th style="text-align:right">Coste</th><th style="text-align:right">Margen</th>
@@ -1372,10 +1618,53 @@ function renderHistorial(){
           </tr>`;
         }).join('')}
       </tbody>
-    </table>
+    </table></div>
   </div>`;
 
   cont.innerHTML=html;
+
+  // Render Chart.js trend chart
+  if(hasFinancial && evsChronological.length >= 2 && typeof Chart !== 'undefined'){
+    const canvas=ge('hist-chart');
+    if(canvas){
+      const isDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+      const gridColor=isDark?'rgba(255,255,255,.06)':'rgba(0,0,0,.05)';
+      const tickColor=isDark?'rgba(255,255,255,.35)':'rgba(0,0,0,.35)';
+      new Chart(canvas,{
+        type:'line',
+        data:{
+          labels:chartLabels,
+          datasets:[
+            {label:'Ingresos (€)',data:chartIngresos,yAxisID:'y',borderColor:'#c9a84c',backgroundColor:'rgba(201,168,76,.08)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#c9a84c',tension:.3,fill:true},
+            {label:'Margen (%)',data:chartMargen,yAxisID:'y2',borderColor:'#378ADD',backgroundColor:'transparent',borderWidth:2,borderDash:[5,4],pointRadius:3,pointBackgroundColor:'#378ADD',tension:.3,fill:false}
+          ]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          interaction:{mode:'index',intersect:false},
+          plugins:{
+            legend:{display:false},
+            tooltip:{
+              backgroundColor:isDark?'#2a2a27':'#fff',
+              titleColor:isDark?'#f0efe9':'#1a1a1a',
+              bodyColor:isDark?'#a8a79f':'#6b6a66',
+              borderColor:isDark?'rgba(201,168,76,.3)':'rgba(201,168,76,.4)',
+              borderWidth:1,padding:10,
+              callbacks:{
+                label:ctx=>ctx.datasetIndex===0?` ${(ctx.raw||0).toLocaleString('es')} €`:ctx.raw!==null?` ${ctx.raw} %`:' —'
+              }
+            }
+          },
+          scales:{
+            x:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:10},maxRotation:35,minRotation:0}},
+            y:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:10},callback:v=>v.toLocaleString('es')+'€'},position:'left'},
+            y2:{grid:{display:false},ticks:{color:'#378ADD',font:{size:10},callback:v=>v+'%'},position:'right'}
+          }
+        }
+      });
+      canvas.parentElement.style.height='220px';
+    }
+  }
 }
 
 function exportarHistorialExcel(){
@@ -1423,17 +1712,20 @@ function renderPersonalLista(){
   cont.innerHTML=roles.map(rol=>{
     const items=personal.filter(p=>p.rol===rol);
     if(!items.length)return'';
-    return`<div style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">${ROL_ICONS[rol]} ${ROL_LABELS[rol]}</div>
-      ${items.map(p=>`
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:5px">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:500">${p.nombre}</div>
-            ${p.tel?`<div style="font-size:11px;color:var(--text-secondary)">${p.tel}</div>`:''}
+    return`<div style="margin-bottom:12px">
+      <div class="sec-label">${ROL_ICONS[rol]} ${ROL_LABELS[rol]} <span style="font-weight:400;font-size:10px;text-transform:none;letter-spacing:0;color:var(--text-tertiary)">${items.length} persona${items.length>1?'s':''}</span></div>
+      ${items.map(p=>{
+        const initials=p.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        return`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:5px;transition:border-color var(--t),box-shadow var(--t)">
+          <div style="width:34px;height:34px;border-radius:50%;background:var(--bg-secondary);border:.5px solid var(--border-md);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-secondary);flex-shrink:0">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.nombre}</div>
+            ${p.tel?`<div style="font-size:11px;color:var(--text-secondary)">${p.tel}</div>`:``}
           </div>
-          ${p.tel?`<a href="https://wa.me/${p.tel}" target="_blank" style="font-size:11px;padding:3px 9px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none"><i class="ti ti-brand-whatsapp"></i></a>`:''}
-          <button class="btn-d" style="font-size:11px;padding:3px 7px" onclick="eliminarPersonal('${p.id}')"><i class="ti ti-trash"></i></button>
-        </div>`).join('')}
+          ${p.tel?`<a href="https://wa.me/${p.tel.replace(/\D/g,'')}" target="_blank" class="btn-icon success" style="text-decoration:none;color:var(--success-text)"><i class="ti ti-brand-whatsapp"></i></a>`:''}
+          <button class="btn-icon danger" style="padding:5px 8px" onclick="eliminarPersonal('${p.id}')"><i class="ti ti-trash"></i></button>
+        </div>`;
+      }).join('')}
     </div>`;
   }).join('');
 }
@@ -1755,39 +2047,84 @@ function renderPantallaCocina(){
     {key:'P',label:'POSTRES',color:'#1D9E75'}
   ];
 
+  const bumpKey=(evId,name)=>`${evId}__${name}`;
+  const isBumped=(name)=>!!kdsBumped[bumpKey(id,name)];
+  const totalPlatos=(ev.platos||[]).length+(ev.infantil?.platos?.length||0);
+  const bumpedCount=Object.keys(kdsBumped).filter(k=>k.startsWith(id+'__')).length;
+
   cont.innerHTML=`
-  <div style="background:var(--bg-secondary);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem">
-    <div style="font-size:20px;font-weight:500">${ev.nombre}</div>
-    <div style="font-size:14px;color:var(--text-secondary);margin-top:4px">
-      ${fmtFecha(ev.fecha)} · ${ev.hora} · ${ev.lugar} · <b>${ev.pax} pax</b> · Factor ×${f} → <b>${raciones} uds/plato</b>
+  <!-- Kitchen display header -->
+  <div style="background:var(--negro);color:var(--blanco);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem;position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold) 70%,transparent)"></div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:5px">
+      <div style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.3rem;font-weight:700;letter-spacing:.02em">${ev.nombre}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:rgba(255,255,255,.6)">${bumpedCount}/${totalPlatos} completados</span>
+        <button class="kds-reset-btn" onclick="kdsResetAll(${id})"><i class="ti ti-refresh"></i> Reset</button>
+      </div>
     </div>
-    ${ev.alergias_txt?`<div style="margin-top:6px;font-size:14px;color:var(--warn-text);font-weight:500"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.6)">
+      <span><i class="ti ti-calendar" style="color:var(--gold)"></i> ${fmtFecha(ev.fecha)}</span>
+      <span><i class="ti ti-clock" style="color:var(--gold)"></i> ${ev.hora}</span>
+      <span><i class="ti ti-map-pin" style="color:var(--gold)"></i> ${ev.lugar}</span>
+      <span style="color:rgba(255,255,255,.9);font-weight:600"><i class="ti ti-users" style="color:var(--gold)"></i> ${ev.pax} pax</span>
+      <span style="color:rgba(255,255,255,.9);font-weight:600"><i class="ti ti-stack" style="color:var(--gold)"></i> ${raciones} uds/plato</span>
+    </div>
+    ${ev.alergias_txt?`<div style="margin-top:8px;font-size:13px;color:#fbbf24;font-weight:600;background:rgba(251,191,36,.1);border-radius:var(--radius);padding:4px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
   </div>
 
   ${CATS_ORDER.map(cat=>{
     const items=ev.platos.filter(p=>p.cat===cat.key);
     if(!items.length)return'';
-    return`<div style="margin-bottom:1rem">
-      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:${cat.color};margin-bottom:8px;text-transform:uppercase;border-bottom:2px solid ${cat.color};padding-bottom:4px">${cat.label}</div>
-      ${items.map(p=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;border-left:4px solid ${cat.color}">
-          <div style="font-size:16px;font-weight:500">${p.nombre}</div>
-          <div style="font-size:32px;font-weight:700;color:${cat.color};min-width:70px;text-align:right">${raciones}</div>
-        </div>`).join('')}
+    return`<div style="margin-bottom:.75rem">
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:${cat.color};border-radius:var(--radius);margin-bottom:5px">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff">${cat.label}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.7);margin-left:auto">${items.filter(p=>!isBumped(p.nombre)).length}/${items.length} pendientes</span>
+      </div>
+      ${items.map(p=>{
+        const bumped=isBumped(p.nombre);
+        return`<div class="kds-row${bumped?' bumped':''}" style="border-left:3px solid ${cat.color}">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+            <div class="kds-bump-check" onclick="kdsBump(${id},'${p.nombre.replace(/'/g,"\\'")}',this)" title="${bumped?'Marcar pendiente':'Marcar completado'}">
+              ${bumped?'<i class="ti ti-check" style="font-size:12px;color:rgba(255,255,255,.8)"></i>':''}
+            </div>
+            <div class="kds-name" style="font-size:15px;font-weight:500">${p.nombre}</div>
+          </div>
+          <div class="kds-qty" style="background:${cat.color}" onclick="kdsBump(${id},'${p.nombre.replace(/'/g,"\\'")}',null)">${bumped?'<i class="ti ti-check"></i>':raciones}</div>
+        </div>`;
+      }).join('')}
     </div>`;
   }).join('')}
 
   ${ev.infantil?.ninos?`
-  <div style="margin-bottom:1rem">
-    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:#1D9E75;margin-bottom:8px;text-transform:uppercase;border-bottom:2px solid #1D9E75;padding-bottom:4px"><i class="ti ti-heart"></i> MENÚ INFANTIL — ${ev.infantil.ninos} NIÑOS</div>
+  <div style="margin-bottom:.75rem">
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:#1D9E75;border-radius:var(--radius);margin-bottom:5px">
+      <span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff"><i class="ti ti-heart"></i> MENÚ INFANTIL — ${ev.infantil.ninos} NIÑOS</span>
+    </div>
     ${(ev.infantil.platos||[]).map(pid=>{
       const p=PLATOS_INFANTIL.find(x=>x.id===pid); if(!p)return'';
-      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;border-left:4px solid #1D9E75">
-        <div style="font-size:16px;font-weight:500">${p.emoji} ${p.nombre}</div>
-        <div style="font-size:32px;font-weight:700;color:#1D9E75;min-width:70px;text-align:right">${ev.infantil.ninos}</div>
+      const bumped=isBumped('infantil_'+p.id);
+      return`<div class="kds-row${bumped?' bumped':''}" style="border-left:3px solid #1D9E75">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+          <div class="kds-bump-check" onclick="kdsBump(${id},'infantil_${p.id}',this)">${bumped?'<i class="ti ti-check" style="font-size:12px;color:rgba(255,255,255,.8)"></i>':''}</div>
+          <div class="kds-name" style="font-size:15px;font-weight:500">${p.nombre}</div>
+        </div>
+        <div class="kds-qty" style="background:#1D9E75" onclick="kdsBump(${id},'infantil_${p.id}',null)">${bumped?'<i class="ti ti-check"></i>':ev.infantil.ninos}</div>
       </div>`;
     }).join('')}
   </div>`:''}`;
+}
+
+function kdsBump(evId, dishName, btnEl){
+  const k=`${evId}__${dishName}`;
+  kdsBumped[k]=!kdsBumped[k];
+  if(!kdsBumped[k])delete kdsBumped[k];
+  renderPantallaCocina();
+}
+
+function kdsResetAll(evId){
+  Object.keys(kdsBumped).forEach(k=>{ if(k.startsWith(evId+'__'))delete kdsBumped[k]; });
+  renderPantallaCocina();
 }
 
 function toggleFullscreen(){
@@ -1798,6 +2135,75 @@ function toggleFullscreen(){
     document.exitFullscreen?.();
   }
 }
+
+/* ===== BÚSQUEDA GLOBAL ===== */
+let _srIdx=0;
+function abrirBusqueda(){
+  const ov=ge('search-overlay');
+  ov.classList.add('open');
+  setTimeout(()=>ge('search-input').focus(),60);
+  ge('search-input').value='';
+  ge('search-results').innerHTML='<div class="sr-empty">Escribe para buscar…</div>';
+}
+function cerrarBusqueda(){
+  ge('search-overlay').classList.remove('open');
+}
+function navBusqueda(e){
+  if(e.key==='Escape'){cerrarBusqueda();return;}
+  const items=[...ge('search-results').querySelectorAll('.sr-item')];
+  if(!items.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault();_srIdx=Math.min(_srIdx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();_srIdx=Math.max(_srIdx-1,0);}
+  else if(e.key==='Enter'){e.preventDefault();window.__srActions?.[_srIdx]?.();cerrarBusqueda();return;}
+  items.forEach((it,i)=>it.classList.toggle('selected',i===_srIdx));
+}
+function renderBusqueda(){
+  const q=ge('search-input').value.trim().toLowerCase();
+  const cont=ge('search-results');
+  if(!q){cont.innerHTML='<div class="sr-empty">Escribe para buscar…</div>';return;}
+  _srIdx=0;
+  const results=[];
+
+  // Eventos
+  const evMatch=eventos.filter(e=>e.nombre.toLowerCase().includes(q)||e.lugar?.toLowerCase().includes(q)||(e.fecha&&fmtFecha(e.fecha).toLowerCase().includes(q)));
+  evMatch.slice(0,5).forEach(e=>results.push({group:'Eventos',icon:'ti-calendar-event',main:e.nombre,sub:`${fmtFecha(e.fecha)} · ${e.pax} pax · ${e.lugar||''}`,action:()=>{cerrarBusqueda();showTab('eventos',document.querySelector('[data-tab=eventos]'));setTimeout(()=>editarEvento(e.id),120);}}));
+
+  // Recetas
+  const recMatch=(recetas||[]).filter(r=>r.nombre.toLowerCase().includes(q)||(r.categoria||'').toLowerCase().includes(q));
+  recMatch.slice(0,4).forEach(r=>results.push({group:'Recetario',icon:'ti-book',main:r.nombre,sub:r.categoria||'',action:()=>{cerrarBusqueda();showTab('recetario',document.querySelector('[data-tab=recetario]'));setTimeout(()=>verReceta(r.id),120);}}));
+
+  // Personal
+  const persData=getPersonal?.()??[];
+  const persMatch=persData.filter(p=>p.nombre?.toLowerCase().includes(q)||(p.rol||'').toLowerCase().includes(q));
+  persMatch.slice(0,4).forEach(p=>results.push({group:'Personal',icon:'ti-user',main:p.nombre,sub:p.rol||'',action:()=>{cerrarBusqueda();showTab('personal',document.querySelector('[data-tab=personal]'));}}));
+
+  // Secciones / módulos
+  const tabs=[{k:'dashboard',l:'Inicio',icon:'ti-dashboard'},{k:'eventos',l:'Eventos',icon:'ti-calendar-event'},{k:'calendario',l:'Calendario',icon:'ti-calendar'},{k:'produccion',l:'Producción',icon:'ti-list-check'},{k:'recetario',l:'Recetario',icon:'ti-book'},{k:'escandallo',l:'Escandallo',icon:'ti-calculator'},{k:'bebidas',l:'Bebidas',icon:'ti-bottle'},{k:'pedidos',l:'Pedidos',icon:'ti-truck'},{k:'vajilla',l:'Vajilla',icon:'ti-tools-kitchen-2'},{k:'compras',l:'Compras',icon:'ti-shopping-cart'},{k:'cocina',l:'Pantalla cocina',icon:'ti-devices-pc'},{k:'historial',l:'Historial',icon:'ti-chart-bar'},{k:'personal',l:'Personal',icon:'ti-users'},{k:'ajustes',l:'Ajustes',icon:'ti-settings'}];
+  tabs.filter(t=>t.l.toLowerCase().includes(q)).slice(0,4).forEach(t=>results.push({group:'Módulos',icon:t.icon,main:t.l,sub:'',action:()=>{cerrarBusqueda();const btn=document.querySelector(`[data-tab="${t.k}"]`);if(btn)showTab(t.k,btn);}}));
+
+  if(!results.length){cont.innerHTML='<div class="sr-empty">Sin resultados para "<b>'+q+'</b>"</div>';return;}
+
+  // Store actions by index for safe onclick reference
+  window.__srActions=results.map(r=>r.action);
+  const groups=[...new Set(results.map(r=>r.group))];
+  let globalIdx=0;
+  cont.innerHTML=groups.map(g=>`
+    <div class="sr-group">${g}</div>
+    ${results.filter(r=>r.group===g).map(r=>{
+      const idx=results.indexOf(r);
+      const html=`<div class="sr-item${idx===0?' selected':''}" data-sri="${idx}" onclick="window.__srActions[${idx}]()">
+        <i class="ti ${r.icon}"></i>
+        <span class="sr-item-main">${r.main}</span>
+        ${r.sub?`<span class="sr-item-sub">${r.sub}</span>`:''}
+      </div>`;
+      return html;
+    }).join('')}
+  `).join('');
+}
+// Keyboard shortcut Ctrl+K / Cmd+K
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();abrirBusqueda();}
+});
 
 /* ===== VAJILLA ===== */
 const VAJ_CATS = {
@@ -2473,23 +2879,24 @@ function renderCalendario(){
     html+=`<div onclick="verDiaCalendario(${dia})"
       style="min-height:80px;padding:6px;border-right:.5px solid var(--border);border-bottom:.5px solid var(--border);
       cursor:${evs.length?'pointer':'default'};
-      background:${esHoy?'var(--info-bg)':esFinde?'var(--bg-secondary)':'var(--bg-primary)'};
-      transition:background .1s"
+      background:${esHoy?'rgba(201,168,76,.07)':esFinde?'var(--bg-secondary)':'var(--bg-primary)'};
+      ${esHoy?'box-shadow:inset 0 2px 0 rgba(201,168,76,.5)':''}
+      transition:background .12s"
       onmouseover="${evs.length?"this.style.background='var(--bg-secondary)'":''}"
-      onmouseout="${evs.length?`this.style.background='${esHoy?"var(--info-bg)":esFinde?"var(--bg-secondary)":"var(--bg-primary)"}'`:''}"
+      onmouseout="${evs.length?`this.style.background='${esHoy?"rgba(201,168,76,.07)":esFinde?"var(--bg-secondary)":"var(--bg-primary)"}'`:''}"
     >
-      <div style="font-size:13px;font-weight:${esHoy?'700':'400'};color:${esHoy?'var(--info-text)':'var(--text-secondary)'};margin-bottom:4px;
-        ${esHoy?'background:var(--info-text);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px':''}">
+      <div style="font-size:12px;font-weight:${esHoy?'700':'400'};margin-bottom:4px;
+        ${esHoy?`background:var(--gold);color:#0d0b07;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700`:`color:var(--text-secondary)`}">
         ${dia}
       </div>
       ${evs.slice(0,3).map(ev=>`
-        <div style="font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:2px;
+        <div style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;
           background:${getTipoColor(ev.tipo)};color:white;
-          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4">
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;font-weight:500">
           ${ev.hora} ${ev.nombre}
         </div>`).join('')}
-      ${evs.length>3?`<div style="font-size:10px;color:var(--text-secondary);margin-top:2px">+${evs.length-3} más</div>`:''}
-      ${evs.length>0&&totalPax?`<div style="font-size:10px;color:var(--text-tertiary);margin-top:3px"><i class="ti ti-users" style="font-size:9px"></i> ${totalPax} pax</div>`:''}
+      ${evs.length>3?`<div style="font-size:10px;color:var(--text-secondary);margin-top:2px;font-weight:500">+${evs.length-3} más</div>`:''}
+      ${evs.length>0&&totalPax?`<div style="font-size:9px;color:var(--text-tertiary);margin-top:3px"><i class="ti ti-users" style="font-size:9px"></i> ${totalPax}</div>`:''}
     </div>`;
   }
 
@@ -2515,37 +2922,39 @@ function verDiaCalendario(dia){
   const fecha=`${String(dia).padStart(2,'0')} ${MESES[calMes]} ${calAnyo}`;
 
   det.style.display='block';
-  det.innerHTML=`<div style="font-size:14px;font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:8px">
-    <i class="ti ti-calendar-event"></i> ${fecha}
-    <span style="font-size:12px;color:var(--text-secondary);font-weight:400">${evs.length} evento${evs.length>1?'s':''} · ${evs.reduce((s,e)=>s+e.pax,0)} pax total</span>
-  </div>`+
+  const mesC=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  det.innerHTML=`<div class="sec-label" style="margin-bottom:10px"><i class="ti ti-calendar-event"></i> ${fecha} <span style="font-size:12px;color:var(--text-secondary);font-weight:400;text-transform:none;letter-spacing:0">${evs.length} evento${evs.length>1?'s':''} · ${evs.reduce((s,e)=>s+e.pax,0)} pax total</span></div>`+
   evs.sort((a,b)=>a.hora.localeCompare(b.hora)).map(ev=>{
     const color=getTipoColor(ev.tipo);
     const alerg=ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:'';
-    const platos=ev.platos?.slice(0,4).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:3px;padding:1px 7px;display:inline-block;margin:2px;border-left:2px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${p.nombre}</span>`).join('')||'';
+    const platos=ev.platos?.slice(0,4).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:4px;padding:1px 7px;display:inline-block;margin:2px;border-left:2px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${p.nombre}</span>`).join('')||'';
     const masPlatos=ev.platos?.length>4?`<span style="font-size:11px;color:var(--text-tertiary)"> +${ev.platos.length-4} más</span>`:'';
-    return `<div class="card" style="border-left:3px solid ${color};margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
-        <div>
-          <div style="font-size:15px;font-weight:500">${ev.nombre}</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
-            <i class="ti ti-clock"></i> ${ev.hora} &nbsp;·&nbsp;
-            <i class="ti ti-users"></i> ${ev.pax} pax &nbsp;·&nbsp;
-            ${ev.lugar} &nbsp;·&nbsp;
-            <span style="color:${color}">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
-          </div>
+    const [,dm,dd]=ev.fecha.split('-');
+    return `<div class="ev-card" style="border-left:4px solid ${color}">
+      <div class="ev-card-top">
+        <div class="ev-card-date" style="border-top:2.5px solid ${color}">
+          <div class="ev-card-date-day">${Number(dd)}</div>
+          <div class="ev-card-date-mon">${mesC[Number(dm)]}</div>
         </div>
-        <div style="display:flex;gap:6px">
-          <button onclick="irProduccion(${ev.id})" style="font-size:11px;padding:3px 10px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);border:none;cursor:pointer">
-            <i class="ti ti-list-check"></i> Producción
-          </button>
-          <button onclick="irBebidas(${ev.id})" style="font-size:11px;padding:3px 10px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer">
-            <i class="ti ti-bottle"></i> Bebidas
-          </button>
+        <div class="ev-card-body">
+          <div class="ev-card-name">${ev.nombre}</div>
+          <div class="ev-card-meta">
+            <i class="ti ti-clock"></i> ${ev.hora}
+            <span style="opacity:.3">·</span>
+            <i class="ti ti-users"></i> ${ev.pax} pax
+            <span style="opacity:.3">·</span>
+            ${ev.lugar}
+            <span style="opacity:.3">·</span>
+            <span style="color:${color};font-weight:500">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
+          </div>
+          ${alerg}
+          <div style="margin-top:7px">${platos}${masPlatos}</div>
         </div>
       </div>
-      ${alerg}
-      <div style="margin-top:7px">${platos}${masPlatos}</div>
+      <div class="ev-card-footer">
+        <button onclick="irProduccion(${ev.id})" class="btn-icon"><i class="ti ti-list-check"></i> Producción</button>
+        <button onclick="irBebidas(${ev.id})" class="btn-icon"><i class="ti ti-bottle"></i> Bebidas</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -2598,6 +3007,7 @@ function renderEventos(){
   if(busca)evs=evs.filter(e=>e.nombre.toLowerCase().includes(busca)||e.lugar?.toLowerCase().includes(busca));
   const cont=ge('lista-ev');
   if(!evs.length){cont.innerHTML='<div class="empty">No hay eventos.</div>';return;}
+  const mesCorto=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   cont.innerHTML=evs.map(ev=>{
     const alerg=ev.alergias_txt?`<div style="margin-top:5px;font-size:12px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:'';
     const algHTML=(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
@@ -2605,28 +3015,42 @@ function renderEventos(){
     const infHTML=ev.infantil?.ninos?`<div style="margin-top:5px;font-size:12px;background:var(--success-bg);color:var(--success-text);padding:3px 8px;border-radius:var(--radius);display:inline-block"><i class="ti ti-heart"></i> ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''} · Menú infantil${ev.infantil.precio_nino?' · '+ev.infantil.precio_nino+'€/niño':''}</div>`:'';
     const notaHTML=ev.notas?`<div style="margin-top:5px;font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);padding:4px 8px;border-radius:var(--radius);border-left:2px solid var(--border-md)"><i class="ti ti-note"></i> ${ev.notas}</div>`:'';
     const evColor=getTipoColor(ev.tipo);
-    return`<div class="card" style="border-left:4px solid ${evColor}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
-        <div style="flex:1;min-width:200px">
-          <div style="font-size:15px;font-weight:500">${ev.nombre}</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
-            <i class="ti ti-calendar"></i> ${fmtFecha(ev.fecha)} · ${ev.hora} &nbsp;·&nbsp;
-            <i class="ti ti-users"></i> ${ev.pax} pax · ${ev.lugar} &nbsp;·&nbsp;
-            <span style="color:${evColor}">${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
-            ${ev.precio_venta?` &nbsp;·&nbsp; <b>${ev.precio_venta}€/pax</b>`:''}
-          </div>
+    const [,fm,fd]=ev.fecha.split('-');
+    return`<div class="ev-card" style="border-left:4px solid ${evColor}">
+      <div class="ev-card-top">
+        <div class="ev-card-date" style="border-top:2.5px solid ${evColor}">
+          <div class="ev-card-date-day">${Number(fd)}</div>
+          <div class="ev-card-date-mon">${mesCorto[Number(fm)]}</div>
         </div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-          ${getBadge(ev.fecha)}
-          <button onclick="editarEvento(${ev.id})" style="font-size:11px;padding:3px 9px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer"><i class="ti ti-edit"></i></button>
-          <button onclick="duplicarEvento(${ev.id})" style="font-size:11px;padding:3px 9px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer"><i class="ti ti-copy"></i></button>
-          <button onclick="editarNota(${ev.id})" style="font-size:11px;padding:3px 9px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer"><i class="ti ti-note"></i></button>
-          <button class="btn-d" onclick="eliminarEv(${ev.id})" style="font-size:11px;padding:3px 9px"><i class="ti ti-trash"></i></button>
+        <div class="ev-card-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+            <div class="ev-card-name">${ev.nombre}</div>
+            ${getBadge(ev.fecha)}
+          </div>
+          <div class="ev-card-meta">
+            <i class="ti ti-clock"></i> ${ev.hora}
+            <span style="opacity:.3">·</span>
+            <i class="ti ti-users"></i> ${ev.pax} pax
+            <span style="opacity:.3">·</span>
+            ${ev.lugar}
+            <span style="opacity:.3">·</span>
+            <span style="color:${evColor};font-weight:500">${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
+            ${ev.precio_venta?`<span style="opacity:.3">·</span><b>${ev.precio_venta}€/pax</b>`:''}
+          </div>
+          ${alerg}${infHTML}${notaHTML}
+          ${algHTML?`<div style="margin-top:5px">${algHTML}</div>`:''}
+          ${chips?`<div style="margin-top:7px">${chips}</div>`:''}
         </div>
       </div>
-      ${alerg}${infHTML}${notaHTML}
-      ${algHTML?`<div style="margin-top:5px">${algHTML}</div>`:''}
-      ${chips?`<div style="margin-top:7px">${chips}</div>`:''}
+      <div class="ev-card-footer">
+        <button onclick="irProdDashboard(${ev.id})" class="btn-icon"><i class="ti ti-list-check"></i> Producción</button>
+        <button onclick="editarEvento(${ev.id})" aria-label="Editar" class="btn-icon"><i class="ti ti-edit"></i> Editar</button>
+        <button onclick="duplicarEvento(${ev.id})" aria-label="Duplicar" class="btn-icon"><i class="ti ti-copy"></i></button>
+        <button onclick="editarNota(${ev.id})" aria-label="Nota" class="btn-icon"><i class="ti ti-note"></i></button>
+        <button onclick="mostrarConfirmacion(${ev.id})" class="btn-icon success"><i class="ti ti-send"></i> Confirmar</button>
+        <div style="flex:1"></div>
+        <button onclick="eliminarEv(${ev.id})" aria-label="Eliminar" class="btn-icon danger"><i class="ti ti-trash"></i></button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -2732,6 +3156,8 @@ function guardarEvento(){
   const precio_venta=parseFloat(ge('n-precio-venta')?.value)||0;
   const alergenos_menu=[...ge('alg-selector').querySelectorAll('.alg-cb.sel')].map(el=>{const lbl=el.querySelector('span:last-child').textContent.trim();return ALERGENOS.find(a=>a.label===lbl)?.id}).filter(Boolean);
   if(!nombre||!fecha||!pax){alert('Nombre, fecha y pax son obligatorios.');return;}
+  const btn=ge('n-guardar-btn');
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin .8s linear infinite"></i> Guardando...';}
   function pp(txt,def){return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([FCPMfcpm]):(.+)/);return m?{cat:m[1].toUpperCase(),nombre:m[2].trim(),alg:[]}:{cat:def,nombre:l,alg:[]}})}
   const platos=[...pp(ge('n-fr').value,'F'),...pp(ge('n-ca').value,'C'),...pp(ge('n-po').value,'P'),...pp(ge('n-pr').value,'M')];
   const ninos=parseInt(ge('n-ninos').value)||0;
@@ -3426,14 +3852,14 @@ function renderPedidos(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
         <div>
           <div style="font-size:15px;font-weight:500">${catInfo.icon} ${prov.nombre}</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${catInfo.label} · ${prov.tel?'📱 '+prov.tel:'Sin teléfono'}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${catInfo.label} · ${prov.tel?`<i class="ti ti-phone"></i> ${prov.tel}`:'<i class="ti ti-phone-off"></i> Sin teléfono'}</div>
         </div>
         <div style="display:flex;gap:6px">
-          <button onclick="copiarMensaje('msg-${prov.id}')" style="font-size:12px;padding:5px 12px;border-radius:var(--radius);border:.5px solid var(--border-md);background:var(--bg-primary);cursor:pointer;color:var(--text-primary)">
+          <button onclick="copiarMensaje('msg-${prov.id}')" class="btn-icon">
             <i class="ti ti-copy"></i> Copiar
           </button>
-          ${prov.tel?`<a href="https://wa.me/${prov.tel}?text=${encodeURIComponent(msg)}" target="_blank" style="font-size:12px;padding:5px 12px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-            <i class="ti ti-brand-whatsapp"></i> Abrir WA
+          ${prov.tel?`<a href="https://wa.me/${prov.tel}?text=${encodeURIComponent(msg)}" target="_blank" class="btn-icon success" style="text-decoration:none;font-weight:600">
+            <i class="ti ti-brand-whatsapp"></i> WhatsApp
           </a>`:''}
         </div>
       </div>
@@ -3842,13 +4268,15 @@ function initDashboard(){
   const diasSemana=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const fechaLabel=`${diasSemana[hoy.getDay()]}, ${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+  const hora=hoy.getHours();
+  const saludo=hora<13?'Buenos días':hora<21?'Buenas tardes':'Buenas noches';
 
   let html=`
   <!-- Fecha y accesos rápidos -->
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px">
     <div>
-      <div style="font-size:13px;color:var(--text-secondary)">${fechaLabel}</div>
-      <div style="font-size:20px;font-weight:500;color:var(--text-primary)">Buenos días 👋</div>
+      <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px">${fechaLabel}</div>
+      <div style="font-size:1.4rem;font-weight:600;color:var(--text-primary);font-family:'Playfair Display SC','Georgia',serif">${saludo}</div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button onclick="showTab('nuevo',document.querySelectorAll('.tab')[10])" class="btn btn-p" style="font-size:12px"><i class="ti ti-plus"></i> Nuevo evento</button>
@@ -3875,31 +4303,38 @@ function initDashboard(){
   </div>`:''}
 
   <!-- Eventos HOY -->
-  <div style="font-size:13px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
-    <i class="ti ti-calendar-event"></i> Hoy
-  </div>
+  <div class="sec-label"><i class="ti ti-calendar-event"></i> Hoy</div>
   ${evHoy.length?evHoy.map(ev=>{
     const color=getTipoColor(ev.tipo);
     const vajAlerta=calcVajEvento(ev).some(v=>!v.ok);
-    return`<div class="card" style="border-left:4px solid ${color};margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
-        <div>
-          <div style="font-size:15px;font-weight:500">${ev.nombre}</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
-            <i class="ti ti-clock"></i> ${ev.hora} &nbsp;·&nbsp;
-            <i class="ti ti-users"></i> ${ev.pax} pax &nbsp;·&nbsp;
-            ${ev.lugar} &nbsp;·&nbsp;
-            <span style="color:${color}">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
-            ${ev.precio_venta?` &nbsp;·&nbsp; ${ev.precio_venta}€/pax`:''}
+    const [,fm,fd]=ev.fecha.split('-');
+    const mesC=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return`<div class="ev-card" style="border-left:4px solid ${color}">
+      <div class="ev-card-top">
+        <div class="ev-card-date" style="border-top:2.5px solid ${color}">
+          <div class="ev-card-date-day">${Number(fd)}</div>
+          <div class="ev-card-date-mon">${mesC[Number(fm)]}</div>
+        </div>
+        <div class="ev-card-body">
+          <div class="ev-card-name">${ev.nombre}</div>
+          <div class="ev-card-meta">
+            <i class="ti ti-clock"></i> ${ev.hora}
+            <span style="opacity:.3">·</span>
+            <i class="ti ti-users"></i> ${ev.pax} pax
+            <span style="opacity:.3">·</span>
+            ${ev.lugar}
+            <span style="opacity:.3">·</span>
+            <span style="color:${color};font-weight:500">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
+            ${ev.precio_venta?`<span style="opacity:.3">·</span>${ev.precio_venta}€/pax`:''}
           </div>
-          ${ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:3px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
-          ${vajAlerta?`<div style="font-size:12px;color:var(--danger-text);margin-top:3px"><i class="ti ti-alert-triangle"></i> Vajilla insuficiente</div>`:''}
+          ${ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
+          ${vajAlerta?`<div style="font-size:12px;color:var(--danger-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> Vajilla insuficiente</div>`:''}
         </div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap">
-          <button onclick="irProdDashboard(${ev.id})" style="font-size:11px;padding:4px 10px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);border:none;cursor:pointer"><i class="ti ti-list-check"></i> Producción</button>
-          <button onclick="irVajDashboard(${ev.id})" style="font-size:11px;padding:4px 10px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer"><i class="ti ti-tools-kitchen"></i> Vajilla</button>
-          <button onclick="mostrarConfirmacion(${ev.id})" style="font-size:11px;padding:4px 10px;border-radius:var(--radius);background:var(--success-bg);color:var(--success-text);border:none;cursor:pointer"><i class="ti ti-send"></i> Confirmar</button>
-        </div>
+      </div>
+      <div class="ev-card-footer">
+        <button onclick="irProdDashboard(${ev.id})" class="btn-icon"><i class="ti ti-list-check"></i> Producción</button>
+        <button onclick="irVajDashboard(${ev.id})" class="btn-icon"><i class="ti ti-tools-kitchen"></i> Vajilla</button>
+        <button onclick="mostrarConfirmacion(${ev.id})" class="btn-icon success"><i class="ti ti-send"></i> Confirmar</button>
       </div>
     </div>`;
   }).join(''):`<div class="card" style="text-align:center;color:var(--text-secondary);padding:2rem">
@@ -3909,24 +4344,26 @@ function initDashboard(){
 
   <!-- Próximos 7 días -->
   ${evSemana.length?`
-  <div style="font-size:13px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 8px">
-    <i class="ti ti-calendar-week"></i> Próximos 7 días
-  </div>
+  <div class="sec-label" style="margin:1.25rem 0 8px"><i class="ti ti-calendar-week"></i> Próximos 7 días</div>
   ${evSemana.map(ev=>{
     const color=getTipoColor(ev.tipo);
     const diff=Math.round((new Date(ev.fecha+'T00:00:00')-hoy)/86400000);
-    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;border-left:3px solid ${color}">
-      <div style="min-width:45px;text-align:center">
-        <div style="font-size:18px;font-weight:500;color:var(--text-primary)">${new Date(ev.fecha+'T00:00:00').getDate()}</div>
-        <div style="font-size:10px;color:var(--text-secondary)">${['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][new Date(ev.fecha+'T00:00:00').getMonth()+1]}</div>
-      </div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:500">${ev.nombre}</div>
-        <div style="font-size:11px;color:var(--text-secondary)">${ev.hora} · ${ev.pax} pax · ${ev.lugar}</div>
-      </div>
-      <div style="display:flex;gap:5px;align-items:center">
-        <span style="font-size:11px;padding:2px 7px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary)">En ${diff} día${diff>1?'s':''}</span>
-        <button onclick="mostrarConfirmacion(${ev.id})" style="font-size:11px;padding:3px 9px;border-radius:var(--radius);background:var(--success-bg);color:var(--success-text);border:none;cursor:pointer"><i class="ti ti-send"></i></button>
+    const [,sm,sd]=ev.fecha.split('-');
+    const mesC2=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return`<div class="ev-card" style="border-left:3px solid ${color}">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px">
+        <div class="ev-card-date" style="border-top:2px solid ${color};width:38px">
+          <div class="ev-card-date-day" style="font-size:17px">${Number(sd)}</div>
+          <div class="ev-card-date-mon">${mesC2[Number(sm)]}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev.nombre}</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${ev.hora} · ${ev.pax} pax · ${ev.lugar}</div>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+          ${getBadge(ev.fecha)}
+          <button onclick="mostrarConfirmacion(${ev.id})" class="btn-icon success" style="padding:4px 9px"><i class="ti ti-send"></i></button>
+        </div>
       </div>
     </div>`;
   }).join('')}`:''}
@@ -4071,12 +4508,12 @@ _Seda Club · Sistema de gestión_`;
     </div>
 
     <!-- Sub-tabs -->
-    <div style="display:flex;gap:4px;margin-bottom:1rem;border-bottom:.5px solid var(--border);flex-wrap:wrap">
-      <button class="tab active" id="conf-tab-cliente" onclick="switchConf('cliente',this)" style="font-size:12px"><i class="ti ti-user"></i> Cliente</button>
-      <button class="tab" id="conf-tab-maitre" onclick="switchConf('maitre',this)" style="font-size:12px"><i class="ti ti-tools-kitchen-2"></i> Maître</button>
-      <button class="tab" id="conf-tab-jefa" onclick="switchConf('jefa',this)" style="font-size:12px"><i class="ti ti-calendar-event"></i> Jefa eventos</button>
-      <button class="tab" id="conf-tab-cocina" onclick="switchConf('cocina',this)" style="font-size:12px"><i class="ti ti-chef-hat"></i> Cocina</button>
-      <button class="tab" id="conf-tab-config" onclick="switchConf('config',this)" style="font-size:12px"><i class="ti ti-address-book"></i> Contactos</button>
+    <div class="sub-tabs" style="flex-wrap:wrap">
+      <button class="sub-tab active" id="conf-tab-cliente" onclick="switchConf('cliente',this)"><i class="ti ti-user"></i> Cliente</button>
+      <button class="sub-tab" id="conf-tab-maitre" onclick="switchConf('maitre',this)"><i class="ti ti-tools-kitchen-2"></i> Maître</button>
+      <button class="sub-tab" id="conf-tab-jefa" onclick="switchConf('jefa',this)"><i class="ti ti-calendar-event"></i> Jefa eventos</button>
+      <button class="sub-tab" id="conf-tab-cocina" onclick="switchConf('cocina',this)"><i class="ti ti-chef-hat"></i> Cocina</button>
+      <button class="sub-tab" id="conf-tab-config" onclick="switchConf('config',this)"><i class="ti ti-address-book"></i> Contactos</button>
     </div>
 
     <!-- CLIENTE -->
@@ -4093,7 +4530,7 @@ _Seda Club · Sistema de gestión_`;
     <div id="conf-view-maitre" style="display:none">
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
         <i class="ti ti-user"></i> ${c.maitre.nombre}
-        ${c.maitre.tel?` · 📱 ${c.maitre.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
+        ${c.maitre.tel?` · <i class="ti ti-phone"></i>${c.maitre.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
         ${c.maitre.email?` · ✉️ ${c.maitre.email}`:''}
       </div>
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgMaitre)}</div>
@@ -4108,7 +4545,7 @@ _Seda Club · Sistema de gestión_`;
     <div id="conf-view-jefa" style="display:none">
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
         <i class="ti ti-user"></i> ${c.jefa_eventos.nombre}
-        ${c.jefa_eventos.tel?` · 📱 ${c.jefa_eventos.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
+        ${c.jefa_eventos.tel?` · <i class="ti ti-phone"></i>${c.jefa_eventos.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
         ${c.jefa_eventos.email?` · ✉️ ${c.jefa_eventos.email}`:''}
       </div>
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgJefa)}</div>
@@ -4143,7 +4580,7 @@ _Seda Club · Sistema de gestión_`;
     <div id="conf-view-cocina" style="display:none">
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
         <i class="ti ti-user"></i> ${c.jefe_cocina.nombre}
-        ${c.jefe_cocina.tel?` · 📱 ${c.jefe_cocina.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
+        ${c.jefe_cocina.tel?` · <i class="ti ti-phone"></i>${c.jefe_cocina.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
         ${c.jefe_cocina.email?` · ✉️ ${c.jefe_cocina.email}`:''}
       </div>
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgCocina)}</div>
@@ -4226,9 +4663,13 @@ window.addEventListener('DOMContentLoaded', async function(){
   if(cab&&ajustes.hotel_nombre)cab.textContent=`${ajustes.hotel_nombre} · ${ajustes.hotel_ciudad||''}`;
   const selLugar=ge('n-lugar');
   if(selLugar&&ajustes.lugares?.length)selLugar.innerHTML=ajustes.lugares.map(l=>`<option>${l}</option>`).join('');
+  initAccordion();
   if(rolActual && ROLES[rolActual]){ aplicarRol(rolActual); }
-  else { setTimeout(()=>ge('rol-modal').style.display='flex', 300); }
-  initDashboard();
+  else {
+    // Sin rol: mostrar todas las secciones y abrir dashboard
+    openAccordion('dashboard');
+    setTimeout(()=>ge('rol-modal').style.display='flex', 400);
+  }
 });
 
 </script>
