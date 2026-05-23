@@ -2700,37 +2700,39 @@ function verDiaCalendario(dia){
   const fecha=`${String(dia).padStart(2,'0')} ${MESES[calMes]} ${calAnyo}`;
 
   det.style.display='block';
-  det.innerHTML=`<div style="font-size:14px;font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:8px">
-    <i class="ti ti-calendar-event"></i> ${fecha}
-    <span style="font-size:12px;color:var(--text-secondary);font-weight:400">${evs.length} evento${evs.length>1?'s':''} · ${evs.reduce((s,e)=>s+e.pax,0)} pax total</span>
-  </div>`+
+  const mesC=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  det.innerHTML=`<div class="sec-label" style="margin-bottom:10px"><i class="ti ti-calendar-event"></i> ${fecha} <span style="font-size:12px;color:var(--text-secondary);font-weight:400;text-transform:none;letter-spacing:0">${evs.length} evento${evs.length>1?'s':''} · ${evs.reduce((s,e)=>s+e.pax,0)} pax total</span></div>`+
   evs.sort((a,b)=>a.hora.localeCompare(b.hora)).map(ev=>{
     const color=getTipoColor(ev.tipo);
     const alerg=ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:'';
-    const platos=ev.platos?.slice(0,4).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:3px;padding:1px 7px;display:inline-block;margin:2px;border-left:2px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${p.nombre}</span>`).join('')||'';
+    const platos=ev.platos?.slice(0,4).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:4px;padding:1px 7px;display:inline-block;margin:2px;border-left:2px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${p.nombre}</span>`).join('')||'';
     const masPlatos=ev.platos?.length>4?`<span style="font-size:11px;color:var(--text-tertiary)"> +${ev.platos.length-4} más</span>`:'';
-    return `<div class="card" style="border-left:3px solid ${color};margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
-        <div>
-          <div style="font-size:15px;font-weight:500">${ev.nombre}</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
-            <i class="ti ti-clock"></i> ${ev.hora} &nbsp;·&nbsp;
-            <i class="ti ti-users"></i> ${ev.pax} pax &nbsp;·&nbsp;
-            ${ev.lugar} &nbsp;·&nbsp;
-            <span style="color:${color}">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
-          </div>
+    const [,dm,dd]=ev.fecha.split('-');
+    return `<div class="ev-card" style="border-left:4px solid ${color}">
+      <div class="ev-card-top">
+        <div class="ev-card-date" style="border-top:2.5px solid ${color}">
+          <div class="ev-card-date-day">${Number(dd)}</div>
+          <div class="ev-card-date-mon">${mesC[Number(dm)]}</div>
         </div>
-        <div style="display:flex;gap:6px">
-          <button onclick="irProduccion(${ev.id})" style="font-size:11px;padding:3px 10px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);border:none;cursor:pointer">
-            <i class="ti ti-list-check"></i> Producción
-          </button>
-          <button onclick="irBebidas(${ev.id})" style="font-size:11px;padding:3px 10px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer">
-            <i class="ti ti-bottle"></i> Bebidas
-          </button>
+        <div class="ev-card-body">
+          <div class="ev-card-name">${ev.nombre}</div>
+          <div class="ev-card-meta">
+            <i class="ti ti-clock"></i> ${ev.hora}
+            <span style="opacity:.3">·</span>
+            <i class="ti ti-users"></i> ${ev.pax} pax
+            <span style="opacity:.3">·</span>
+            ${ev.lugar}
+            <span style="opacity:.3">·</span>
+            <span style="color:${color};font-weight:500">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
+          </div>
+          ${alerg}
+          <div style="margin-top:7px">${platos}${masPlatos}</div>
         </div>
       </div>
-      ${alerg}
-      <div style="margin-top:7px">${platos}${masPlatos}</div>
+      <div class="ev-card-footer">
+        <button onclick="irProduccion(${ev.id})" class="btn-icon"><i class="ti ti-list-check"></i> Producción</button>
+        <button onclick="irBebidas(${ev.id})" class="btn-icon"><i class="ti ti-bottle"></i> Bebidas</button>
+      </div>
     </div>`;
   }).join('');
 }
