@@ -3633,14 +3633,14 @@ function renderPedidos(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
         <div>
           <div style="font-size:15px;font-weight:500">${catInfo.icon} ${prov.nombre}</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${catInfo.label} · ${prov.tel?'📱 '+prov.tel:'Sin teléfono'}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${catInfo.label} · ${prov.tel?`<i class="ti ti-phone"></i> ${prov.tel}`:'<i class="ti ti-phone-off"></i> Sin teléfono'}</div>
         </div>
         <div style="display:flex;gap:6px">
-          <button onclick="copiarMensaje('msg-${prov.id}')" style="font-size:12px;padding:5px 12px;border-radius:var(--radius);border:.5px solid var(--border-md);background:var(--bg-primary);cursor:pointer;color:var(--text-primary)">
+          <button onclick="copiarMensaje('msg-${prov.id}')" class="btn-icon">
             <i class="ti ti-copy"></i> Copiar
           </button>
-          ${prov.tel?`<a href="https://wa.me/${prov.tel}?text=${encodeURIComponent(msg)}" target="_blank" style="font-size:12px;padding:5px 12px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-            <i class="ti ti-brand-whatsapp"></i> Abrir WA
+          ${prov.tel?`<a href="https://wa.me/${prov.tel}?text=${encodeURIComponent(msg)}" target="_blank" class="btn-icon success" style="text-decoration:none;font-weight:600">
+            <i class="ti ti-brand-whatsapp"></i> WhatsApp
           </a>`:''}
         </div>
       </div>
@@ -4311,7 +4311,7 @@ _Seda Club · Sistema de gestión_`;
     <div id="conf-view-maitre" style="display:none">
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
         <i class="ti ti-user"></i> ${c.maitre.nombre}
-        ${c.maitre.tel?` · 📱 ${c.maitre.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
+        ${c.maitre.tel?` · <i class="ti ti-phone"></i>${c.maitre.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
         ${c.maitre.email?` · ✉️ ${c.maitre.email}`:''}
       </div>
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgMaitre)}</div>
@@ -4326,7 +4326,7 @@ _Seda Club · Sistema de gestión_`;
     <div id="conf-view-jefa" style="display:none">
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
         <i class="ti ti-user"></i> ${c.jefa_eventos.nombre}
-        ${c.jefa_eventos.tel?` · 📱 ${c.jefa_eventos.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
+        ${c.jefa_eventos.tel?` · <i class="ti ti-phone"></i>${c.jefa_eventos.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
         ${c.jefa_eventos.email?` · ✉️ ${c.jefa_eventos.email}`:''}
       </div>
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgJefa)}</div>
@@ -4361,7 +4361,7 @@ _Seda Club · Sistema de gestión_`;
     <div id="conf-view-cocina" style="display:none">
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
         <i class="ti ti-user"></i> ${c.jefe_cocina.nombre}
-        ${c.jefe_cocina.tel?` · 📱 ${c.jefe_cocina.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
+        ${c.jefe_cocina.tel?` · <i class="ti ti-phone"></i>${c.jefe_cocina.tel}`:'<span style="color:var(--warn-text)"> · Sin teléfono configurado</span>'}
         ${c.jefe_cocina.email?` · ✉️ ${c.jefe_cocina.email}`:''}
       </div>
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgCocina)}</div>
