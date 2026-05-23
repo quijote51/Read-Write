@@ -295,6 +295,24 @@ textarea{resize:vertical;min-height:65px}
 .form-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:600px){.form-2,.form-3{grid-template-columns:1fr}.receta-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
 
+/* ── EVENT DETAIL MODAL ── */
+#ev-detail-modal{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:1050;display:none;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto}
+#ev-detail-modal.open{display:flex}
+.ev-detail-inner{background:var(--bg-primary);border-radius:var(--radius-lg);width:100%;max-width:700px;margin:auto;box-shadow:0 32px 80px rgba(0,0,0,.4),0 0 0 1px var(--border);overflow:hidden}
+.ev-detail-banner{padding:1.25rem 1.5rem;position:relative;overflow:hidden}
+.ev-detail-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.3) 100%)}
+.ev-detail-banner-content{position:relative;z-index:1}
+.ev-detail-body{padding:1.25rem 1.5rem}
+.ev-detail-section{margin-bottom:1rem}
+.ev-detail-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-secondary);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ev-detail-section-title::after{content:'';flex:1;height:.5px;background:var(--border)}
+.ev-detail-dish{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg-secondary);border-radius:var(--radius);margin-bottom:3px;font-size:13px}
+.ev-detail-dish-name{font-weight:500;flex:1;min-width:0}
+.ev-detail-dish-qty{font-size:13px;font-weight:700;padding:2px 10px;border-radius:var(--radius);color:#fff}
+.ev-detail-actions{display:flex;gap:6px;padding:1rem 1.5rem;border-top:.5px solid var(--border);background:var(--bg-secondary);flex-wrap:wrap}
+.ev-card-top.clickable{cursor:pointer;transition:background var(--t)}
+.ev-card-top.clickable:hover{background:var(--bg-secondary)}
+
 /* ── GLOBAL SEARCH OVERLAY ── */
 #search-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:1100;display:none;align-items:flex-start;justify-content:center;padding:80px 1rem 2rem}
 #search-overlay.open{display:flex}
@@ -395,6 +413,13 @@ textarea{resize:vertical;min-height:65px}
     <button onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" aria-label="Ajustes" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:13px;min-height:34px;min-width:34px;transition:background 150ms ease"><i class="ti ti-settings"></i></button>
   </div>
 </header>
+
+<!-- EVENT DETAIL MODAL -->
+<div id="ev-detail-modal" role="dialog" aria-modal="true" aria-labelledby="ev-detail-titulo" onclick="if(event.target===this)cerrarDetalleEvento()">
+  <div class="ev-detail-inner">
+    <div id="ev-detail-cont"></div>
+  </div>
+</div>
 
 <!-- GLOBAL SEARCH OVERLAY -->
 <div id="search-overlay" role="dialog" aria-modal="true" aria-label="Buscar" onclick="if(event.target===this)cerrarBusqueda()">
@@ -1460,7 +1485,7 @@ function showTab(name,btn){
 
 /* ===== SELECTOR DE ROL ===== */
 const ROLES = {
-  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina']},
+  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','eventos','produccion','conjunta','recetario','compras','cocina']},
   sala:      {icon:'<i class="ti ti-tools-kitchen-2"></i>',  nombre:'Sala / Maître',  tabs:['dashboard','bebidas','vajilla','eventos']},
   eventos:   {icon:'<i class="ti ti-calendar-event"></i>',   nombre:'Jefa de eventos',tabs:['dashboard','eventos','calendario','plantillas','escandallo','nuevo']},
   direccion: {icon:'<i class="ti ti-chart-bar"></i>',        nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos']},
@@ -3008,16 +3033,18 @@ function renderEventos(){
   const cont=ge('lista-ev');
   if(!evs.length){cont.innerHTML='<div class="empty">No hay eventos.</div>';return;}
   const mesCorto=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const canEdit=!rolActual||ROLES[rolActual]?.tabs.includes('nuevo');
+  const canProd=!rolActual||['produccion','conjunta'].some(t=>ROLES[rolActual]?.tabs.includes(t));
   cont.innerHTML=evs.map(ev=>{
-    const alerg=ev.alergias_txt?`<div style="margin-top:5px;font-size:12px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:'';
     const algHTML=(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
     const chips=(ev.platos||[]).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:var(--radius);padding:2px 8px;color:var(--text-secondary);display:inline-block;margin:2px;border-left:3px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${p.nombre}</span>`).join('');
     const infHTML=ev.infantil?.ninos?`<div style="margin-top:5px;font-size:12px;background:var(--success-bg);color:var(--success-text);padding:3px 8px;border-radius:var(--radius);display:inline-block"><i class="ti ti-heart"></i> ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''} · Menú infantil${ev.infantil.precio_nino?' · '+ev.infantil.precio_nino+'€/niño':''}</div>`:'';
     const notaHTML=ev.notas?`<div style="margin-top:5px;font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);padding:4px 8px;border-radius:var(--radius);border-left:2px solid var(--border-md)"><i class="ti ti-note"></i> ${ev.notas}</div>`:'';
     const evColor=getTipoColor(ev.tipo);
     const [,fm,fd]=ev.fecha.split('-');
-    return`<div class="ev-card" style="border-left:4px solid ${evColor}">
-      <div class="ev-card-top">
+    const esPasado=new Date(ev.fecha+'T00:00:00')<hoy;
+    return`<div class="ev-card" style="border-left:4px solid ${evColor}${esPasado?';opacity:.75':''}">
+      <div class="ev-card-top clickable" onclick="verDetalleEvento(${ev.id})" title="Ver detalle del evento">
         <div class="ev-card-date" style="border-top:2.5px solid ${evColor}">
           <div class="ev-card-date-day">${Number(fd)}</div>
           <div class="ev-card-date-mon">${mesCorto[Number(fm)]}</div>
@@ -3025,7 +3052,7 @@ function renderEventos(){
         <div class="ev-card-body">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:3px">
             <div class="ev-card-name">${ev.nombre}</div>
-            ${getBadge(ev.fecha)}
+            <div style="display:flex;align-items:center;gap:6px">${esPasado?'<span class="badge" style="background:var(--bg-tertiary);color:var(--text-tertiary);font-size:10px">Pasado</span>':''}${getBadge(ev.fecha)}</div>
           </div>
           <div class="ev-card-meta">
             <i class="ti ti-clock"></i> ${ev.hora}
@@ -3037,23 +3064,159 @@ function renderEventos(){
             <span style="color:${evColor};font-weight:500">${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
             ${ev.precio_venta?`<span style="opacity:.3">·</span><b>${ev.precio_venta}€/pax</b>`:''}
           </div>
-          ${alerg}${infHTML}${notaHTML}
+          ${ev.alergias_txt?`<div style="margin-top:5px;font-size:12px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
+          ${infHTML}${notaHTML}
           ${algHTML?`<div style="margin-top:5px">${algHTML}</div>`:''}
           ${chips?`<div style="margin-top:7px">${chips}</div>`:''}
         </div>
+        <i class="ti ti-chevron-right" style="color:var(--text-tertiary);font-size:14px;flex-shrink:0;margin-left:4px"></i>
       </div>
       <div class="ev-card-footer">
-        <button onclick="irProdDashboard(${ev.id})" class="btn-icon"><i class="ti ti-list-check"></i> Producción</button>
-        <button onclick="editarEvento(${ev.id})" aria-label="Editar" class="btn-icon"><i class="ti ti-edit"></i> Editar</button>
-        <button onclick="duplicarEvento(${ev.id})" aria-label="Duplicar" class="btn-icon"><i class="ti ti-copy"></i></button>
-        <button onclick="editarNota(${ev.id})" aria-label="Nota" class="btn-icon"><i class="ti ti-note"></i></button>
-        <button onclick="mostrarConfirmacion(${ev.id})" class="btn-icon success"><i class="ti ti-send"></i> Confirmar</button>
+        ${canProd?`<button onclick="event.stopPropagation();irProdDashboard(${ev.id})" class="btn-icon"><i class="ti ti-list-check"></i> Producción</button>`:''}
+        ${canEdit?`<button onclick="event.stopPropagation();editarEvento(${ev.id})" class="btn-icon"><i class="ti ti-edit"></i> Editar</button>`:''}
+        ${canEdit?`<button onclick="event.stopPropagation();duplicarEvento(${ev.id})" aria-label="Duplicar" class="btn-icon"><i class="ti ti-copy"></i></button>`:''}
+        ${canEdit?`<button onclick="event.stopPropagation();editarNota(${ev.id})" aria-label="Nota" class="btn-icon"><i class="ti ti-note"></i></button>`:''}
+        ${canEdit&&!esPasado?`<button onclick="event.stopPropagation();mostrarConfirmacion(${ev.id})" class="btn-icon success"><i class="ti ti-send"></i> Confirmar</button>`:''}
         <div style="flex:1"></div>
-        <button onclick="eliminarEv(${ev.id})" aria-label="Eliminar" class="btn-icon danger"><i class="ti ti-trash"></i></button>
+        ${canEdit?`<button onclick="event.stopPropagation();eliminarEv(${ev.id})" aria-label="Eliminar" class="btn-icon danger"><i class="ti ti-trash"></i></button>`:''}
       </div>
     </div>`;
   }).join('');
 }
+
+/* ===== DETALLE DE EVENTO (modal, todos los roles) ===== */
+function verDetalleEvento(id){
+  const ev=eventos.find(e=>e.id===id); if(!ev)return;
+  const evColor=getTipoColor(ev.tipo);
+  const f=getFactorEvento(ev);
+  const raciones=Math.round(ev.pax*f);
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const esPasado=new Date(ev.fecha+'T00:00:00')<hoy;
+  const canEdit=!rolActual||ROLES[rolActual]?.tabs.includes('nuevo');
+  const canProd=!rolActual||['produccion','conjunta'].some(t=>ROLES[rolActual]?.tabs.includes(t));
+  const canFinancial=!rolActual||['historial','escandallo'].some(t=>ROLES[rolActual]?.tabs.includes(t))||rolActual==='admin';
+
+  // Cost data (only for relevant roles)
+  const {totalCoste}=canFinancial?calcCosteEvento(ev):{totalCoste:0};
+  const ing=(ev.precio_venta||0)*ev.pax;
+  const margen=ing>0?((ing-totalCoste)/ing*100):0;
+
+  const CATS_DET=[
+    {key:'F',label:'Fríos',color:'#378ADD'},
+    {key:'C',label:'Calientes',color:'#D85A30'},
+    {key:'M',label:'Principales',color:'#7F77DD'},
+    {key:'P',label:'Postres',color:'#1D9E75'}
+  ];
+
+  const mesCorto=['','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const [fy,fm,fd]=ev.fecha.split('-');
+
+  const platosHTML=CATS_DET.map(cat=>{
+    const items=(ev.platos||[]).filter(p=>p.cat===cat.key);
+    if(!items.length)return'';
+    return`
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${cat.color};margin-bottom:5px;display:flex;align-items:center;gap:5px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${cat.color};display:inline-block"></span>${cat.label}
+      </div>
+      ${items.map(p=>`<div class="ev-detail-dish">
+        <span class="ev-detail-dish-name">${p.nombre}</span>
+        <span class="ev-detail-dish-qty" style="background:${cat.color}">${raciones}</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+
+  const infHTML=ev.infantil?.ninos?`
+    <div class="ev-detail-section">
+      <div class="ev-detail-section-title"><i class="ti ti-heart" style="color:#1D9E75"></i> Menú infantil — ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''}</div>
+      ${(ev.infantil.platos||[]).map(pid=>{const p=PLATOS_INFANTIL.find(x=>x.id===pid);return p?`<div class="ev-detail-dish"><span class="ev-detail-dish-name">${p.nombre}</span><span class="ev-detail-dish-qty" style="background:#1D9E75">${ev.infantil.ninos}</span></div>`:''}).join('')}
+    </div>`:'';
+
+  const algHTML=(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
+
+  ge('ev-detail-cont').innerHTML=`
+  <div class="ev-detail-banner" style="background:${evColor}">
+    <div class="ev-detail-banner-content">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px">${TIPO_LABEL[ev.tipo]||ev.tipo}</div>
+          <div id="ev-detail-titulo" style="font-family:'Playfair Display SC',serif;font-size:1.4rem;font-weight:700;color:#fff;line-height:1.15;margin-bottom:8px">${ev.nombre}</div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.85)">
+            <span><i class="ti ti-calendar"></i> ${Number(fd)} de ${mesCorto[Number(fm)]} de ${fy}</span>
+            <span><i class="ti ti-clock"></i> ${ev.hora}</span>
+            <span><i class="ti ti-map-pin"></i> ${ev.lugar}</span>
+          </div>
+        </div>
+        <button onclick="cerrarDetalleEvento()" style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px"><i class="ti ti-x"></i></button>
+      </div>
+      ${ev.alergias_txt?`<div style="margin-top:10px;font-size:13px;color:#fbbf24;background:rgba(0,0,0,.25);border-radius:var(--radius);padding:5px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
+    </div>
+  </div>
+
+  <div class="ev-detail-body">
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:1.25rem">
+      <div class="stat"><div class="stat-l">Pax</div><div class="stat-v">${ev.pax}</div></div>
+      <div class="stat"><div class="stat-l">Raciones/plato</div><div class="stat-v">${raciones}</div></div>
+      ${ev.precio_venta?`<div class="stat"><div class="stat-l">Precio/pax</div><div class="stat-v">${ev.precio_venta}€</div></div>`:''}
+      ${ev.precio_venta&&canFinancial?`<div class="stat" style="border-top-color:${ing>0?margenColor(margen):'var(--gold)'}"><div class="stat-l">Margen</div><div class="stat-v" style="color:${ing>0?margenColor(margen):'var(--text-primary)'}">${ing>0?margen.toFixed(1)+'%':'—'}</div></div>`:''}
+      ${ev.infantil?.ninos?`<div class="stat"><div class="stat-l">Niños</div><div class="stat-v" style="color:var(--success-text)">${ev.infantil.ninos}</div></div>`:''}
+    </div>
+
+    <!-- Dishes -->
+    ${platosHTML?`
+    <div class="ev-detail-section">
+      <div class="ev-detail-section-title"><i class="ti ti-tools-kitchen-2"></i> Platos del evento</div>
+      ${platosHTML}
+    </div>`:''}
+
+    ${infHTML}
+
+    ${algHTML?`
+    <div class="ev-detail-section">
+      <div class="ev-detail-section-title"><i class="ti ti-alert-triangle"></i> Alérgenos en el menú</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${algHTML}</div>
+    </div>`:''}
+
+    ${ev.notas?`
+    <div class="ev-detail-section">
+      <div class="ev-detail-section-title"><i class="ti ti-note"></i> Nota interna</div>
+      <div style="font-size:13px;color:var(--text-secondary);background:var(--bg-secondary);padding:10px 12px;border-radius:var(--radius);border-left:3px solid var(--border-md)">${ev.notas}</div>
+    </div>`:''}
+
+    ${esPasado&&canFinancial&&ing>0?`
+    <div class="ev-detail-section">
+      <div class="ev-detail-section-title"><i class="ti ti-chart-bar" style="color:var(--gold)"></i> Resumen financiero</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px">
+        <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Ingresos</div>
+          <div style="font-weight:700;color:var(--success-text)">${ing.toLocaleString('es')}€</div>
+        </div>
+        <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Coste</div>
+          <div style="font-weight:700;color:var(--danger-text)">${totalCoste.toFixed(0)}€</div>
+        </div>
+        <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:10px;text-align:center;border-top:2px solid ${margenColor(margen)}">
+          <div style="font-size:10px;color:var(--text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Margen</div>
+          <div style="font-weight:700;color:${margenColor(margen)}">${margen.toFixed(1)}%</div>
+        </div>
+      </div>
+    </div>`:''}
+  </div>
+
+  <div class="ev-detail-actions">
+    ${canProd?`<button onclick="cerrarDetalleEvento();irProdDashboard(${ev.id})" class="btn btn-p" style="font-size:13px"><i class="ti ti-list-check"></i> Ver producción</button>`:''}
+    ${canEdit?`<button onclick="cerrarDetalleEvento();editarEvento(${ev.id})" class="btn-sec" style="font-size:13px"><i class="ti ti-edit"></i> Editar evento</button>`:''}
+    ${canEdit?`<button onclick="cerrarDetalleEvento();mostrarConfirmacion(${ev.id})" class="btn-sec" style="font-size:13px"><i class="ti ti-send"></i> Confirmar</button>`:''}
+    <div style="flex:1"></div>
+    <button onclick="cerrarDetalleEvento()" class="btn-sec" style="font-size:13px">Cerrar</button>
+  </div>`;
+
+  ge('ev-detail-modal').classList.add('open');
+}
+function cerrarDetalleEvento(){ ge('ev-detail-modal').classList.remove('open'); }
+// Close on Escape key
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&ge('ev-detail-modal').classList.contains('open'))cerrarDetalleEvento(); });
 
 function eliminarEv(id){if(!confirm('¿Eliminar evento?'))return;eventos=eventos.filter(e=>e.id!==id);saveEv(eventos);renderEventos();}
 
