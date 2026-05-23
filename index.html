@@ -919,11 +919,11 @@ textarea{resize:vertical;min-height:65px}
 
 <!-- AJUSTES -->
 <div class="sec" id="tab-ajustes">
-  <div style="font-size:16px;font-weight:500;margin-bottom:1.5rem"><i class="ti ti-settings"></i> Ajustes del sistema</div>
+  <div class="sec-label" style="margin-bottom:1.5rem;font-size:14px;font-weight:600;letter-spacing:.04em"><i class="ti ti-settings"></i> Ajustes del sistema</div>
 
   <!-- Hotel -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-building"></i> Datos del hotel</div>
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-building"></i> Datos del hotel</div>
     <div class="form-2" style="margin-bottom:10px">
       <div class="fg" style="margin-bottom:0"><label>Nombre del hotel</label><input type="text" id="aj-hotel-nombre" placeholder="Seda Club Hotel"/></div>
       <div class="fg" style="margin-bottom:0"><label>Ciudad</label><input type="text" id="aj-hotel-ciudad" placeholder="Granada"/></div>
@@ -938,7 +938,7 @@ textarea{resize:vertical;min-height:65px}
 
   <!-- Lugares -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-map-pin"></i> Lugares del hotel</div>
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-map-pin"></i> Lugares del hotel</div>
     <div id="aj-lugares-lista"></div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <input type="text" id="aj-lugar-nuevo" placeholder="Ej: Jardín, Terraza interior..." style="flex:1;font-size:13px"/>
@@ -948,7 +948,7 @@ textarea{resize:vertical;min-height:65px}
 
   <!-- Tipos de servicio -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:8px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-tools-kitchen-2"></i> Tipos de servicio</div>
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-tools-kitchen-2"></i> Tipos de servicio</div>
     <div id="aj-tipos-lista"></div>
     <div class="form-3" style="margin-top:8px">
       <div class="fg" style="margin-bottom:0"><label>Nombre</label><input type="text" id="aj-tipo-nom" placeholder="Brunch"/></div>
@@ -960,7 +960,7 @@ textarea{resize:vertical;min-height:65px}
 
   <!-- Exportar / Importar -->
   <div class="card" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:500;margin-bottom:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em"><i class="ti ti-database"></i> Datos</div>
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-database"></i> Datos y copias de seguridad</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn-sec" style="font-size:12px" onclick="exportarDatos()"><i class="ti ti-download"></i> Exportar todos los datos</button>
       <button class="btn-sec" style="font-size:12px" onclick="ge('import-file').click()"><i class="ti ti-upload"></i> Importar datos</button>
