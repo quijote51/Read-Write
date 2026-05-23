@@ -225,6 +225,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 .empty{text-align:center;color:var(--text-secondary);padding:2.5rem 2rem;font-size:14px}
 .sec-label{font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .sec-label::after{content:'';flex:1;height:.5px;background:var(--border)}
+.form-sec{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 8px;display:flex;align-items:center;gap:7px}
+.form-sec::before{content:'';width:3px;height:11px;background:var(--gold);border-radius:2px;flex-shrink:0}
 
 /* ── FORMS ── */
 .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
@@ -970,6 +972,7 @@ textarea{resize:vertical;min-height:65px}
   </div>
 
   <div class="card">
+    <div class="form-sec">Información del evento</div>
     <div class="form-3" style="margin-bottom:10px">
       <div class="fg" style="margin-bottom:0"><label for="n-nom">Nombre / cliente</label><input type="text" id="n-nom" autocomplete="off" placeholder="Cumpleaños Ana"/></div>
       <div class="fg" style="margin-bottom:0"><label for="n-fecha">Fecha</label><input type="date" id="n-fecha" autocomplete="off"/></div>
@@ -985,6 +988,8 @@ textarea{resize:vertical;min-height:65px}
         <select id="n-lugar"><option>Azotea</option><option>Restaurante Clandestino</option><option>Salón privado</option></select>
       </div>
     </div>
+
+    <div class="form-sec">Producción y precio</div>
     <div class="form-2" style="margin-bottom:10px">
       <div class="fg" style="margin-bottom:0">
         <label>Factor de producción <span style="color:var(--text-secondary);font-weight:300">(uds. por persona)</span></label>
@@ -1007,7 +1012,9 @@ textarea{resize:vertical;min-height:65px}
         <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">Para calcular el margen en el escandallo</div>
       </div>
     </div>
-    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Platos: uno por línea · <b>F:</b> frío · <b>C:</b> caliente · <b>P:</b> postre · <b>M:</b> principal</p>
+
+    <div class="form-sec">Menú</div>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Un plato por línea · <b>F:</b> frío · <b>C:</b> caliente · <b>P:</b> postre · <b>M:</b> principal</p>
     <div class="form-2" style="margin-bottom:10px">
       <div class="fg" style="margin-bottom:0"><label>Aperitivos fríos</label><textarea id="n-fr" placeholder="F:Ensaladilla rusa de langostinos&#10;F:Tartar de salmón con mango"></textarea></div>
       <div class="fg" style="margin-bottom:0"><label>Aperitivos calientes</label><textarea id="n-ca" placeholder="C:Pastela Moruna&#10;C:Croquetas de pollo y jamón ibérico"></textarea></div>
@@ -1016,12 +1023,14 @@ textarea{resize:vertical;min-height:65px}
       <div class="fg" style="margin-bottom:0"><label>Postres</label><textarea id="n-po" placeholder="P:Bocaditos de lemon pie"></textarea></div>
       <div class="fg" style="margin-bottom:0"><label>Platos principales</label><textarea id="n-pr" placeholder="M:Presa ibérica con puré de boniato"></textarea></div>
     </div>
+
+    <div class="form-sec">Alergias y alérgenos</div>
     <div class="fg"><label>Alergias de clientes</label><input type="text" id="n-alerg-txt" placeholder="Ej: 1 pax huevo · 2 pax gluten"/></div>
     <div class="fg"><label>Alérgenos presentes en el menú</label><div class="alg-cb-grid" id="alg-selector"></div></div>
 
     <!-- MENÚ INFANTIL -->
-    <div style="margin-top:12px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius);border:.5px solid var(--border)">
-      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text-primary)"><i class="ti ti-heart"></i> Menú infantil (opcional)</div>
+    <div style="margin-top:14px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius);border:.5px solid var(--border)">
+      <div class="form-sec" style="margin-top:0"><i class="ti ti-heart" style="color:var(--gold)"></i> Menú infantil (opcional)</div>
       <div class="form-2" style="margin-bottom:10px">
         <div class="fg" style="margin-bottom:0">
           <label>Número de niños</label>
@@ -1036,8 +1045,8 @@ textarea{resize:vertical;min-height:65px}
       <div id="n-platos-infantil" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px"></div>
     </div>
 
-    <div id="n-edit-aviso" style="display:none;padding:8px 12px;background:var(--warn-bg);color:var(--warn-text);border-radius:var(--radius);font-size:13px;margin-bottom:8px"></div>
-    <button class="btn btn-p" style="margin-top:12px" id="n-guardar-btn" onclick="guardarEvento()">Guardar evento</button>
+    <div id="n-edit-aviso" style="display:none;padding:8px 12px;background:var(--warn-bg);color:var(--warn-text);border-radius:var(--radius);font-size:13px;margin-top:12px"></div>
+    <button class="btn btn-p" style="margin-top:16px;width:100%;justify-content:center;padding:12px 18px;font-size:14px;font-weight:600;border-radius:var(--radius-lg)" id="n-guardar-btn" onclick="guardarEvento()"><i class="ti ti-check"></i> Guardar evento</button>
   </div>
 </div>
 </div>
