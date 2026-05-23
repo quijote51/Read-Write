@@ -312,6 +312,7 @@ textarea{resize:vertical;min-height:65px}
 .ev-detail-actions{display:flex;gap:6px;padding:1rem 1.5rem;border-top:.5px solid var(--border);background:var(--bg-secondary);flex-wrap:wrap}
 .ev-card-top.clickable{cursor:pointer;transition:background var(--t)}
 .ev-card-top.clickable:hover{background:var(--bg-secondary)}
+.ev-card-prod-activa{border-color:rgba(201,168,76,.5)!important;box-shadow:var(--shadow-sm),0 0 0 2px rgba(201,168,76,.15)!important}
 
 /* ── GLOBAL SEARCH OVERLAY ── */
 #search-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:1100;display:none;align-items:flex-start;justify-content:center;padding:80px 1rem 2rem}
@@ -583,15 +584,8 @@ textarea{resize:vertical;min-height:65px}
 
 <!-- PRODUCCIÓN INDIVIDUAL -->
 <div class="sec" id="tab-produccion">
-  <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center">
-    <select id="prod-sel" onchange="renderProd()" style="flex:1">
-      <option value="">Selecciona un evento</option>
-    </select>
-    <button class="btn-print no-print" onclick="imprimirFicha()" id="btn-imprimir" style="display:none">
-      <i class="ti ti-printer"></i> Imprimir ficha
-    </button>
-  </div>
-  <div id="prod-cont"></div>
+  <select id="prod-sel" style="display:none"><option value=""></option></select>
+  <div id="prod-ev-list"></div>
 </div>
 
 <!-- PRODUCCIÓN CONJUNTA -->
@@ -3336,73 +3330,112 @@ function guardarEvento(){
 
 /* ---- PRODUCCIÓN ---- */
 function fillProdSel(){
+  // Keep hidden select in sync for irProdDashboard
   ge('prod-sel').innerHTML='<option value="">Selecciona un evento</option>'+[...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax)</option>`).join('');
+  renderProdEvList();
 }
-function renderProd(){
-  const id=parseInt(ge('prod-sel').value),cont=ge('prod-cont');
-  const btnImp=ge('btn-imprimir');
-  if(!id){cont.innerHTML='<div class="empty">Selecciona un evento.</div>';btnImp.style.display='none';return;}
-  const ev=eventos.find(e=>e.id===id);if(!ev)return;
+
+let _prodEvActivo=null;
+
+function renderProdEvList(){
+  const cont=ge('prod-ev-list'); if(!cont)return;
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const evs=[...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const proximos=evs.filter(e=>new Date(e.fecha+'T00:00:00')>=new Date(hoy.getTime()-86400000));
+  const pasados=evs.filter(e=>new Date(e.fecha+'T00:00:00')<new Date(hoy.getTime()-86400000));
+  const mesCorto=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+  function evCard(ev){
+    const [,fm,fd]=ev.fecha.split('-');
+    const c=getTipoColor(ev.tipo);
+    const activo=_prodEvActivo===ev.id;
+    return`<div id="prod-ev-${ev.id}" class="ev-card${activo?' ev-card-prod-activa':''}" style="border-left:4px solid ${c};cursor:pointer;margin-bottom:6px" onclick="abrirProdEv(${ev.id})">
+      <div class="ev-card-top" style="padding:10px 12px">
+        <div class="ev-card-date" style="border-top:2px solid ${c}">
+          <div class="ev-card-date-day">${Number(fd)}</div>
+          <div class="ev-card-date-mon">${mesCorto[Number(fm)]}</div>
+        </div>
+        <div class="ev-card-body">
+          <div class="ev-card-name" style="font-size:14px">${ev.nombre}</div>
+          <div class="ev-card-meta"><i class="ti ti-clock"></i> ${ev.hora} · <i class="ti ti-users"></i> ${ev.pax} pax · ${ev.lugar}</div>
+        </div>
+        <i class="ti ${activo?'ti-chevron-up':'ti-chevron-down'}" style="color:var(--text-tertiary);font-size:14px;flex-shrink:0"></i>
+      </div>
+      ${activo?`<div id="prod-inline-${ev.id}" style="border-top:.5px solid var(--border)"></div>`:''}
+    </div>`;
+  }
+
+  cont.innerHTML=`
+    ${proximos.length?`<div class="sec-label" style="margin-bottom:10px"><i class="ti ti-calendar-event" style="color:var(--gold)"></i> Próximos eventos</div>${proximos.map(evCard).join('')}`:''}
+    ${pasados.length?`<div class="sec-label" style="margin:14px 0 10px"><i class="ti ti-history"></i> Eventos pasados</div>${pasados.slice(0,5).map(evCard).join('')}`:''}
+  `;
+  if(_prodEvActivo) setTimeout(()=>renderProdInline(_prodEvActivo),0);
+}
+
+function abrirProdEv(id){
+  _prodEvActivo = (_prodEvActivo===id) ? null : id;
+  ge('prod-sel').value = _prodEvActivo||'';
+  renderProdEvList();
+  if(_prodEvActivo){
+    setTimeout(()=>{
+      const el=ge('prod-ev-'+id);
+      if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    },100);
+  }
+}
+
+function renderProdInline(id){
+  const cont=ge('prod-inline-'+id); if(!cont)return;
+  const ev=eventos.find(e=>e.id===id); if(!ev)return;
   const f=getFactorEvento(ev),pax=ev.pax,total=ev.platos.length*Math.round(pax*f);
-  btnImp.style.display='inline-flex';
 
-  const alergC=ev.alergias_txt?`<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px"><div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:3px"><i class="ti ti-alert-triangle"></i> Alergias de clientes</div><div style="font-size:13px">${ev.alergias_txt}</div></div>`:'';
-  const alergMenu=(ev.alergenos_menu||[]).length?`<div class="card" style="margin-bottom:10px"><div style="font-size:13px;font-weight:500;margin-bottom:5px"><i class="ti ti-shield-check"></i> Alérgenos en este menú</div><div>${(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div></div>`:'';
+  const alergC=ev.alergias_txt?`<div style="background:var(--warn-bg);border-radius:var(--radius);padding:8px 12px;font-size:13px;color:var(--warn-text);margin-bottom:8px"><i class="ti ti-alert-triangle"></i> <b>Alergias:</b> ${ev.alergias_txt}</div>`:'';
+  const alergMenu=(ev.alergenos_menu||[]).length?`<div style="margin-bottom:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px">${(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div>`:'';
 
-  let t=`<div class="card" style="padding:0;overflow:hidden"><table class="ptable"><thead><tr><th>Plato</th><th>Alérgenos</th><th style="text-align:right">Uds.</th><th style="text-align:center" class="no-print">Receta</th></tr></thead><tbody>`;
+  let tabla=`<div class="card" style="padding:0;overflow:hidden;margin-bottom:8px"><div class="ptable-outer"><table class="ptable"><thead><tr><th>Plato</th><th>Alérgenos</th><th style="text-align:right">Uds.</th><th class="no-print" style="text-align:center">Receta</th></tr></thead><tbody>`;
   CATS.forEach(cat=>{
     const items=ev.platos.filter(p=>p.cat===cat.key);if(!items.length)return;
-    t+=`<tr><td colspan="4" class="cat-hdr" style="border-left:3px solid ${cat.color}">${cat.label}</td></tr>`;
+    tabla+=`<tr><td colspan="4" class="cat-hdr" style="border-left:3px solid ${cat.color}">${cat.label}</td></tr>`;
     items.forEach(p=>{
       const qty=Math.round(pax*f);
       const aH=(p.alg||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
       const rec=recetas.find(r=>p.nombre.toLowerCase().includes(r.nombre.toLowerCase().slice(0,12))||r.nombre.toLowerCase().includes(p.nombre.toLowerCase().slice(0,12)));
-      const rb=rec?`<button class="no-print" onclick="showTab('recetario',document.querySelectorAll('.tab')[3]);verReceta('${rec.id}')" style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--info-bg);color:var(--info-text);border:none;cursor:pointer"><i class="ti ti-book"></i> Ver</button>`:'';
-      t+=`<tr><td style="font-weight:500">${p.nombre}</td><td>${aH||'—'}</td><td style="text-align:right;font-size:17px;font-weight:500">${qty}</td><td style="text-align:center" class="no-print">${rb}</td></tr>`;
+      const rb=rec?`<button class="no-print" onclick="event.stopPropagation();showTab('recetario',document.querySelector('[data-tab=recetario]'));setTimeout(()=>verReceta('${rec.id}'),120)" style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--info-bg);color:var(--info-text);border:none;cursor:pointer"><i class="ti ti-book"></i> Ver</button>`:'';
+      tabla+=`<tr><td style="font-weight:500">${p.nombre}</td><td>${aH||'—'}</td><td style="text-align:right;font-size:17px;font-weight:700">${qty}</td><td style="text-align:center" class="no-print">${rb}</td></tr>`;
     });
   });
-  t+='</tbody></table></div>';
+  tabla+='</tbody></table></div></div>';
 
-  // Datos del evento para cabecera de impresión
-  cont.dataset.evId=ev.id;
-
-  // Sección menú infantil
-  const infHTML=ev.infantil?.ninos?`
-  <div class="card" style="border:.5px solid var(--success-text);margin-top:10px">
-    <div style="font-size:13px;font-weight:500;color:var(--success-text);margin-bottom:8px"><i class="ti ti-heart"></i> Menú infantil — ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''}</div>
-    <table class="ptable">
-      <thead><tr><th>Plato</th><th>Alérgenos</th><th style="text-align:right">Uds.</th></tr></thead>
-      <tbody>
-        ${(ev.infantil.platos||[]).map(pid=>{
-          const p=PLATOS_INFANTIL.find(x=>x.id===pid); if(!p)return'';
-          const aH=p.alg.map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
-          return`<tr><td style="font-weight:500">${p.emoji} ${p.nombre}</td><td>${aH}</td><td style="text-align:right;font-size:17px;font-weight:500">${ev.infantil.ninos}</td></tr>`;
-        }).join('')}
-        ${ev.infantil.precio_nino?`<tr style="background:var(--bg-secondary)"><td colspan="2" style="font-weight:500">Total menús infantiles</td><td style="text-align:right;font-weight:500">${(ev.infantil.precio_nino*ev.infantil.ninos).toFixed(0)}€</td></tr>`:''}
-      </tbody>
-    </table>
+  const infHTML=ev.infantil?.ninos?`<div class="card" style="border:.5px solid var(--success-text);padding:0;overflow:hidden">
+    <div style="padding:8px 12px;font-size:13px;font-weight:500;color:var(--success-text);border-bottom:.5px solid var(--border)"><i class="ti ti-heart"></i> Menú infantil — ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''}</div>
+    <div class="ptable-outer"><table class="ptable"><thead><tr><th>Plato</th><th>Alérgenos</th><th style="text-align:right">Uds.</th></tr></thead><tbody>
+      ${(ev.infantil.platos||[]).map(pid=>{const p=PLATOS_INFANTIL.find(x=>x.id===pid);if(!p)return'';const aH=p.alg.map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');return`<tr><td style="font-weight:500">${p.emoji} ${p.nombre}</td><td>${aH}</td><td style="text-align:right;font-size:17px;font-weight:700">${ev.infantil.ninos}</td></tr>`;}).join('')}
+    </tbody></table></div>
   </div>`:'';
 
-  cont.innerHTML=`
-  <div class="ficha-print" style="margin-bottom:12px;padding:10px;background:#f9f9f9;border:1px solid #ddd;border-radius:6px;border-left:4px solid #1a1a1a">
-    <div style="font-size:16px;font-weight:bold;margin-bottom:4px">${ev.nombre}</div>
-    <div style="font-size:12px;color:var(--text-secondary);display:flex;gap:16px;flex-wrap:wrap">
-      <span><i class="ti ti-calendar"></i> ${fmtFecha(ev.fecha)} · ${ev.hora}</span>
-      <span><i class="ti ti-users"></i> ${pax} personas${ev.infantil?.ninos?' + '+ev.infantil.ninos+' niños':''}</span>
-      <span><i class="ti ti-map-pin"></i> ${ev.lugar}</span>
-      <span><i class="ti ti-tools-kitchen-2"></i> ${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
+  cont.innerHTML=`<div style="padding:12px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:10px">
+      <div class="stat"><div class="stat-l">Personas</div><div class="stat-v">${pax}</div></div>
+      <div class="stat"><div class="stat-l">Factor</div><div class="stat-v">${f.toFixed(1)}×</div></div>
+      <div class="stat"><div class="stat-l">Platos</div><div class="stat-v">${ev.platos.length}</div></div>
+      <div class="stat"><div class="stat-l">Raciones tot.</div><div class="stat-v">${total}</div></div>
     </div>
-  </div>
-  <div class="stat-g">
-    <div class="stat"><div class="stat-l">Personas</div><div class="stat-v">${pax}${ev.infantil?.ninos?`<span style="font-size:13px;color:var(--success-text)"> +${ev.infantil.ninos}<i class="ti ti-heart" style="font-size:12px"></i></span>`:''}</div></div>
-    <div class="stat"><div class="stat-l">Factor</div><div class="stat-v">${f.toFixed(1)}×</div></div>
-    <div class="stat"><div class="stat-l">Platos distintos</div><div class="stat-v">${ev.platos.length}</div></div>
-    <div class="stat"><div class="stat-l">Raciones totales</div><div class="stat-v">${total}</div></div>
-  </div>`+alergC+alergMenu+t+infHTML;
+    ${alergC}${alergMenu}${tabla}${infHTML}
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <button onclick="event.stopPropagation();window._prodPrintId=${id};ge('prod-sel').value=${id};imprimirFicha()" class="btn-sec" style="font-size:12px"><i class="ti ti-printer"></i> Imprimir ficha</button>
+      <button onclick="event.stopPropagation();verDetalleEvento(${id})" class="btn-sec" style="font-size:12px"><i class="ti ti-eye"></i> Ver detalle completo</button>
+    </div>
+  </div>`;
+}
+function renderProd(){
+  // Legacy: si se usa el select oculto directamente, sincronizar con el sistema de tarjetas
+  const id=parseInt(ge('prod-sel').value);
+  if(id && id!==_prodEvActivo){ _prodEvActivo=id; renderProdEvList(); }
 }
 
 function imprimirFicha(){
-  const id=parseInt(ge('prod-sel').value);
+  const id=parseInt(window._prodPrintId||_prodEvActivo||ge('prod-sel').value||0);
+  window._prodPrintId=null;
   const ev=eventos.find(e=>e.id===id);
   if(!ev)return;
   const ahora=new Date();
@@ -4787,8 +4820,8 @@ function copiarConfirmacion(){
 
 
 function irProdDashboard(evId){
-  showTab('produccion',document.querySelectorAll('.tab')[3]);
-  setTimeout(()=>{ge('prod-sel').value=evId;renderProd();},50);
+  showTab('produccion',document.querySelector('[data-tab=produccion]'));
+  setTimeout(()=>{ _prodEvActivo=evId; ge('prod-sel').value=evId; renderProdEvList(); },80);
 }
 function irVajDashboard(evId){
   showTab('vajilla',document.querySelectorAll('.tab')[10]);
