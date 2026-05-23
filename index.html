@@ -1914,35 +1914,46 @@ function renderPantallaCocina(){
   ];
 
   cont.innerHTML=`
-  <div style="background:var(--bg-secondary);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem">
-    <div style="font-size:20px;font-weight:500">${ev.nombre}</div>
-    <div style="font-size:14px;color:var(--text-secondary);margin-top:4px">
-      ${fmtFecha(ev.fecha)} · ${ev.hora} · ${ev.lugar} · <b>${ev.pax} pax</b> · Factor ×${f} → <b>${raciones} uds/plato</b>
+  <!-- Kitchen display header -->
+  <div style="background:var(--negro);color:var(--blanco);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem;position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold) 70%,transparent)"></div>
+    <div style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.3rem;font-weight:700;letter-spacing:.02em;margin-bottom:5px">${ev.nombre}</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.6)">
+      <span><i class="ti ti-calendar" style="color:var(--gold)"></i> ${fmtFecha(ev.fecha)}</span>
+      <span><i class="ti ti-clock" style="color:var(--gold)"></i> ${ev.hora}</span>
+      <span><i class="ti ti-map-pin" style="color:var(--gold)"></i> ${ev.lugar}</span>
+      <span style="color:rgba(255,255,255,.9);font-weight:600"><i class="ti ti-users" style="color:var(--gold)"></i> ${ev.pax} pax</span>
+      <span style="color:rgba(255,255,255,.9);font-weight:600"><i class="ti ti-stack" style="color:var(--gold)"></i> ${raciones} uds/plato</span>
     </div>
-    ${ev.alergias_txt?`<div style="margin-top:6px;font-size:14px;color:var(--warn-text);font-weight:500"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
+    ${ev.alergias_txt?`<div style="margin-top:8px;font-size:13px;color:#fbbf24;font-weight:600;background:rgba(251,191,36,.1);border-radius:var(--radius);padding:4px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
   </div>
 
   ${CATS_ORDER.map(cat=>{
     const items=ev.platos.filter(p=>p.cat===cat.key);
     if(!items.length)return'';
-    return`<div style="margin-bottom:1rem">
-      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:${cat.color};margin-bottom:8px;text-transform:uppercase;border-bottom:2px solid ${cat.color};padding-bottom:4px">${cat.label}</div>
+    return`<div style="margin-bottom:.75rem">
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:${cat.color};border-radius:var(--radius);margin-bottom:5px">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff">${cat.label}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.7);margin-left:auto">${items.length} plato${items.length>1?'s':''}</span>
+      </div>
       ${items.map(p=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;border-left:4px solid ${cat.color}">
-          <div style="font-size:16px;font-weight:500">${p.nombre}</div>
-          <div style="font-size:32px;font-weight:700;color:${cat.color};min-width:70px;text-align:right">${raciones}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:4px;border-left:3px solid ${cat.color}">
+          <div style="font-size:15px;font-weight:500">${p.nombre}</div>
+          <div style="background:${cat.color};color:#fff;border-radius:var(--radius);padding:4px 14px;font-size:26px;font-weight:800;min-width:64px;text-align:center;letter-spacing:-.02em">${raciones}</div>
         </div>`).join('')}
     </div>`;
   }).join('')}
 
   ${ev.infantil?.ninos?`
-  <div style="margin-bottom:1rem">
-    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:#1D9E75;margin-bottom:8px;text-transform:uppercase;border-bottom:2px solid #1D9E75;padding-bottom:4px"><i class="ti ti-heart"></i> MENÚ INFANTIL — ${ev.infantil.ninos} NIÑOS</div>
+  <div style="margin-bottom:.75rem">
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:#1D9E75;border-radius:var(--radius);margin-bottom:5px">
+      <span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff"><i class="ti ti-heart"></i> MENÚ INFANTIL — ${ev.infantil.ninos} NIÑOS</span>
+    </div>
     ${(ev.infantil.platos||[]).map(pid=>{
       const p=PLATOS_INFANTIL.find(x=>x.id===pid); if(!p)return'';
-      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;border-left:4px solid #1D9E75">
-        <div style="font-size:16px;font-weight:500">${p.emoji} ${p.nombre}</div>
-        <div style="font-size:32px;font-weight:700;color:#1D9E75;min-width:70px;text-align:right">${ev.infantil.ninos}</div>
+      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:4px;border-left:3px solid #1D9E75">
+        <div style="font-size:15px;font-weight:500">${p.nombre}</div>
+        <div style="background:#1D9E75;color:#fff;border-radius:var(--radius);padding:4px 14px;font-size:26px;font-weight:800;min-width:64px;text-align:center">${ev.infantil.ninos}</div>
       </div>`;
     }).join('')}
   </div>`:''}`;
