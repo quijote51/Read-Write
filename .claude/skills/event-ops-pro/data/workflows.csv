@@ -1,0 +1,31 @@
+No,Flujo,Trigger,Paso,Responsable,Modulo_App,Tiempo,Dependencias,Output,Notas
+1,Creacion Evento,Consulta cliente o planificacion interna,1. Abrir tab Nuevo Evento en la app,Jefa de Eventos,nuevo,2 min,,Formulario en blanco,Usar plantilla si existe tipo similar
+2,Creacion Evento,Datos basicos introducidos,2. Rellenar nombre / fecha / hora / pax / tipo / lugar,Jefa de Eventos,nuevo,3 min,Fecha confirmada por venue,Campos obligatorios validados,Nombre debe identificar cliente + mes
+3,Creacion Evento,Formulario basico completo,3. Añadir platos del menú (F/C/M/P) y alérgenos,Jefa de Eventos / Chef,nuevo,5 min,Menu acordado con cliente,Platos guardados en evento,Usar nombres exactos del recetario para vincular recetas
+4,Creacion Evento,Platos añadidos,4. Asignar precio/pax y calcular escandallo,Jefa de Eventos / Direccion,escandallo,5 min,Costes actualizados en recetario,Margen calculado,Margen objetivo mínimo 55%
+5,Creacion Evento,Evento guardado,5. Verificar que aparece en Calendario y Dashboard,Jefa de Eventos,calendario dashboard,1 min,Evento guardado correctamente,Evento visible en ambas vistas,Sincronización automática
+6,Creacion Evento,Evento creado,6. Asignar personal y enviar briefing,Jefa de Eventos,personal,5 min,Personal disponible confirmado,Asignaciones guardadas,Briefing mínimo: nombre evento / fecha / hora / pax / lugar
+7,Confirmacion Cliente,48h antes del evento,1. Revisar que evento está marcado como confirmado,Jefa de Eventos,eventos,1 min,,Check estado confirmación,Si no confirmado enviar WhatsApp al cliente
+8,Confirmacion Cliente,Confirmación recibida,2. Actualizar número final de pax si cambió,Jefa de Eventos,nuevo (editar),2 min,,Pax actualizado,Recalcular producción y vajilla con nuevo número
+9,Confirmacion Cliente,Pax confirmado,3. Imprimir o exportar ficha de producción,Chef,produccion,2 min,Pax final confirmado,Ficha producción impresa / PDF,Pegar en tablón de cocina
+10,Briefing 48h,48 horas antes,1. Revisar ficha de producción con todo el equipo,Chef + Sala,produccion,15 min,Ficha producción actualizada,Equipo informado,Revisar alérgenos especialmente
+11,Briefing 48h,Briefing realizado,2. Confirmar stock de vajilla suficiente,Sala / Maitre,vajilla,5 min,Evento seleccionado en vajilla,Stock OK o alerta insuficiencia,Si insuficiente solicitar préstamo o alquiler hoy
+12,Briefing 48h,Vajilla verificada,3. Preparar mise en place para bebidas,Barra / Sala,bebidas,10 min,Bebidas planificadas en app,Bebidas preparadas,Confirmar temperatura servicio y cantidades
+13,Briefing 48h,Mise en place bebidas,4. Confirmar menú infantil si aplica,Chef + Sala,nuevo (editar),3 min,Número niños confirmado,Menú infantil preparado,Alergias infantiles verificadas con padres
+14,Dia del Evento,Mañana del evento (D-0),1. Abrir Pantalla Cocina (KDS) con el evento seleccionado,Chef,cocina,1 min,Evento del día,KDS con platos y cantidades,Verificar hora de servicio
+15,Dia del Evento,KDS activo,2. Iniciar preparaciones en orden de categorías (F→C→M→P),Equipo Cocina,cocina,Variable,KDS cargado,Prep en curso,Comenzar por frío primero
+16,Dia del Evento,Preparaciones comenzadas,3. Marcar platos completados con sistema bump (tocar cantidad),Chef / Cocinero,cocina,Continuo,Prod en curso,Platos marcados en KDS,El contador X/Y actualiza progreso
+17,Dia del Evento,Servicio iniciado,4. Sala recoge platos en orden y sirve a mesa/buffet,Sala / Maitre,—,Variable,Platos completados,Servicio en curso,Comunicar con cocina ante cualquier incidencia
+18,Dia del Evento,Servicio completado,5. Reset del KDS para el evento,Chef,cocina,1 min,,KDS limpio,Click botón Reset en cabecera KDS
+19,Post Evento,Evento finalizado,1. Registrar incidencias y anotaciones en campo Notas,Jefa de Eventos,eventos (editar),5 min,,Notas guardadas,Alergias inesperadas / cambios de pax / platos rechazados
+20,Post Evento,Notas guardadas,2. Revisar margen real vs estimado en Historial,Direccion,historial,5 min,Precio_venta y costes actualizados,Margen real calculado,Si margen < 45% analizar causas
+21,Post Evento,Analisis completado,3. Enviar email de satisfacción al cliente (24h post-evento),Jefa de Eventos,—,3 min,,Email enviado,Usar template de seguimiento en marketing
+22,Revision Semanal,Cada lunes,1. Revisar eventos de la semana en Calendario,Direccion / Jefa,calendario,5 min,,Lista eventos semana,Identificar solapamientos o cuellos de botella
+23,Revision Semanal,Lista revisada,2. Verificar personal asignado a cada evento,Jefa de Eventos,personal,5 min,,Asignaciones completas,Completar asignaciones pendientes
+24,Revision Semanal,Personal verificado,3. Lanzar pedido de compras para ingredientes de la semana,Chef,compras,10 min,Eventos de semana confirmados,Lista de compras generada,Agrupar por proveedor para eficiencia
+25,Revision Semanal,Compras planificadas,4. Verificar stock de vajilla para eventos de la semana,Sala,vajilla,5 min,,Alertas de insuficiencia resueltas,Ordenar piezas adicionales si necesario
+26,Cierre Mensual,Ultimo dia del mes,1. Filtrar Historial por mes en curso y exportar Excel,Direccion,historial,3 min,,Excel con todos los eventos del mes,Revisar margen total del mes
+27,Cierre Mensual,Excel exportado,2. Analizar gráfico de tendencias (ingresos y margen),Direccion,historial,10 min,,Informe de tendencias,Identificar tipo de evento más rentable
+28,Cierre Mensual,Analisis completado,3. Actualizar precios de ingredientes si han variado,Chef / Admin,escandallo (precios),15 min,Facturas proveedores del mes,Precios actualizados,Recalcula automáticamente escandallo de todos los eventos
+29,Incidencia Evento,Durante el servicio,1. Anotar incidencia inmediatamente (alergia inesperada / rotura),Chef / Maitre,eventos (notas),2 min,,Nota urgente guardada,Usar campo notas desde cualquier módulo
+30,Incidencia Evento,Incidencia registrada,2. Ajustar producción si cambió el pax last minute,Chef,produccion,3 min,Nuevo numero pax,Producción ajustada,Factor se recalcula automáticamente al cambiar pax
