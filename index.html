@@ -169,7 +169,24 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 .cat-F{background:#e6f1fb;color:#185fa5}.cat-C{background:#faece7;color:#993c1d}
 .cat-P{background:#eaf3de;color:#3b6d11}.cat-M{background:#eeedfe;color:#534ab7}
 
-/* ── RECIPE + VAJILLA GRIDS ── */
+/* ── EVENT CARDS ── */
+.ev-card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px;overflow:hidden;transition:border-color var(--t),box-shadow var(--t)}
+.ev-card:hover{box-shadow:var(--shadow-md);border-color:var(--border-md)}
+.ev-card-top{display:flex;align-items:flex-start;gap:12px;padding:13px 14px 11px}
+.ev-card-date{width:42px;flex-shrink:0;text-align:center;background:var(--bg-secondary);border-radius:var(--radius);padding:6px 4px}
+.ev-card-date-day{font-size:19px;font-weight:700;color:var(--text-primary);line-height:1}
+.ev-card-date-mon{font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.ev-card-body{flex:1;min-width:0}
+.ev-card-name{font-size:15px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev-card-meta{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;flex-wrap:wrap;line-height:1.5}
+.ev-card-footer{display:flex;gap:4px;align-items:center;padding:7px 12px;border-top:.5px solid var(--border);background:var(--bg-secondary)}
+/* ── ICON BUTTONS ── */
+.btn-icon{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);padding:5px 10px;font-size:12px;color:var(--text-secondary);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:inherit;font-weight:400;transition:all var(--t);min-height:30px;white-space:nowrap}
+.btn-icon:hover{background:var(--bg-tertiary);color:var(--text-primary);border-color:var(--border-md)}
+.btn-icon.danger{color:var(--danger-text);border-color:rgba(163,45,45,.3)}
+.btn-icon.danger:hover{background:var(--danger-bg);border-color:var(--danger-text)}
+.btn-icon.success{color:var(--success-text);border-color:rgba(59,109,17,.3)}
+.btn-icon.success:hover{background:var(--success-bg);border-color:var(--success-text)}
 .receta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
 .receta-card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:border-color var(--t),box-shadow var(--t),transform 200ms ease}
 .receta-card:hover{border-color:var(--border-md);box-shadow:var(--shadow-md);transform:translateY(-1px)}
@@ -2728,6 +2745,7 @@ function renderEventos(){
   if(busca)evs=evs.filter(e=>e.nombre.toLowerCase().includes(busca)||e.lugar?.toLowerCase().includes(busca));
   const cont=ge('lista-ev');
   if(!evs.length){cont.innerHTML='<div class="empty">No hay eventos.</div>';return;}
+  const mesCorto=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   cont.innerHTML=evs.map(ev=>{
     const alerg=ev.alergias_txt?`<div style="margin-top:5px;font-size:12px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:'';
     const algHTML=(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
@@ -2735,28 +2753,42 @@ function renderEventos(){
     const infHTML=ev.infantil?.ninos?`<div style="margin-top:5px;font-size:12px;background:var(--success-bg);color:var(--success-text);padding:3px 8px;border-radius:var(--radius);display:inline-block"><i class="ti ti-heart"></i> ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''} · Menú infantil${ev.infantil.precio_nino?' · '+ev.infantil.precio_nino+'€/niño':''}</div>`:'';
     const notaHTML=ev.notas?`<div style="margin-top:5px;font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);padding:4px 8px;border-radius:var(--radius);border-left:2px solid var(--border-md)"><i class="ti ti-note"></i> ${ev.notas}</div>`:'';
     const evColor=getTipoColor(ev.tipo);
-    return`<div class="card" style="border-left:4px solid ${evColor}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
-        <div style="flex:1;min-width:200px">
-          <div style="font-size:15px;font-weight:500">${ev.nombre}</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
-            <i class="ti ti-calendar"></i> ${fmtFecha(ev.fecha)} · ${ev.hora} &nbsp;·&nbsp;
-            <i class="ti ti-users"></i> ${ev.pax} pax · ${ev.lugar} &nbsp;·&nbsp;
-            <span style="color:${evColor}">${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
-            ${ev.precio_venta?` &nbsp;·&nbsp; <b>${ev.precio_venta}€/pax</b>`:''}
-          </div>
+    const [,fm,fd]=ev.fecha.split('-');
+    return`<div class="ev-card" style="border-left:4px solid ${evColor}">
+      <div class="ev-card-top">
+        <div class="ev-card-date" style="border-top:2.5px solid ${evColor}">
+          <div class="ev-card-date-day">${Number(fd)}</div>
+          <div class="ev-card-date-mon">${mesCorto[Number(fm)]}</div>
         </div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-          ${getBadge(ev.fecha)}
-          <button onclick="editarEvento(${ev.id})" aria-label="Editar evento" style="font-size:11px;padding:5px 10px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer;min-height:32px"><i class="ti ti-edit"></i></button>
-          <button onclick="duplicarEvento(${ev.id})" aria-label="Duplicar evento" style="font-size:11px;padding:5px 10px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer;min-height:32px"><i class="ti ti-copy"></i></button>
-          <button onclick="editarNota(${ev.id})" aria-label="Añadir nota" style="font-size:11px;padding:5px 10px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer;min-height:32px"><i class="ti ti-note"></i></button>
-          <button class="btn-d" onclick="eliminarEv(${ev.id})" aria-label="Eliminar evento" style="font-size:11px;padding:5px 10px;min-height:32px"><i class="ti ti-trash"></i></button>
+        <div class="ev-card-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+            <div class="ev-card-name">${ev.nombre}</div>
+            ${getBadge(ev.fecha)}
+          </div>
+          <div class="ev-card-meta">
+            <i class="ti ti-clock"></i> ${ev.hora}
+            <span style="opacity:.3">·</span>
+            <i class="ti ti-users"></i> ${ev.pax} pax
+            <span style="opacity:.3">·</span>
+            ${ev.lugar}
+            <span style="opacity:.3">·</span>
+            <span style="color:${evColor};font-weight:500">${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
+            ${ev.precio_venta?`<span style="opacity:.3">·</span><b>${ev.precio_venta}€/pax</b>`:''}
+          </div>
+          ${alerg}${infHTML}${notaHTML}
+          ${algHTML?`<div style="margin-top:5px">${algHTML}</div>`:''}
+          ${chips?`<div style="margin-top:7px">${chips}</div>`:''}
         </div>
       </div>
-      ${alerg}${infHTML}${notaHTML}
-      ${algHTML?`<div style="margin-top:5px">${algHTML}</div>`:''}
-      ${chips?`<div style="margin-top:7px">${chips}</div>`:''}
+      <div class="ev-card-footer">
+        <button onclick="irProdDashboard(${ev.id})" class="btn-icon"><i class="ti ti-list-check"></i> Producción</button>
+        <button onclick="editarEvento(${ev.id})" aria-label="Editar" class="btn-icon"><i class="ti ti-edit"></i> Editar</button>
+        <button onclick="duplicarEvento(${ev.id})" aria-label="Duplicar" class="btn-icon"><i class="ti ti-copy"></i></button>
+        <button onclick="editarNota(${ev.id})" aria-label="Nota" class="btn-icon"><i class="ti ti-note"></i></button>
+        <button onclick="mostrarConfirmacion(${ev.id})" class="btn-icon success"><i class="ti ti-send"></i> Confirmar</button>
+        <div style="flex:1"></div>
+        <button onclick="eliminarEv(${ev.id})" aria-label="Eliminar" class="btn-icon danger"><i class="ti ti-trash"></i></button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -4015,25 +4047,34 @@ function initDashboard(){
   ${evHoy.length?evHoy.map(ev=>{
     const color=getTipoColor(ev.tipo);
     const vajAlerta=calcVajEvento(ev).some(v=>!v.ok);
-    return`<div class="card" style="border-left:4px solid ${color};margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
-        <div>
-          <div style="font-size:15px;font-weight:500">${ev.nombre}</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
-            <i class="ti ti-clock"></i> ${ev.hora} &nbsp;·&nbsp;
-            <i class="ti ti-users"></i> ${ev.pax} pax &nbsp;·&nbsp;
-            ${ev.lugar} &nbsp;·&nbsp;
-            <span style="color:${color}">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
-            ${ev.precio_venta?` &nbsp;·&nbsp; ${ev.precio_venta}€/pax`:''}
+    const [,fm,fd]=ev.fecha.split('-');
+    const mesC=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return`<div class="ev-card" style="border-left:4px solid ${color}">
+      <div class="ev-card-top">
+        <div class="ev-card-date" style="border-top:2.5px solid ${color}">
+          <div class="ev-card-date-day">${Number(fd)}</div>
+          <div class="ev-card-date-mon">${mesC[Number(fm)]}</div>
+        </div>
+        <div class="ev-card-body">
+          <div class="ev-card-name">${ev.nombre}</div>
+          <div class="ev-card-meta">
+            <i class="ti ti-clock"></i> ${ev.hora}
+            <span style="opacity:.3">·</span>
+            <i class="ti ti-users"></i> ${ev.pax} pax
+            <span style="opacity:.3">·</span>
+            ${ev.lugar}
+            <span style="opacity:.3">·</span>
+            <span style="color:${color};font-weight:500">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
+            ${ev.precio_venta?`<span style="opacity:.3">·</span>${ev.precio_venta}€/pax`:''}
           </div>
-          ${ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:3px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
-          ${vajAlerta?`<div style="font-size:12px;color:var(--danger-text);margin-top:3px"><i class="ti ti-alert-triangle"></i> Vajilla insuficiente</div>`:''}
+          ${ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
+          ${vajAlerta?`<div style="font-size:12px;color:var(--danger-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> Vajilla insuficiente</div>`:''}
         </div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap">
-          <button onclick="irProdDashboard(${ev.id})" style="font-size:11px;padding:4px 10px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);border:none;cursor:pointer"><i class="ti ti-list-check"></i> Producción</button>
-          <button onclick="irVajDashboard(${ev.id})" style="font-size:11px;padding:4px 10px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);border:.5px solid var(--border);cursor:pointer"><i class="ti ti-tools-kitchen"></i> Vajilla</button>
-          <button onclick="mostrarConfirmacion(${ev.id})" style="font-size:11px;padding:4px 10px;border-radius:var(--radius);background:var(--success-bg);color:var(--success-text);border:none;cursor:pointer"><i class="ti ti-send"></i> Confirmar</button>
-        </div>
+      </div>
+      <div class="ev-card-footer">
+        <button onclick="irProdDashboard(${ev.id})" class="btn-icon"><i class="ti ti-list-check"></i> Producción</button>
+        <button onclick="irVajDashboard(${ev.id})" class="btn-icon"><i class="ti ti-tools-kitchen"></i> Vajilla</button>
+        <button onclick="mostrarConfirmacion(${ev.id})" class="btn-icon success"><i class="ti ti-send"></i> Confirmar</button>
       </div>
     </div>`;
   }).join(''):`<div class="card" style="text-align:center;color:var(--text-secondary);padding:2rem">
