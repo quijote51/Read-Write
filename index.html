@@ -212,7 +212,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 .vaj-body{padding:.6rem}
 .vaj-nombre{font-size:12px;font-weight:500;color:var(--text-primary);line-height:1.3;margin-bottom:3px}
 .vaj-stock-ok{font-size:11px;color:var(--success-text)}
-.vaj-stock-warn{font-size:11px;color:var(--danger-text)}
+.vaj-stock-warn{font-size:11px;color:var(--warn-text)}
+.vaj-stock-critical{font-size:11px;color:var(--danger-text);font-weight:600}
 .receta-emoji{width:100%;height:130px;display:flex;align-items:center;justify-content:center;font-size:48px;background:var(--bg-secondary)}
 .receta-body{padding:.75rem}
 .receta-nombre{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px;line-height:1.3}
@@ -750,7 +751,16 @@ textarea{resize:vertical;min-height:65px}
   <!-- Sub-tabs -->
   <div class="sub-tabs">
     <button class="sub-tab active" id="beb-tab-evento" onclick="switchBeb('evento',this)"><i class="ti ti-calendar-event"></i> Por evento</button>
-    <button class="sub-tab" id="beb-tab-bodega" onclick="switchBeb('bodega',this)"><i class="ti ti-building-store"></i> Bodega base</button>
+    <button class="sub-tab" id="beb-tab-stock" onclick="switchBeb('stock',this)"><i class="ti ti-bottle"></i> Inventario bodega</button>
+    <button class="sub-tab" id="beb-tab-bodega" onclick="switchBeb('bodega',this)"><i class="ti ti-building-store"></i> Dotación base</button>
+  </div>
+
+  <!-- Inventario bodega -->
+  <div id="beb-stock-view" style="display:none">
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:1rem">
+      Registra el stock real de botellas en la bodega. Se usará para alertar si no hay suficiente para los próximos eventos.
+    </p>
+    <div id="beb-stock-cont"></div>
   </div>
 
   <!-- Por evento -->
@@ -843,6 +853,7 @@ textarea{resize:vertical;min-height:65px}
   <div class="sub-tabs">
     <button class="sub-tab active" id="vaj-tab-evento" onclick="switchVaj('evento',this)"><i class="ti ti-calendar-event"></i> Por evento</button>
     <button class="sub-tab" id="vaj-tab-stock" onclick="switchVaj('stock',this)"><i class="ti ti-package"></i> Stock del hotel</button>
+    <button class="sub-tab" id="vaj-tab-bajas" onclick="switchVaj('bajas',this)"><i class="ti ti-minus"></i> Registrar baja</button>
     <button class="sub-tab" id="vaj-tab-config" onclick="switchVaj('config',this)"><i class="ti ti-settings"></i> Configurar dotación</button>
   </div>
 
@@ -902,6 +913,19 @@ textarea{resize:vertical;min-height:65px}
       Ajusta cuántas unidades de cada pieza se necesitan por persona según el tipo de evento.
     </p>
     <div id="vaj-config-cont"></div>
+  </div>
+
+  <!-- Registrar Bajas -->
+  <div id="vaj-bajas-view" style="display:none">
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:1rem">
+      Registra roturas o pérdidas de vajilla después de un evento. El stock se actualiza automáticamente.
+    </p>
+    <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;flex-wrap:wrap">
+      <select id="vaj-bajas-ev-sel" onchange="renderVajBajas()" style="flex:1;font-size:13px">
+        <option value="">Selecciona un evento</option>
+      </select>
+    </div>
+    <div id="vaj-bajas-cont"><div class="empty">Selecciona un evento para registrar bajas de vajilla.</div></div>
   </div>
 </div>
 
@@ -2236,34 +2260,34 @@ const VAJ_CATS = {
 
 const VAJ_STOCK_DEFAULT = [
   // Menaje cóctel
-  {id:'v1',  nombre:'Cucharita aperitivo',          cat:'menaje_coctel', stock:200, factor_coctel:2,   factor_menu:0,   notas:'Colección plateada'},
-  {id:'v2',  nombre:'Mini plato pizarra 8cm',        cat:'menaje_coctel', stock:150, factor_coctel:1.5, factor_menu:0,   notas:''},
-  {id:'v3',  nombre:'Mini plato redondo blanco',     cat:'menaje_coctel', stock:120, factor_coctel:1.5, factor_menu:0,   notas:''},
-  {id:'v4',  nombre:'Vasito shot aperitivo',         cat:'menaje_coctel', stock:100, factor_coctel:1,   factor_menu:0,   notas:'Para salmorejo, gazpacho...'},
-  {id:'v5',  nombre:'Vasito postre',                 cat:'menaje_coctel', stock:80,  factor_coctel:0.5, factor_menu:1,   notas:''},
-  {id:'v6',  nombre:'Cucharita postre',              cat:'menaje_coctel', stock:150, factor_coctel:0.5, factor_menu:1,   notas:''},
-  {id:'v7',  nombre:'Palillo banderilla',            cat:'menaje_coctel', stock:300, factor_coctel:3,   factor_menu:0,   notas:''},
+  {id:'v1',  nombre:'Cucharita aperitivo',          cat:'menaje_coctel', stock:200, stock_min:100, factor_coctel:2,   factor_menu:0,   notas:'Colección plateada'},
+  {id:'v2',  nombre:'Mini plato pizarra 8cm',        cat:'menaje_coctel', stock:150, stock_min:75,  factor_coctel:1.5, factor_menu:0,   notas:''},
+  {id:'v3',  nombre:'Mini plato redondo blanco',     cat:'menaje_coctel', stock:120, stock_min:60,  factor_coctel:1.5, factor_menu:0,   notas:''},
+  {id:'v4',  nombre:'Vasito shot aperitivo',         cat:'menaje_coctel', stock:100, stock_min:50,  factor_coctel:1,   factor_menu:0,   notas:'Para salmorejo, gazpacho...'},
+  {id:'v5',  nombre:'Vasito postre',                 cat:'menaje_coctel', stock:80,  stock_min:60,  factor_coctel:0.5, factor_menu:1,   notas:''},
+  {id:'v6',  nombre:'Cucharita postre',              cat:'menaje_coctel', stock:150, stock_min:60,  factor_coctel:0.5, factor_menu:1,   notas:''},
+  {id:'v7',  nombre:'Palillo banderilla',            cat:'menaje_coctel', stock:300, stock_min:120, factor_coctel:3,   factor_menu:0,   notas:''},
   // Platos
-  {id:'v8',  nombre:'Plato llano principal',         cat:'platos',        stock:60,  factor_coctel:0,   factor_menu:1,   notas:''},
-  {id:'v9',  nombre:'Plato hondo',                   cat:'platos',        stock:60,  factor_coctel:0,   factor_menu:1,   notas:''},
-  {id:'v10', nombre:'Plato postre',                  cat:'platos',        stock:60,  factor_coctel:0,   factor_menu:1,   notas:''},
-  {id:'v11', nombre:'Plato pan',                     cat:'platos',        stock:60,  factor_coctel:0,   factor_menu:1,   notas:''},
+  {id:'v8',  nombre:'Plato llano principal',         cat:'platos',        stock:60,  stock_min:40,  factor_coctel:0,   factor_menu:1,   notas:''},
+  {id:'v9',  nombre:'Plato hondo',                   cat:'platos',        stock:60,  stock_min:40,  factor_coctel:0,   factor_menu:1,   notas:''},
+  {id:'v10', nombre:'Plato postre',                  cat:'platos',        stock:60,  stock_min:40,  factor_coctel:0,   factor_menu:1,   notas:''},
+  {id:'v11', nombre:'Plato pan',                     cat:'platos',        stock:60,  stock_min:40,  factor_coctel:0,   factor_menu:1,   notas:''},
   // Copas
-  {id:'v12', nombre:'Copa vino blanco',              cat:'copas',         stock:80,  factor_coctel:1,   factor_menu:1,   notas:''},
-  {id:'v13', nombre:'Copa vino tinto',               cat:'copas',         stock:80,  factor_coctel:0.5, factor_menu:1,   notas:''},
-  {id:'v14', nombre:'Copa cava / champán',           cat:'copas',         stock:80,  factor_coctel:1,   factor_menu:0.5, notas:''},
-  {id:'v15', nombre:'Vaso agua / refresco',          cat:'copas',         stock:100, factor_coctel:1,   factor_menu:1,   notas:''},
-  {id:'v16', nombre:'Vaso cerveza',                  cat:'copas',         stock:80,  factor_coctel:1,   factor_menu:0.5, notas:''},
+  {id:'v12', nombre:'Copa vino blanco',              cat:'copas',         stock:80,  stock_min:60,  factor_coctel:1,   factor_menu:1,   notas:''},
+  {id:'v13', nombre:'Copa vino tinto',               cat:'copas',         stock:80,  stock_min:60,  factor_coctel:0.5, factor_menu:1,   notas:''},
+  {id:'v14', nombre:'Copa cava / champán',           cat:'copas',         stock:80,  stock_min:60,  factor_coctel:1,   factor_menu:0.5, notas:''},
+  {id:'v15', nombre:'Vaso agua / refresco',          cat:'copas',         stock:100, stock_min:60,  factor_coctel:1,   factor_menu:1,   notas:''},
+  {id:'v16', nombre:'Vaso cerveza',                  cat:'copas',         stock:80,  stock_min:60,  factor_coctel:1,   factor_menu:0.5, notas:''},
   // Cubiertos
-  {id:'v17', nombre:'Tenedor mesa',                  cat:'cubiertos',     stock:80,  factor_coctel:0,   factor_menu:2,   notas:'Tenedor entrante + principal'},
-  {id:'v18', nombre:'Cuchillo mesa',                 cat:'cubiertos',     stock:80,  factor_coctel:0,   factor_menu:2,   notas:''},
-  {id:'v19', nombre:'Cuchara sopa',                  cat:'cubiertos',     stock:60,  factor_coctel:0,   factor_menu:1,   notas:''},
-  {id:'v20', nombre:'Cubierto postre',               cat:'cubiertos',     stock:80,  factor_coctel:0,   factor_menu:1,   notas:''},
+  {id:'v17', nombre:'Tenedor mesa',                  cat:'cubiertos',     stock:80,  stock_min:60,  factor_coctel:0,   factor_menu:2,   notas:'Tenedor entrante + principal'},
+  {id:'v18', nombre:'Cuchillo mesa',                 cat:'cubiertos',     stock:80,  stock_min:60,  factor_coctel:0,   factor_menu:2,   notas:''},
+  {id:'v19', nombre:'Cuchara sopa',                  cat:'cubiertos',     stock:60,  stock_min:40,  factor_coctel:0,   factor_menu:1,   notas:''},
+  {id:'v20', nombre:'Cubierto postre',               cat:'cubiertos',     stock:80,  stock_min:60,  factor_coctel:0,   factor_menu:1,   notas:''},
   // Bandejas
-  {id:'v21', nombre:'Bandeja rectangular negra',     cat:'bandejas',      stock:20,  factor_coctel:0.2, factor_menu:0,   notas:'Para pase'},
-  {id:'v22', nombre:'Bandeja redonda plateada',      cat:'bandejas',      stock:15,  factor_coctel:0.15,factor_menu:0,   notas:'Para pase'},
-  {id:'v23', nombre:'Pizarra grande presentación',   cat:'bandejas',      stock:10,  factor_coctel:0.1, factor_menu:0,   notas:''},
-  {id:'v24', nombre:'Fuente oval porcelana',         cat:'bandejas',      stock:12,  factor_coctel:0,   factor_menu:0.1, notas:'Para servicio de mesa'}
+  {id:'v21', nombre:'Bandeja rectangular negra',     cat:'bandejas',      stock:20,  stock_min:10,  factor_coctel:0.2, factor_menu:0,   notas:'Para pase'},
+  {id:'v22', nombre:'Bandeja redonda plateada',      cat:'bandejas',      stock:15,  stock_min:8,   factor_coctel:0.15,factor_menu:0,   notas:'Para pase'},
+  {id:'v23', nombre:'Pizarra grande presentación',   cat:'bandejas',      stock:10,  stock_min:5,   factor_coctel:0.1, factor_menu:0,   notas:''},
+  {id:'v24', nombre:'Fuente oval porcelana',         cat:'bandejas',      stock:12,  stock_min:6,   factor_coctel:0,   factor_menu:0.1, notas:'Para servicio de mesa'}
 ];
 
 function getVaj(){try{return JSON.parse(localStorage.getItem('seda_vaj')||'null')}catch{return null}}
@@ -2271,16 +2295,90 @@ function saveVaj(v){try{localStorage.setItem('seda_vaj',JSON.stringify(v))}catch
 
 let vajilla = getVaj() || JSON.parse(JSON.stringify(VAJ_STOCK_DEFAULT));
 if(!getVaj()) saveVaj(vajilla);
+// Migrate: add stock_min to existing items that lack it
+(()=>{
+  const defaults={};
+  VAJ_STOCK_DEFAULT.forEach(d=>defaults[d.id]=d.stock_min||0);
+  let migrated=false;
+  vajilla.forEach(v=>{ if(v.stock_min===undefined){ v.stock_min=defaults[v.id]||0; migrated=true; } });
+  if(migrated) saveVaj(vajilla);
+})();
 
 function switchVaj(tab, btn){
   document.querySelectorAll('[id^="vaj-tab-"]').forEach(t=>t.classList.remove('active'));
-  ['evento','stock','config'].forEach(t=>{
+  ['evento','stock','config','bajas'].forEach(t=>{
     const el=ge('vaj-'+t+'-view'); if(el) el.style.display=t===tab?'block':'none';
   });
   btn.classList.add('active');
   if(tab==='stock') renderVajStock();
   if(tab==='config') renderVajConfig();
   if(tab==='evento') renderVajEvento();
+  if(tab==='bajas') initVajBajas();
+}
+
+function initVajBajas(){
+  ge('vaj-bajas-ev-sel').innerHTML='<option value="">Selecciona un evento</option>'+
+    [...eventos].sort((a,b)=>b.fecha.localeCompare(a.fecha))
+      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax)</option>`)
+      .join('');
+  renderVajBajas();
+}
+
+function renderVajBajas(){
+  const id=parseInt(ge('vaj-bajas-ev-sel').value);
+  const cont=ge('vaj-bajas-cont');
+  if(!id){cont.innerHTML='<div class="empty">Selecciona un evento para registrar bajas de vajilla.</div>';return;}
+  const ev=eventos.find(e=>e.id===id); if(!ev) return;
+
+  const items=calcVajEvento(ev);
+  if(!items.length){cont.innerHTML='<div class="empty">Este evento no tiene vajilla calculada (sin pax o sin piezas configuradas).</div>';return;}
+
+  cont.innerHTML=`
+  <div class="card" style="margin-bottom:12px;background:var(--warn-bg);border-color:var(--warn-text)">
+    <div style="font-size:13px;font-weight:500;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> Registrar bajas — ${ev.nombre}</div>
+    <div style="font-size:12px;color:var(--warn-text);opacity:.8;margin-top:2px">Introduce las unidades rotas o perdidas. El stock se descontará automáticamente.</div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:12px">
+    <table class="ptable">
+      <thead><tr>
+        <th>Pieza</th>
+        <th style="text-align:right">Usadas</th>
+        <th style="text-align:right">Stock actual</th>
+        <th style="text-align:center">Bajas</th>
+      </tr></thead>
+      <tbody>
+        ${items.map(v=>`<tr>
+          <td style="font-weight:500">${v.nombre}</td>
+          <td style="text-align:right;color:var(--text-secondary)">${v.necesario}</td>
+          <td style="text-align:right">${v.stock}</td>
+          <td style="text-align:center">
+            <input type="number" id="baja-${v.id}" min="0" max="${v.stock}" value="0"
+              style="width:70px;font-size:14px;text-align:center;border:1px solid var(--warn-text)"
+              placeholder="0"/>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <button class="btn btn-p" onclick="confirmarBajas([${items.map(v=>`'${v.id}'`).join(',')}])">
+    <i class="ti ti-check"></i> Confirmar bajas y actualizar stock
+  </button>`;
+}
+
+function confirmarBajas(ids){
+  let total=0;
+  ids.forEach(vid=>{
+    const val=parseInt(ge('baja-'+vid)?.value)||0;
+    if(val<=0) return;
+    const v=vajilla.find(x=>x.id===vid); if(!v) return;
+    v.stock=Math.max(0, v.stock-val);
+    total+=val;
+  });
+  if(!total){alert('No hay bajas registradas (todo en 0).');return;}
+  saveVaj(vajilla);
+  alert(`✓ ${total} baja(s) registrada(s). Stock actualizado.`);
+  renderVajBajas();
+  renderVajStock();
 }
 
 function initVajilla(){
@@ -2408,8 +2506,9 @@ function renderVajStock(){
             </div>
             <div class="vaj-body">
               <div class="vaj-nombre">${v.nombre}</div>
-              <div class="${v.stock>20?'vaj-stock-ok':'vaj-stock-warn'}">
+              <div class="${v.stock>=(v.stock_min||0)?'vaj-stock-ok':(v.stock>=(v.stock_min||0)*0.5?'vaj-stock-warn':'vaj-stock-critical')}">
                 ${v.stock>0?`Stock: ${v.stock} uds`:'Sin stock'}
+                ${v.stock_min&&v.stock<v.stock_min?`<span style="font-size:9px;display:block;opacity:.8">mín: ${v.stock_min}</span>`:''}
               </div>
               <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">
                 Cóctel ×${v.factor_coctel} · Menú ×${v.factor_menu}
@@ -2450,6 +2549,11 @@ function verDetallePieza(id){
           <label>Stock disponible</label>
           <input type="number" value="${v.stock}" min="0" style="font-size:15px;font-weight:500"
             onchange="actualizarStock('${v.id}',this.value);this.closest('.fg').querySelector('label').style.color='var(--success-text)'"/>
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label>Stock mínimo <span style="font-size:10px;color:var(--text-tertiary)">(alerta NARANJA)</span></label>
+          <input type="number" value="${v.stock_min||0}" min="0"
+            onchange="actualizarStockMin('${v.id}',this.value)"/>
         </div>
         <div class="fg" style="margin-bottom:0">
           <label>Factor cóctel (×pax)</label>
@@ -2501,6 +2605,12 @@ function actualizarNotasVaj(id, valor){
 function actualizarStock(id, valor){
   const v=vajilla.find(x=>x.id===id); if(!v)return;
   v.stock=parseInt(valor)||0;
+  saveVaj(vajilla);
+}
+
+function actualizarStockMin(id, valor){
+  const v=vajilla.find(x=>x.id===id); if(!v)return;
+  v.stock_min=parseInt(valor)||0;
   saveVaj(vajilla);
 }
 
@@ -4215,11 +4325,87 @@ function calcUnidades(catId, pax, tipo, extra=0){
 
 function switchBeb(tab, btn){
   document.querySelectorAll('[id^="beb-tab-"]').forEach(t=>t.classList.remove('active'));
-  ge('beb-evento-view').style.display = tab==='evento' ? 'block' : 'none';
-  ge('beb-bodega-view').style.display = tab==='bodega' ? 'block' : 'none';
+  ['evento','stock','bodega'].forEach(t=>{
+    const el=ge('beb-'+t+'-view'); if(el) el.style.display=t===tab?'block':'none';
+  });
   btn.classList.add('active');
   if(tab==='bodega') renderBebBodega();
   if(tab==='evento') renderBebEvento();
+  if(tab==='stock') renderBebStock();
+}
+
+function getBebStock(){ try{return JSON.parse(localStorage.getItem('seda_beb_stock')||'null')}catch{return null} }
+function saveBebStock(s){ try{localStorage.setItem('seda_beb_stock',JSON.stringify(s))}catch{} }
+
+function renderBebStock(){
+  const cont=ge('beb-stock-cont');
+  const stock=getBebStock()||{};
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+
+  // Calcular necesidades de próximos eventos (14 días)
+  const evProx=eventos.filter(e=>{const d=new Date(e.fecha+'T00:00:00');return d>=hoy&&d<=new Date(hoy.getTime()+14*86400000);});
+  const necesidades={};
+  evProx.forEach(ev=>{
+    BEB_CATS.forEach(cat=>{
+      if(cat.id==='barra_libre') return;
+      const cfg=ev.bebidas?.[cat.id];
+      if(!cfg?.activo) return;
+      const uds=calcUnidades(cat.id,ev.pax,ev.tipo)+(cfg.botellas_extra||0);
+      necesidades[cat.id]=(necesidades[cat.id]||0)+uds;
+    });
+  });
+
+  let html=``;
+  if(evProx.length){
+    html+=`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius)">
+      <i class="ti ti-calendar-week"></i> Próximos ${evProx.length} evento(s) en 14 días — necesidades calculadas automáticamente
+    </div>`;
+  }
+
+  html+=`<div class="card" style="padding:0;overflow:hidden;margin-bottom:12px">
+    <table class="ptable">
+      <thead><tr>
+        <th>Bebida</th>
+        <th style="text-align:right">Stock bodega</th>
+        <th style="text-align:right">Necesario (14d)</th>
+        <th style="text-align:center">Estado</th>
+      </tr></thead>
+      <tbody>
+        ${BEB_CATS.filter(c=>c.id!=='barra_libre').map(cat=>{
+          const stockVal=stock[cat.id]||0;
+          const nec=Math.ceil(necesidades[cat.id]||0);
+          const ok=!nec||stockVal>=nec;
+          const diff=nec-stockVal;
+          return`<tr>
+            <td>
+              <span style="font-size:16px;margin-right:6px">${cat.emoji}</span>
+              <span style="font-weight:500">${cat.label}</span>
+              <span style="font-size:11px;color:var(--text-tertiary);display:block;margin-left:26px">${cat.ud}</span>
+            </td>
+            <td style="text-align:right">
+              <input type="number" value="${stockVal}" min="0" style="width:80px;font-size:14px;text-align:center"
+                onchange="updateBebStock('${cat.id}',this.value)"/>
+            </td>
+            <td style="text-align:right;font-size:15px;font-weight:500;color:var(--text-secondary)">${nec||'—'}</td>
+            <td style="text-align:center">
+              ${!nec?`<span style="font-size:12px;color:var(--text-tertiary)">—</span>`
+                :ok?`<span style="font-size:12px;padding:2px 8px;border-radius:var(--radius);background:var(--success-bg);color:var(--success-text)">✓ OK</span>`
+                  :`<span style="font-size:12px;padding:2px 8px;border-radius:var(--radius);background:var(--danger-bg);color:var(--danger-text)">Faltan ${diff}</span>`}
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12px;color:var(--text-secondary)"><i class="ti ti-info-circle"></i> Actualiza el stock después de cada recuento físico. Los valores se guardan en este dispositivo.</p>`;
+
+  cont.innerHTML=html;
+}
+
+function updateBebStock(catId, valor){
+  const stock=getBebStock()||{};
+  stock[catId]=parseInt(valor)||0;
+  saveBebStock(stock);
 }
 
 function initBebidas(){
@@ -4449,8 +4635,13 @@ function initDashboard(){
   const evProximos=eventos.filter(e=>{const d=new Date(e.fecha+'T00:00:00');return d>=hoy&&d<=new Date(hoy.getTime()+14*86400000);});
   evProximos.forEach(ev=>{
     const items=calcVajEvento(ev).filter(v=>!v.ok);
-    if(items.length) alertas.push({tipo:'danger',msg:`Vajilla insuficiente · ${ev.nombre} (${fmtFecha(ev.fecha)})`});
+    if(items.length) alertas.push({tipo:'danger',msg:`Vajilla insuficiente · ${ev.nombre} (${fmtFecha(ev.fecha)})`,link:()=>irVajDashboard(ev.id)});
   });
+  // Vajilla bajo stock mínimo
+  const vajBajoMin=vajilla.filter(v=>(v.stock_min||0)>0&&v.stock<v.stock_min);
+  const vajCritica=vajBajoMin.filter(v=>v.stock<(v.stock_min||0)*0.5);
+  if(vajCritica.length) alertas.push({tipo:'danger',msg:`Stock crítico · ${vajCritica.length} pieza(s) por debajo del mínimo: ${vajCritica.map(v=>v.nombre).join(', ')}`,link:()=>showTab('vajilla',document.querySelector('[data-tab=vajilla]'))});
+  else if(vajBajoMin.length) alertas.push({tipo:'warn',msg:`Stock bajo · ${vajBajoMin.length} pieza(s) bajo el mínimo: ${vajBajoMin.slice(0,3).map(v=>v.nombre).join(', ')}${vajBajoMin.length>3?'...':''}`,link:()=>showTab('vajilla',document.querySelector('[data-tab=vajilla]'))});
   // Eventos sin precio
   const evSinPrecio=eventos.filter(e=>!e.precio_venta&&new Date(e.fecha+'T00:00:00')>=hoy);
   if(evSinPrecio.length) alertas.push({tipo:'warn',msg:`${evSinPrecio.length} evento(s) sin precio de venta — el escandallo no puede calcular margen`});
@@ -4490,12 +4681,17 @@ function initDashboard(){
 
   <!-- Alertas -->
   ${alertas.length?`<div style="margin-bottom:1.25rem">
-    ${alertas.map(a=>`
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--radius);margin-bottom:6px;
+    ${alertas.map((a,ai)=>{
+      window.__dashAlertLinks=window.__dashAlertLinks||[];
+      window.__dashAlertLinks[ai]=a.link||null;
+      return`<div onclick="window.__dashAlertLinks&&window.__dashAlertLinks[${ai}]&&window.__dashAlertLinks[${ai}]()"
+        style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--radius);margin-bottom:6px;
         background:${a.tipo==='danger'?'var(--danger-bg)':'var(--warn-bg)'};
-        color:${a.tipo==='danger'?'var(--danger-text)':'var(--warn-text)'};font-size:13px">
+        color:${a.tipo==='danger'?'var(--danger-text)':'var(--warn-text)'};font-size:13px;
+        ${a.link?'cursor:pointer;':''}">
         <i class="ti ti-alert-triangle"></i> ${a.msg}
-      </div>`).join('')}
+        ${a.link?`<i class="ti ti-arrow-right" style="margin-left:auto;opacity:.5"></i>`:''}
+      </div>`;}).join('')}
   </div>`:''}
 
   <!-- Eventos HOY -->
