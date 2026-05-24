@@ -5045,6 +5045,13 @@ window.addEventListener('DOMContentLoaded', async function(){
     if(provCloud.data?.length){ proveedores=provCloud.data; saveProv(proveedores); }
     if(persCloud.data?.length){ personal=persCloud.data; savePersonal(personal); }
     mostrarSync(true);
+    // Refrescar vistas que ya estén abiertas con los datos de Supabase
+    const activeTab = document.querySelector('.sec.active')?.id?.replace('tab-','');
+    if(activeTab==='eventos') renderEventos();
+    if(activeTab==='dashboard'||!activeTab) renderDashboard();
+    if(activeTab==='historial') renderHistorial();
+    if(activeTab==='calendario') renderCalendario();
+    if(activeTab==='produccion') renderProdEvList();
   } catch(e){ mostrarSync(false); }
 
   renderAlgSel('alg-selector');
