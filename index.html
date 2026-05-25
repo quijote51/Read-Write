@@ -18,8 +18,14 @@
 // ══════════════════════════════════════
 // OÍDO COCINA · Configuración Supabase
 // ══════════════════════════════════════
-const SUPA_URL  = 'https://gxkxslkdqgwovgxcuzkr.supabase.co';
-const SUPA_KEY  = 'sb_publishable_xAUprOgWQi0HhYms69zUhA_yiTwDYPK';
+const SUPA_URL_DEFAULT = 'https://gxkxslkdqgwovgxcuzkr.supabase.co';
+const SUPA_KEY_DEFAULT = 'sb_publishable_xAUprOgWQi0HhYms69zUhA_yiTwDYPK';
+
+(()=>{
+  try{const c=JSON.parse(localStorage.getItem('seda_supa_config')||'null');if(c?.url)window._supaOverride=c;}catch{}
+})();
+const SUPA_URL = window._supaOverride?.url || SUPA_URL_DEFAULT;
+const SUPA_KEY = window._supaOverride?.key || SUPA_KEY_DEFAULT;
 
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
@@ -59,11 +65,12 @@ async function dbSave(tabla, localKey, valor){
 }
 
 // Indicador de estado de sincronización
-function mostrarSync(ok){
+function mostrarSync(ok, msg){
   const el = document.getElementById('sync-indicator');
   if(el){
-    el.innerHTML = ok ? '<i class="ti ti-cloud-check"></i> Sincronizado' : '<i class="ti ti-wifi-off"></i> Sin conexión';
+    el.innerHTML = ok ? '<i class="ti ti-cloud-check"></i> Sincronizado' : `<i class="ti ti-wifi-off"></i> ${msg||'Sin conexión'}`;
     el.style.color = ok ? 'rgba(255,255,255,.4)' : 'rgba(255,165,0,.7)';
+    el.title = ok ? '' : (msg||'Sin conexión con Supabase. Ve a Ajustes → Conexión a la nube.');
   }
 }
 
@@ -71,9 +78,20 @@ function mostrarSync(ok){
 async function checkSupabase(){
   try {
     const {error} = await supa.from('config').select('key').limit(1);
-    mostrarSync(!error);
-    return !error;
-  } catch { mostrarSync(false); return false; }
+    if(error){
+      const m = error.message||'';
+      if(m.includes('allowlist')||m.includes('not allowed')) mostrarSync(false,'Dominio no autorizado');
+      else mostrarSync(false);
+      return false;
+    }
+    mostrarSync(true);
+    return true;
+  } catch(e){
+    const m = String(e);
+    if(m.includes('allowlist')||m.includes('not allowed')) mostrarSync(false,'Dominio no autorizado');
+    else mostrarSync(false);
+    return false;
+  }
 }
 </script>
 <style>
@@ -407,7 +425,7 @@ textarea{resize:vertical;min-height:65px}
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:6px">
-    <span id="sync-indicator" style="font-size:10px;color:rgba(255,255,255,.28);display:inline-flex;align-items:center;gap:4px"><i class="ti ti-cloud"></i> Conectando...</span>
+    <span id="sync-indicator" onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" title="" style="font-size:10px;color:rgba(255,255,255,.28);display:inline-flex;align-items:center;gap:4px;cursor:pointer"><i class="ti ti-cloud"></i> Conectando...</span>
     <button onclick="abrirBusqueda()" aria-label="Buscar (Ctrl+K)" title="Buscar (Ctrl+K)" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:13px;min-height:34px;min-width:34px;transition:background 150ms ease"><i class="ti ti-search"></i></button>
     <button onclick="abrirSelectorRol()" id="rol-btn" aria-label="Cambiar rol" aria-haspopup="dialog" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,.75);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px;transition:background 150ms ease">
       <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down" style="font-size:11px;opacity:.6"></i>
@@ -1047,6 +1065,24 @@ textarea{resize:vertical;min-height:65px}
       <div class="fg" style="margin-bottom:0"><label>Color</label><input type="color" id="aj-tipo-color" value="#378ADD" style="height:38px;padding:2px"/></div>
     </div>
     <button class="btn btn-p" style="font-size:12px;margin-top:8px" onclick="agregarTipoAjustes()"><i class="ti ti-plus"></i> Añadir tipo</button>
+  </div>
+
+  <!-- Conexión a la nube -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-cloud"></i> Conexión a la nube (Supabase)</div>
+    <div id="aj-supa-alert" style="display:none;border-radius:var(--radius);padding:10px 12px;font-size:12px;margin-bottom:10px;background:var(--warn-bg);color:var(--warn-text)">
+      <strong><i class="ti ti-alert-triangle"></i> Dominio no autorizado</strong><br>
+      La clave <code style="font-size:11px">sb_publishable_</code> requiere añadir el dominio de la app en Supabase → Settings → API → Allowed origins.<br>
+      O bien, introduce abajo la clave <em>anon JWT</em> (empieza por <code style="font-size:11px">eyJ…</code>) desde Supabase → Settings → API → Project API keys.
+    </div>
+    <div class="fg" style="margin-bottom:8px"><label>URL del proyecto</label><input type="text" id="aj-supa-url" placeholder="https://xxx.supabase.co" autocomplete="off"/></div>
+    <div class="fg" style="margin-bottom:8px"><label>Clave anon (JWT)</label><input type="password" id="aj-supa-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off"/></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-p" style="font-size:12px" onclick="testGuardarSupa()"><i class="ti ti-plug-connected"></i> Probar y guardar</button>
+      <button class="btn-sec" style="font-size:12px" onclick="resetSupaConfig()"><i class="ti ti-refresh"></i> Usar clave por defecto</button>
+      <span id="aj-supa-status" style="font-size:12px"></span>
+    </div>
+    <p style="font-size:11px;color:var(--text-secondary);margin-top:8px">Tras guardar una clave válida, recarga la página para aplicar la conexión.</p>
   </div>
 
   <!-- Exportar / Importar -->
@@ -1860,9 +1896,48 @@ function initAjustes(){
   ge('aj-hotel-web').value=ajustes.hotel_web||'';
   renderAjustesLugares();
   renderAjustesTipos();
-  // Actualizar cabecera
+  initSupaConfig();
   const cabecera=ge('header-hotel-nombre');
   if(cabecera)cabecera.textContent=`${ajustes.hotel_nombre||'Hotel'} · ${ajustes.hotel_ciudad||''}`;
+}
+
+function initSupaConfig(){
+  const cfg=window._supaOverride||null;
+  const urlEl=ge('aj-supa-url'); const keyEl=ge('aj-supa-key');
+  if(urlEl) urlEl.value=cfg?.url||SUPA_URL_DEFAULT;
+  if(keyEl) keyEl.value=cfg?.key||'';
+  // Mostrar alerta si el dominio está bloqueado (estado detectado al cargar)
+  const syncEl=ge('sync-indicator');
+  const alertEl=ge('aj-supa-alert');
+  if(alertEl && syncEl?.title?.includes('Supabase')) alertEl.style.display='block';
+  else if(alertEl && SUPA_KEY.startsWith('sb_publishable_')) alertEl.style.display='block';
+}
+
+async function testGuardarSupa(){
+  const url=(ge('aj-supa-url')?.value||'').trim();
+  const key=(ge('aj-supa-key')?.value||'').trim();
+  const statusEl=ge('aj-supa-status');
+  if(!url||!key){statusEl.textContent='Introduce URL y clave.';statusEl.style.color='var(--warn-text)';return;}
+  statusEl.textContent='Probando...';statusEl.style.color='var(--text-secondary)';
+  try{
+    const testClient=supabase.createClient(url,key);
+    const {error}=await testClient.from('config').select('key').limit(1);
+    if(error) throw new Error(error.message||'Error de conexión');
+    localStorage.setItem('seda_supa_config',JSON.stringify({url,key}));
+    statusEl.textContent='✓ Conexión correcta. Recarga la página para aplicar.';
+    statusEl.style.color='var(--success-text)';
+    ge('aj-supa-alert').style.display='none';
+  }catch(e){
+    statusEl.textContent=`✗ ${e.message}`;
+    statusEl.style.color='var(--danger-text)';
+  }
+}
+
+function resetSupaConfig(){
+  localStorage.removeItem('seda_supa_config');
+  ge('aj-supa-url').value=SUPA_URL_DEFAULT;
+  ge('aj-supa-key').value='';
+  const s=ge('aj-supa-status');s.textContent='Clave por defecto restaurada. Recarga para aplicar.';s.style.color='var(--text-secondary)';
 }
 
 function guardarAjustesHotel(){
