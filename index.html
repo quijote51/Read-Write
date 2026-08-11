@@ -607,6 +607,7 @@ textarea{resize:vertical;min-height:65px}
             </select>
           </div>
         </div>
+        <div class="fg" style="margin-bottom:8px;max-width:220px"><label>Antelación pedido (días)</label><input type="number" id="np-antelacion" min="0" max="14" placeholder="1"/></div>
         <button class="btn btn-p" onclick="agregarProveedor()"><i class="ti ti-plus"></i> Añadir</button>
       </div>
     </div>
@@ -2806,7 +2807,10 @@ function renderEventos(){
         <div class="ev-card-body">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:3px">
             <div class="ev-card-name">${ev.nombre}</div>
-            ${getBadge(ev.fecha)}
+            <div style="display:flex;gap:5px;align-items:center">
+              ${Object.keys(ev.confirmaciones||{}).length?`<span style="font-size:10px;color:var(--success-text);background:var(--success-bg);padding:2px 7px;border-radius:var(--radius)" title="Confirmaciones enviadas a: ${Object.keys(ev.confirmaciones).join(', ')}"><i class="ti ti-check"></i> ${Object.keys(ev.confirmaciones).length}/4</span>`:''}
+              ${getBadge(ev.fecha)}
+            </div>
           </div>
           <div class="ev-card-meta">
             <i class="ti ti-clock"></i> ${ev.hora}
@@ -2905,6 +2909,8 @@ function actualizarEvento(id){
   const precio_venta=parseFloat(ge('n-precio-venta')?.value)||0;
   const alergenos_menu=[...ge('alg-selector').querySelectorAll('.alg-cb.sel')].map(el=>{const lbl=el.querySelector('span:last-child').textContent.trim();return ALERGENOS.find(a=>a.label===lbl)?.id}).filter(Boolean);
   if(!nombre||!fecha||!pax){alert('Nombre, fecha y pax son obligatorios.');return;}
+  const conflictoEd=detectarConflicto(fecha,hora,lugar,id);
+  if(conflictoEd&&!confirm(`⚠️ Ya hay otro evento en "${lugar}" cerca de esa hora:\n"${conflictoEd.nombre}" el ${fmtFecha(conflictoEd.fecha)} a las ${conflictoEd.hora}.\n\n¿Guardar de todas formas?`))return;
   function pp(txt,def){return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([FCPMfcpm]):(.+)/);return m?{cat:m[1].toUpperCase(),nombre:m[2].trim(),alg:[]}:{cat:def,nombre:l,alg:[]}})}
   const platos=[...pp(ge('n-fr').value,'F'),...pp(ge('n-ca').value,'C'),...pp(ge('n-po').value,'P'),...pp(ge('n-pr').value,'M')];
   const ninos=parseInt(ge('n-ninos').value)||0;
@@ -2929,6 +2935,21 @@ function resetFormEvento(){
   ge('n-edit-aviso').style.display='none';
 }
 
+// Detecta eventos que chocan en el mismo lugar y franja horaria (±2h) el mismo día.
+// excludeId sirve para no comparar un evento consigo mismo al editarlo.
+function detectarConflicto(fecha,hora,lugar,excludeId){
+  if(!fecha||!hora||!lugar)return null;
+  const [h,m]=hora.split(':').map(Number);
+  const minEvento=h*60+m;
+  return eventos.find(e=>{
+    if(e.id===excludeId)return false;
+    if(e.fecha!==fecha||e.lugar!==lugar)return false;
+    const [eh,em]=(e.hora||'00:00').split(':').map(Number);
+    const minOtro=eh*60+em;
+    return Math.abs(minOtro-minEvento)<120; // menos de 2h de diferencia
+  })||null;
+}
+
 function guardarEvento(){
   const nombre=ge('n-nom').value.trim(),fecha=ge('n-fecha').value,hora=ge('n-hora').value||'14:00';
   const pax=parseInt(ge('n-pax').value),tipo=ge('n-tipo').value,lugar=ge('n-lugar').value;
@@ -2937,6 +2958,8 @@ function guardarEvento(){
   const precio_venta=parseFloat(ge('n-precio-venta')?.value)||0;
   const alergenos_menu=[...ge('alg-selector').querySelectorAll('.alg-cb.sel')].map(el=>{const lbl=el.querySelector('span:last-child').textContent.trim();return ALERGENOS.find(a=>a.label===lbl)?.id}).filter(Boolean);
   if(!nombre||!fecha||!pax){alert('Nombre, fecha y pax son obligatorios.');return;}
+  const conflicto=detectarConflicto(fecha,hora,lugar,null);
+  if(conflicto&&!confirm(`⚠️ Ya hay otro evento en "${lugar}" cerca de esa hora:\n"${conflicto.nombre}" el ${fmtFecha(conflicto.fecha)} a las ${conflicto.hora}.\n\n¿Guardar de todas formas?`))return;
   const btn=ge('n-guardar-btn');
   if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin .8s linear infinite"></i> Guardando...';}
   function pp(txt,def){return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([FCPMfcpm]):(.+)/);return m?{cat:m[1].toUpperCase(),nombre:m[2].trim(),alg:[]}:{cat:def,nombre:l,alg:[]}})}
@@ -3534,11 +3557,11 @@ function saveProv(p){try{localStorage.setItem('seda_prov',JSON.stringify(p))}cat
 let proveedores=getProv();
 if(!proveedores){
   proveedores=[
-    {id:'p1',nombre:'Cárnico Ruiz',tel:'34600000001',cat:'carnico'},
-    {id:'p2',nombre:'Pescadería del Puerto',tel:'34600000002',cat:'pescado'},
-    {id:'p3',nombre:'Frutas y Verduras García',tel:'34600000003',cat:'verdura'},
-    {id:'p4',nombre:'Lácteos Martínez',tel:'34600000004',cat:'lacteo'},
-    {id:'p5',nombre:'Panadería Artesana',tel:'34600000005',cat:'panaderia'}
+    {id:'p1',nombre:'Cárnico Ruiz',tel:'34600000001',cat:'carnico',antelacion:2},
+    {id:'p2',nombre:'Pescadería del Puerto',tel:'34600000002',cat:'pescado',antelacion:1},
+    {id:'p3',nombre:'Frutas y Verduras García',tel:'34600000003',cat:'verdura',antelacion:1},
+    {id:'p4',nombre:'Lácteos Martínez',tel:'34600000004',cat:'lacteo',antelacion:2},
+    {id:'p5',nombre:'Panadería Artesana',tel:'34600000005',cat:'panaderia',antelacion:1}
   ];
   saveProv(proveedores);
 }
@@ -3714,11 +3737,29 @@ function agregarProveedor(){
   const nombre=ge('np-nombre').value.trim();
   const tel=ge('np-tel').value.trim().replace(/\s/g,'');
   const cat=ge('np-cat').value;
+  const antelacion=parseInt(ge('np-antelacion')?.value)||1;
   if(!nombre){alert('El nombre es obligatorio.');return;}
-  proveedores.push({id:'p'+Date.now(),nombre,tel,cat});
+  proveedores.push({id:'p'+Date.now(),nombre,tel,cat,antelacion});
   saveProv(proveedores);
-  ge('np-nombre').value='';ge('np-tel').value='';
+  ge('np-nombre').value='';ge('np-tel').value='';if(ge('np-antelacion'))ge('np-antelacion').value='';
   renderProvEdit();
+}
+
+// Proveedores con eventos en los próximos días para los que ya toca hacer el pedido
+// (antelación del proveedor >= días que faltan para el evento)
+function pedidosUrgentes(){
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const avisos=[];
+  eventos.forEach(ev=>{
+    const d=new Date(ev.fecha+'T00:00:00');
+    const diasFaltan=Math.round((d-hoy)/86400000);
+    if(diasFaltan<0||diasFaltan>7)return;
+    proveedores.forEach(p=>{
+      const ant=p.antelacion||1;
+      if(diasFaltan<=ant) avisos.push({evento:ev,proveedor:p,diasFaltan});
+    });
+  });
+  return avisos;
 }
 
 function renderProvEdit(){
@@ -4039,6 +4080,12 @@ function initDashboard(){
   // Eventos sin precio
   const evSinPrecio=eventos.filter(e=>!e.precio_venta&&new Date(e.fecha+'T00:00:00')>=hoy);
   if(evSinPrecio.length) alertas.push({tipo:'warn',msg:`${evSinPrecio.length} evento(s) sin precio de venta — el escandallo no puede calcular margen`});
+  // Pedidos a proveedores urgentes (según antelación configurada por proveedor)
+  const urgentes=pedidosUrgentes();
+  urgentes.forEach(u=>{
+    alertas.push({tipo:u.diasFaltan<=0?'danger':'warn',
+      msg:`Pedido a ${u.proveedor.nombre} · ${u.evento.nombre} (${u.diasFaltan<=0?'HOY':'en '+u.diasFaltan+' día(s)'})`});
+  });
 
   const COLOR_TIPO={coctel:'#378ADD',menu:'#7F77DD',desayuno:'#D85A30'};
   const LABEL_TIPO={coctel:'Cóctel',menu:'Menú',desayuno:'Desayuno'};
@@ -4165,6 +4212,18 @@ let contactosInternos = getContactos() || {
 if(!getContactos()) saveContactos(contactosInternos);
 
 /* ===== CONFIRMACIÓN DE EVENTO ===== */
+// Marca que se ha pulsado el enlace de envío (WA o email) a un destinatario concreto.
+// No hay forma de saber si el mensaje se llegó a enviar de verdad (WhatsApp/mailto abren
+// la app y el envío final lo hace el usuario), pero al menos queda registro de que se inició.
+function marcarEnvioConfirmacion(evId,destinatario){
+  const ev=eventos.find(e=>e.id===evId); if(!ev)return;
+  if(!ev.confirmaciones)ev.confirmaciones={};
+  ev.confirmaciones[destinatario]=new Date().toISOString();
+  saveEv(eventos);
+  const badge=ge('conf-envio-'+destinatario);
+  if(badge)badge.style.display='inline';
+}
+
 function mostrarConfirmacion(evId){
   const ev=eventos.find(e=>e.id===evId); if(!ev) return;
   const modal=ge('conf-modal');
@@ -4302,8 +4361,9 @@ _Seda Club · Sistema de gestión_`;
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgCliente)}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('cliente')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
-        <a href="https://wa.me/?text=${encodeURIComponent(msgCliente)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>
-        <a href="mailto:?subject=Confirmación reserva Seda Club Hotel&body=${encodeURIComponent(msgCliente.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email</a>
+        <a href="https://wa.me/?text=${encodeURIComponent(msgCliente)}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'cliente')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>
+        <a href="mailto:?subject=Confirmación reserva Seda Club Hotel&body=${encodeURIComponent(msgCliente.replace(/\*/g,''))}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'cliente')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email</a>
+        <span id="conf-envio-cliente" style="${ev.confirmaciones?.cliente?'':'display:none'};font-size:11px;color:var(--success-text)"><i class="ti ti-check"></i> Enviado ${ev.confirmaciones?.cliente?new Date(ev.confirmaciones.cliente).toLocaleString('es'):''}</span>
       </div>
     </div>
 
@@ -4317,8 +4377,9 @@ _Seda Club · Sistema de gestión_`;
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgMaitre)}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('maitre')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
-        ${c.maitre.tel?`<a href="https://wa.me/${c.maitre.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgMaitre)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Maître</a>`:''}
-        ${c.maitre.email?`<a href="mailto:${c.maitre.email}?subject=Ficha servicio ${ev.nombre}&body=${encodeURIComponent(msgMaitre.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Maître</a>`:''}
+        ${c.maitre.tel?`<a href="https://wa.me/${c.maitre.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgMaitre)}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'maitre')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Maître</a>`:''}
+        ${c.maitre.email?`<a href="mailto:${c.maitre.email}?subject=Ficha servicio ${ev.nombre}&body=${encodeURIComponent(msgMaitre.replace(/\*/g,''))}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'maitre')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Maître</a>`:''}
+        <span id="conf-envio-maitre" style="${ev.confirmaciones?.maitre?'':'display:none'};font-size:11px;color:var(--success-text)"><i class="ti ti-check"></i> Enviado ${ev.confirmaciones?.maitre?new Date(ev.confirmaciones.maitre).toLocaleString('es'):''}</span>
       </div>
     </div>
 
@@ -4332,8 +4393,9 @@ _Seda Club · Sistema de gestión_`;
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgJefa)}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('jefa')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
-        ${c.jefa_eventos.tel?`<a href="https://wa.me/${c.jefa_eventos.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgJefa)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Jefa</a>`:''}
-        ${c.jefa_eventos.email?`<a href="mailto:${c.jefa_eventos.email}?subject=Confirmación interna ${ev.nombre}&body=${encodeURIComponent(msgJefa.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Jefa</a>`:''}
+        ${c.jefa_eventos.tel?`<a href="https://wa.me/${c.jefa_eventos.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgJefa)}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'jefa')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Jefa</a>`:''}
+        ${c.jefa_eventos.email?`<a href="mailto:${c.jefa_eventos.email}?subject=Confirmación interna ${ev.nombre}&body=${encodeURIComponent(msgJefa.replace(/\*/g,''))}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'jefa')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Jefa</a>`:''}
+        <span id="conf-envio-jefa" style="${ev.confirmaciones?.jefa?'':'display:none'};font-size:11px;color:var(--success-text)"><i class="ti ti-check"></i> Enviado ${ev.confirmaciones?.jefa?new Date(ev.confirmaciones.jefa).toLocaleString('es'):''}</span>
       </div>
     </div>
 
@@ -4367,8 +4429,9 @@ _Seda Club · Sistema de gestión_`;
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgCocina)}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('cocina')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
-        ${c.jefe_cocina.tel?`<a href="https://wa.me/${c.jefe_cocina.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgCocina)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Cocina</a>`:''}
-        ${c.jefe_cocina.email?`<a href="mailto:${c.jefe_cocina.email}?subject=Orden producción ${ev.nombre}&body=${encodeURIComponent(msgCocina.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Cocina</a>`:''}
+        ${c.jefe_cocina.tel?`<a href="https://wa.me/${c.jefe_cocina.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgCocina)}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'cocina')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Cocina</a>`:''}
+        ${c.jefe_cocina.email?`<a href="mailto:${c.jefe_cocina.email}?subject=Orden producción ${ev.nombre}&body=${encodeURIComponent(msgCocina.replace(/\*/g,''))}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'cocina')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Cocina</a>`:''}
+        <span id="conf-envio-cocina" style="${ev.confirmaciones?.cocina?'':'display:none'};font-size:11px;color:var(--success-text)"><i class="ti ti-check"></i> Enviado ${ev.confirmaciones?.cocina?new Date(ev.confirmaciones.cocina).toLocaleString('es'):''}</span>
       </div>
     </div>`;
 
