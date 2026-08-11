@@ -361,8 +361,33 @@ textarea{resize:vertical;min-height:65px}
       <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down" style="font-size:11px;opacity:.6"></i>
     </button>
     <button onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" aria-label="Ajustes" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:13px;min-height:34px;min-width:34px;transition:background 150ms ease"><i class="ti ti-settings"></i></button>
+    <button onclick="cerrarSesion()" aria-label="Cerrar sesión" title="Cerrar sesión" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:13px;min-height:34px;min-width:34px;transition:background 150ms ease"><i class="ti ti-logout"></i></button>
   </div>
 </header>
+
+<!-- MODAL LOGIN -->
+<div id="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1003;align-items:center;justify-content:center;padding:1rem">
+  <div class="rol-modal-inner">
+    <div style="text-align:center">
+      <div class="rol-modal-badge"><i class="ti ti-lock"></i> ACCESO PRIVADO</div>
+      <div id="login-modal-titulo" class="rol-modal-title">O<span style="color:#c9a84c">í</span>do Cocina</div>
+      <div class="rol-modal-sub">Inicia sesión para continuar</div>
+    </div>
+    <div class="rol-modal-divider"><span></span><i class="ti ti-diamond-filled"></i><span></span></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="fg" style="margin-bottom:0">
+        <label style="color:rgba(255,255,255,.5)">Email</label>
+        <input type="email" id="login-email" placeholder="hotel@oidococina.com" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);color:#fff" onkeydown="if(event.key==='Enter')hacerLogin()"/>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label style="color:rgba(255,255,255,.5)">Contraseña</label>
+        <input type="password" id="login-pass" placeholder="••••••••" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);color:#fff" onkeydown="if(event.key==='Enter')hacerLogin()"/>
+      </div>
+      <div id="login-error" style="display:none;font-size:12px;color:#f08080;background:rgba(240,128,128,.1);border-radius:8px;padding:8px 10px"></div>
+      <button id="login-btn" class="btn btn-p" style="justify-content:center;margin-top:4px" onclick="hacerLogin()"><i class="ti ti-login"></i> Entrar</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL SELECTOR DE ROL -->
 <div id="rol-modal" role="dialog" aria-modal="true" aria-labelledby="rol-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1002;align-items:center;justify-content:center;padding:1rem">
@@ -4481,7 +4506,7 @@ function irVajDashboard(evId){
 }
 
 // ── ARRANQUE ──
-window.addEventListener('DOMContentLoaded', async function(){
+async function initApp(){
   // Verificar conexión Supabase
   checkSupabase();
   // Cargar datos desde Supabase (con fallback a localStorage)
@@ -4517,6 +4542,50 @@ window.addEventListener('DOMContentLoaded', async function(){
     // Sin rol: mostrar todas las secciones y abrir dashboard
     openAccordion('dashboard');
     setTimeout(()=>ge('rol-modal').style.display='flex', 400);
+  }
+}
+
+/* ===== AUTENTICACIÓN ===== */
+async function mostrarLogin(){
+  ge('login-modal').style.display='flex';
+  ge('main-content').style.display='none';
+}
+
+async function ocultarLogin(){
+  ge('login-modal').style.display='none';
+  ge('main-content').style.display='';
+}
+
+async function hacerLogin(){
+  const email=ge('login-email').value.trim();
+  const pass=ge('login-pass').value;
+  const btn=ge('login-btn');
+  const err=ge('login-error');
+  err.style.display='none';
+  if(!email||!pass){err.textContent='Introduce email y contraseña.';err.style.display='block';return;}
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin .8s linear infinite"></i> Entrando...';
+  const {data,error}=await supa.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-login"></i> Entrar';
+  if(error){
+    err.textContent = error.message==='Invalid login credentials' ? 'Email o contraseña incorrectos.' : 'Error al entrar: '+error.message;
+    err.style.display='block';
+    return;
+  }
+  ocultarLogin();
+  initApp();
+}
+
+function cerrarSesion(){
+  if(!confirm('¿Cerrar sesión?'))return;
+  supa.auth.signOut().then(()=>location.reload());
+}
+
+window.addEventListener('DOMContentLoaded', async function(){
+  const {data:{session}} = await supa.auth.getSession();
+  if(session){
+    initApp();
+  } else {
+    mostrarLogin();
   }
 });
 
