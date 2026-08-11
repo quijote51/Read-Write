@@ -1425,13 +1425,23 @@ function toggleAccordion(name){
 function openAccordion(name){
   const item=ge('acc-'+name);
   if(!item||item.style.display==='none')return;
+  // Cerrar cualquier otra sección abierta (comportamiento de acordeón real: solo una a la vez)
+  document.querySelectorAll('.acc-item.open').forEach(other=>{
+    if(other!==item){
+      other.classList.remove('open');
+      const h=other.querySelector('.acc-header');
+      if(h)h.setAttribute('aria-expanded','false');
+    }
+  });
   if(!item.classList.contains('open')){
     item.classList.add('open');
     const hdr=item.querySelector('.acc-header');
     if(hdr)hdr.setAttribute('aria-expanded','true');
     callTabInit(name);
   }
-  setTimeout(()=>item.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+  // Mover la sección activa al principio del contenedor para que quede justo bajo el header
+  if(item.parentNode) item.parentNode.insertBefore(item, item.parentNode.firstChild);
+  window.scrollTo(0,0);
 }
 
 function showTab(name,btn){
