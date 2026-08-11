@@ -23,7 +23,29 @@
 const SUPA_URL  = 'https://gxkxslkdqgwovgxcuzkr.supabase.co';
 const SUPA_KEY  = 'sb_publishable_xAUprOgWQi0HhYms69zUhA_yiTwDYPK';
 
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+// Si el script de Supabase (CDN externo) no llega a cargar —VPN, firewall, conexión
+// lenta, bloqueador de anuncios— usamos un cliente "falso" que no rompe el resto de
+// la app: cada llamada resuelve con datos vacíos en vez de lanzar un error que
+// pararía todo el JavaScript (y dejaría la página sin envolver en pestañas).
+function crearSupaFallback(){
+  const resultado = {data:null, error:{message:'offline'}};
+  const chain = new Proxy(function(){}, {
+    get(target, prop){
+      if(prop==='then') return (resolve)=>resolve(resultado);
+      return ()=>chain;
+    },
+    apply(){ return chain; }
+  });
+  return {
+    from: ()=>chain,
+    auth: {
+      getSession: async ()=>({data:{session:null}, error:null}),
+      signInWithPassword: async ()=>({data:null, error:{message:'No se pudo conectar con el servidor. Comprueba tu conexión (o desactiva el VPN) e inténtalo de nuevo.'}}),
+      signOut: async ()=>({error:null})
+    }
+  };
+}
+const supa = (typeof supabase !== 'undefined') ? supabase.createClient(SUPA_URL, SUPA_KEY) : crearSupaFallback();
 
 // ── Capa de datos: Supabase con fallback a localStorage ──
 
@@ -4598,10 +4620,17 @@ function cerrarSesion(){
 }
 
 window.addEventListener('DOMContentLoaded', async function(){
-  const {data:{session}} = await supa.auth.getSession();
-  if(session){
-    initApp();
-  } else {
+  try {
+    const {data:{session}} = await supa.auth.getSession();
+    if(session){
+      await initApp();
+    } else {
+      mostrarLogin();
+    }
+  } catch(e){
+    // Red caída, VPN bloqueando, o cualquier fallo inesperado: mostrar login
+    // igualmente en vez de dejar la página cruda sin envolver en pestañas.
+    console.warn('Fallo en arranque, mostrando login:', e);
     mostrarLogin();
   }
 });
