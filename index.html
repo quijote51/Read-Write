@@ -1385,6 +1385,7 @@ function initAccordion(){
     content.appendChild(sec);
     inner.appendChild(content);
     body.appendChild(inner);
+    body.style.display='none'; // Oculto por defecto vía JS (no depender solo del truco CSS grid-template-rows)
     wrapper.appendChild(header);
     wrapper.appendChild(body);
   });
@@ -1417,6 +1418,8 @@ function toggleAccordion(name){
     item.classList.remove('open');
     const hdr=item.querySelector('.acc-header');
     if(hdr)hdr.setAttribute('aria-expanded','false');
+    const body=ge('acc-body-'+name);
+    if(body)body.style.display='none';
   } else {
     openAccordion(name);
   }
@@ -1431,6 +1434,8 @@ function openAccordion(name){
       other.classList.remove('open');
       const h=other.querySelector('.acc-header');
       if(h)h.setAttribute('aria-expanded','false');
+      const ob=other.querySelector('.acc-body');
+      if(ob)ob.style.display='none';
     }
   });
   if(!item.classList.contains('open')){
@@ -1439,6 +1444,8 @@ function openAccordion(name){
     if(hdr)hdr.setAttribute('aria-expanded','true');
     callTabInit(name);
   }
+  const body=item.querySelector('.acc-body');
+  if(body)body.style.display='block';
   // Mover la sección activa al principio del contenedor para que quede justo bajo el header
   if(item.parentNode) item.parentNode.insertBefore(item, item.parentNode.firstChild);
   window.scrollTo(0,0);
