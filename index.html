@@ -386,6 +386,8 @@ textarea{resize:vertical;min-height:65px}
 </style>
 </head>
 <body>
+<div id="js-canary" style="background:#a32d2d;color:#fff;padding:12px 16px;font-size:14px;font-weight:600;text-align:center">⚠️ JavaScript NO se está ejecutando en este navegador</div>
+<script>document.getElementById('js-canary').remove();</script>
 <a href="#main-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999" onfocus="this.style.cssText='position:fixed;left:1rem;top:1rem;width:auto;height:auto;overflow:visible;z-index:9999;padding:8px 16px;background:var(--negro);color:var(--blanco);border-radius:var(--radius);font-size:13px;font-weight:500'">Saltar al contenido</a>
 <div class="print-header" style="margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:10px">
   <div style="display:flex;justify-content:space-between;align-items:flex-end">
