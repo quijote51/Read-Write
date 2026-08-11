@@ -1457,7 +1457,7 @@ const ROLES = {
   admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','ajustes','nuevo']}
 };
 
-let rolActual = localStorage.getItem('seda_rol') || null;
+let rolActual = null; // Ya no se recuerda entre sesiones: se pregunta el rol cada vez que se abre la app
 
 function abrirSelectorRol(){
   ge('rol-modal').style.display='flex';
