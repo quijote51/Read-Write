@@ -1,4 +1,3 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
-  "_touch": "force-redeploy"
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
