@@ -4520,6 +4520,13 @@ window.addEventListener('DOMContentLoaded', async function(){
   }
 });
 
+// Registrar service worker (requisito de Chrome/Android para ofrecer "Instalar app")
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+
 </script>
 </body>
 </html>
