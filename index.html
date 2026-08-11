@@ -45,7 +45,43 @@ function crearSupaFallback(){
     }
   };
 }
-const supa = (typeof supabase !== 'undefined') ? supabase.createClient(SUPA_URL, SUPA_KEY) : crearSupaFallback();
+let supa;
+try {
+  supa = (typeof supabase !== 'undefined') ? supabase.createClient(SUPA_URL, SUPA_KEY) : crearSupaFallback();
+} catch(e){
+  supa = crearSupaFallback();
+}
+
+// Manejador de errores visible: si algo revienta en JS, lo mostramos en pantalla
+// en vez de quedar solo en la consola (que en móvil nadie puede ver).
+window.addEventListener('error', function(e){
+  mostrarErrorVisible('Error JS: '+(e.message||'desconocido')+' — '+(e.filename?e.filename.split('/').pop():'')+':'+e.lineno);
+});
+window.addEventListener('unhandledrejection', function(e){
+  mostrarErrorVisible('Promesa rechazada: '+(e.reason?.message||e.reason||'desconocido'));
+});
+let _errorQueue = [];
+function mostrarErrorVisible(msg){
+  if(!document.body){ _errorQueue.push(msg); return; }
+  let box = document.getElementById('error-visible-box');
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'error-visible-box';
+    box.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#a32d2d;color:#fff;padding:10px 14px;font-size:12px;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,.4)';
+    document.body.prepend(box);
+  }
+  const line = document.createElement('div');
+  line.style.cssText = 'border-top:1px solid rgba(255,255,255,.2);padding-top:4px;margin-top:4px';
+  line.textContent = msg;
+  box.appendChild(line);
+}
+document.addEventListener('DOMContentLoaded', function(){
+  if(_errorQueue.length){
+    const pendientes = _errorQueue.slice();
+    _errorQueue = [];
+    pendientes.forEach(mostrarErrorVisible);
+  }
+});
 
 // ── Capa de datos: Supabase con fallback a localStorage ──
 
@@ -4567,20 +4603,28 @@ async function initApp(){
     mostrarSync(true);
   } catch(e){ mostrarSync(false); }
 
-  renderAlgSel('alg-selector');
-  renderPlatosInfantil();
-  renderPltSelector();
-  renderTipoSelects();
-  const cab=ge('header-hotel-nombre');
-  if(cab&&ajustes.hotel_nombre)cab.textContent=`${ajustes.hotel_nombre} · ${ajustes.hotel_ciudad||''}`;
-  const selLugar=ge('n-lugar');
-  if(selLugar&&ajustes.lugares?.length)selLugar.innerHTML=ajustes.lugares.map(l=>`<option>${l}</option>`).join('');
-  initAccordion();
-  if(rolActual && ROLES[rolActual]){ aplicarRol(rolActual); }
-  else {
-    // Sin rol: mostrar todas las secciones y abrir dashboard
-    openAccordion('dashboard');
-    setTimeout(()=>ge('rol-modal').style.display='flex', 400);
+  try {
+    renderAlgSel('alg-selector');
+    renderPlatosInfantil();
+    renderPltSelector();
+    renderTipoSelects();
+    const cab=ge('header-hotel-nombre');
+    if(cab&&ajustes.hotel_nombre)cab.textContent=`${ajustes.hotel_nombre} · ${ajustes.hotel_ciudad||''}`;
+    const selLugar=ge('n-lugar');
+    if(selLugar&&ajustes.lugares?.length)selLugar.innerHTML=ajustes.lugares.map(l=>`<option>${l}</option>`).join('');
+  } catch(e){
+    mostrarErrorVisible('Error preparando la interfaz: '+e.message);
+  }
+  try {
+    initAccordion();
+    if(rolActual && ROLES[rolActual]){ aplicarRol(rolActual); }
+    else {
+      // Sin rol: mostrar todas las secciones y abrir dashboard
+      openAccordion('dashboard');
+      setTimeout(()=>ge('rol-modal').style.display='flex', 400);
+    }
+  } catch(e){
+    mostrarErrorVisible('Error mostrando el menú: '+e.message);
   }
 }
 
