@@ -9,10 +9,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Oído Cocina · Seda Club Hotel</title>
-<link rel="manifest" href="/manifest.json">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -23,65 +19,7 @@
 const SUPA_URL  = 'https://gxkxslkdqgwovgxcuzkr.supabase.co';
 const SUPA_KEY  = 'sb_publishable_xAUprOgWQi0HhYms69zUhA_yiTwDYPK';
 
-// Si el script de Supabase (CDN externo) no llega a cargar —VPN, firewall, conexión
-// lenta, bloqueador de anuncios— usamos un cliente "falso" que no rompe el resto de
-// la app: cada llamada resuelve con datos vacíos en vez de lanzar un error que
-// pararía todo el JavaScript (y dejaría la página sin envolver en pestañas).
-function crearSupaFallback(){
-  const resultado = {data:null, error:{message:'offline'}};
-  const chain = new Proxy(function(){}, {
-    get(target, prop){
-      if(prop==='then') return (resolve)=>resolve(resultado);
-      return ()=>chain;
-    },
-    apply(){ return chain; }
-  });
-  return {
-    from: ()=>chain,
-    auth: {
-      getSession: async ()=>({data:{session:null}, error:null}),
-      signInWithPassword: async ()=>({data:null, error:{message:'No se pudo conectar con el servidor. Comprueba tu conexión (o desactiva el VPN) e inténtalo de nuevo.'}}),
-      signOut: async ()=>({error:null})
-    }
-  };
-}
-let supa;
-try {
-  supa = (typeof supabase !== 'undefined') ? supabase.createClient(SUPA_URL, SUPA_KEY) : crearSupaFallback();
-} catch(e){
-  supa = crearSupaFallback();
-}
-
-// Manejador de errores visible: si algo revienta en JS, lo mostramos en pantalla
-// en vez de quedar solo en la consola (que en móvil nadie puede ver).
-window.addEventListener('error', function(e){
-  mostrarErrorVisible('Error JS: '+(e.message||'desconocido')+' — '+(e.filename?e.filename.split('/').pop():'')+':'+e.lineno);
-});
-window.addEventListener('unhandledrejection', function(e){
-  mostrarErrorVisible('Promesa rechazada: '+(e.reason?.message||e.reason||'desconocido'));
-});
-let _errorQueue = [];
-function mostrarErrorVisible(msg){
-  if(!document.body){ _errorQueue.push(msg); return; }
-  let box = document.getElementById('error-visible-box');
-  if(!box){
-    box = document.createElement('div');
-    box.id = 'error-visible-box';
-    box.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#a32d2d;color:#fff;padding:10px 14px;font-size:12px;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,.4)';
-    document.body.prepend(box);
-  }
-  const line = document.createElement('div');
-  line.style.cssText = 'border-top:1px solid rgba(255,255,255,.2);padding-top:4px;margin-top:4px';
-  line.textContent = msg;
-  box.appendChild(line);
-}
-document.addEventListener('DOMContentLoaded', function(){
-  if(_errorQueue.length){
-    const pendientes = _errorQueue.slice();
-    _errorQueue = [];
-    pendientes.forEach(mostrarErrorVisible);
-  }
-});
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ── Capa de datos: Supabase con fallback a localStorage ──
 
@@ -386,8 +324,6 @@ textarea{resize:vertical;min-height:65px}
 </style>
 </head>
 <body>
-<div id="js-canary" style="background:#a32d2d;color:#fff;padding:12px 16px;font-size:14px;font-weight:600;text-align:center">⚠️ JavaScript NO se está ejecutando en este navegador</div>
-<script>document.getElementById('js-canary').remove();</script>
 <a href="#main-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999" onfocus="this.style.cssText='position:fixed;left:1rem;top:1rem;width:auto;height:auto;overflow:visible;z-index:9999;padding:8px 16px;background:var(--negro);color:var(--blanco);border-radius:var(--radius);font-size:13px;font-weight:500'">Saltar al contenido</a>
 <div class="print-header" style="margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:10px">
   <div style="display:flex;justify-content:space-between;align-items:flex-end">
@@ -421,33 +357,8 @@ textarea{resize:vertical;min-height:65px}
       <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down" style="font-size:11px;opacity:.6"></i>
     </button>
     <button onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" aria-label="Ajustes" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:13px;min-height:34px;min-width:34px;transition:background 150ms ease"><i class="ti ti-settings"></i></button>
-    <button onclick="cerrarSesion()" aria-label="Cerrar sesión" title="Cerrar sesión" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:13px;min-height:34px;min-width:34px;transition:background 150ms ease"><i class="ti ti-logout"></i></button>
   </div>
 </header>
-
-<!-- MODAL LOGIN -->
-<div id="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1003;align-items:center;justify-content:center;padding:1rem">
-  <div class="rol-modal-inner">
-    <div style="text-align:center">
-      <div class="rol-modal-badge"><i class="ti ti-lock"></i> ACCESO PRIVADO</div>
-      <div id="login-modal-titulo" class="rol-modal-title">O<span style="color:#c9a84c">í</span>do Cocina</div>
-      <div class="rol-modal-sub">Inicia sesión para continuar</div>
-    </div>
-    <div class="rol-modal-divider"><span></span><i class="ti ti-diamond-filled"></i><span></span></div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="fg" style="margin-bottom:0">
-        <label style="color:rgba(255,255,255,.5)">Email</label>
-        <input type="email" id="login-email" placeholder="hotel@oidococina.com" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);color:#fff" onkeydown="if(event.key==='Enter')hacerLogin()"/>
-      </div>
-      <div class="fg" style="margin-bottom:0">
-        <label style="color:rgba(255,255,255,.5)">Contraseña</label>
-        <input type="password" id="login-pass" placeholder="••••••••" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);color:#fff" onkeydown="if(event.key==='Enter')hacerLogin()"/>
-      </div>
-      <div id="login-error" style="display:none;font-size:12px;color:#f08080;background:rgba(240,128,128,.1);border-radius:8px;padding:8px 10px"></div>
-      <button id="login-btn" class="btn btn-p" style="justify-content:center;margin-top:4px" onclick="hacerLogin()"><i class="ti ti-login"></i> Entrar</button>
-    </div>
-  </div>
-</div>
 
 <!-- MODAL SELECTOR DE ROL -->
 <div id="rol-modal" role="dialog" aria-modal="true" aria-labelledby="rol-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1002;align-items:center;justify-content:center;padding:1rem">
@@ -696,7 +607,6 @@ textarea{resize:vertical;min-height:65px}
             </select>
           </div>
         </div>
-        <div class="fg" style="margin-bottom:8px;max-width:220px"><label>Antelación pedido (días)</label><input type="number" id="np-antelacion" min="0" max="14" placeholder="1"/></div>
         <button class="btn btn-p" onclick="agregarProveedor()"><i class="ti ti-plus"></i> Añadir</button>
       </div>
     </div>
@@ -1445,7 +1355,6 @@ function initAccordion(){
     content.appendChild(sec);
     inner.appendChild(content);
     body.appendChild(inner);
-    body.style.display='none'; // Oculto por defecto vía JS (no depender solo del truco CSS grid-template-rows)
     wrapper.appendChild(header);
     wrapper.appendChild(body);
   });
@@ -1478,8 +1387,6 @@ function toggleAccordion(name){
     item.classList.remove('open');
     const hdr=item.querySelector('.acc-header');
     if(hdr)hdr.setAttribute('aria-expanded','false');
-    const body=ge('acc-body-'+name);
-    if(body)body.style.display='none';
   } else {
     openAccordion(name);
   }
@@ -1488,27 +1395,13 @@ function toggleAccordion(name){
 function openAccordion(name){
   const item=ge('acc-'+name);
   if(!item||item.style.display==='none')return;
-  // Cerrar cualquier otra sección abierta (comportamiento de acordeón real: solo una a la vez)
-  document.querySelectorAll('.acc-item.open').forEach(other=>{
-    if(other!==item){
-      other.classList.remove('open');
-      const h=other.querySelector('.acc-header');
-      if(h)h.setAttribute('aria-expanded','false');
-      const ob=other.querySelector('.acc-body');
-      if(ob)ob.style.display='none';
-    }
-  });
   if(!item.classList.contains('open')){
     item.classList.add('open');
     const hdr=item.querySelector('.acc-header');
     if(hdr)hdr.setAttribute('aria-expanded','true');
     callTabInit(name);
   }
-  const body=item.querySelector('.acc-body');
-  if(body)body.style.display='block';
-  // Mover la sección activa al principio del contenedor para que quede justo bajo el header
-  if(item.parentNode) item.parentNode.insertBefore(item, item.parentNode.firstChild);
-  window.scrollTo(0,0);
+  setTimeout(()=>item.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
 }
 
 function showTab(name,btn){
@@ -1524,7 +1417,7 @@ const ROLES = {
   admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','ajustes','nuevo']}
 };
 
-let rolActual = null; // Ya no se recuerda entre sesiones: se pregunta el rol cada vez que se abre la app
+let rolActual = localStorage.getItem('seda_rol') || null;
 
 function abrirSelectorRol(){
   ge('rol-modal').style.display='flex';
@@ -2913,10 +2806,7 @@ function renderEventos(){
         <div class="ev-card-body">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:3px">
             <div class="ev-card-name">${ev.nombre}</div>
-            <div style="display:flex;gap:5px;align-items:center">
-              ${Object.keys(ev.confirmaciones||{}).length?`<span style="font-size:10px;color:var(--success-text);background:var(--success-bg);padding:2px 7px;border-radius:var(--radius)" title="Confirmaciones enviadas a: ${Object.keys(ev.confirmaciones).join(', ')}"><i class="ti ti-check"></i> ${Object.keys(ev.confirmaciones).length}/4</span>`:''}
-              ${getBadge(ev.fecha)}
-            </div>
+            ${getBadge(ev.fecha)}
           </div>
           <div class="ev-card-meta">
             <i class="ti ti-clock"></i> ${ev.hora}
@@ -3015,8 +2905,6 @@ function actualizarEvento(id){
   const precio_venta=parseFloat(ge('n-precio-venta')?.value)||0;
   const alergenos_menu=[...ge('alg-selector').querySelectorAll('.alg-cb.sel')].map(el=>{const lbl=el.querySelector('span:last-child').textContent.trim();return ALERGENOS.find(a=>a.label===lbl)?.id}).filter(Boolean);
   if(!nombre||!fecha||!pax){alert('Nombre, fecha y pax son obligatorios.');return;}
-  const conflictoEd=detectarConflicto(fecha,hora,lugar,id);
-  if(conflictoEd&&!confirm(`⚠️ Ya hay otro evento en "${lugar}" cerca de esa hora:\n"${conflictoEd.nombre}" el ${fmtFecha(conflictoEd.fecha)} a las ${conflictoEd.hora}.\n\n¿Guardar de todas formas?`))return;
   function pp(txt,def){return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([FCPMfcpm]):(.+)/);return m?{cat:m[1].toUpperCase(),nombre:m[2].trim(),alg:[]}:{cat:def,nombre:l,alg:[]}})}
   const platos=[...pp(ge('n-fr').value,'F'),...pp(ge('n-ca').value,'C'),...pp(ge('n-po').value,'P'),...pp(ge('n-pr').value,'M')];
   const ninos=parseInt(ge('n-ninos').value)||0;
@@ -3041,21 +2929,6 @@ function resetFormEvento(){
   ge('n-edit-aviso').style.display='none';
 }
 
-// Detecta eventos que chocan en el mismo lugar y franja horaria (±2h) el mismo día.
-// excludeId sirve para no comparar un evento consigo mismo al editarlo.
-function detectarConflicto(fecha,hora,lugar,excludeId){
-  if(!fecha||!hora||!lugar)return null;
-  const [h,m]=hora.split(':').map(Number);
-  const minEvento=h*60+m;
-  return eventos.find(e=>{
-    if(e.id===excludeId)return false;
-    if(e.fecha!==fecha||e.lugar!==lugar)return false;
-    const [eh,em]=(e.hora||'00:00').split(':').map(Number);
-    const minOtro=eh*60+em;
-    return Math.abs(minOtro-minEvento)<120; // menos de 2h de diferencia
-  })||null;
-}
-
 function guardarEvento(){
   const nombre=ge('n-nom').value.trim(),fecha=ge('n-fecha').value,hora=ge('n-hora').value||'14:00';
   const pax=parseInt(ge('n-pax').value),tipo=ge('n-tipo').value,lugar=ge('n-lugar').value;
@@ -3064,8 +2937,6 @@ function guardarEvento(){
   const precio_venta=parseFloat(ge('n-precio-venta')?.value)||0;
   const alergenos_menu=[...ge('alg-selector').querySelectorAll('.alg-cb.sel')].map(el=>{const lbl=el.querySelector('span:last-child').textContent.trim();return ALERGENOS.find(a=>a.label===lbl)?.id}).filter(Boolean);
   if(!nombre||!fecha||!pax){alert('Nombre, fecha y pax son obligatorios.');return;}
-  const conflicto=detectarConflicto(fecha,hora,lugar,null);
-  if(conflicto&&!confirm(`⚠️ Ya hay otro evento en "${lugar}" cerca de esa hora:\n"${conflicto.nombre}" el ${fmtFecha(conflicto.fecha)} a las ${conflicto.hora}.\n\n¿Guardar de todas formas?`))return;
   const btn=ge('n-guardar-btn');
   if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin .8s linear infinite"></i> Guardando...';}
   function pp(txt,def){return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([FCPMfcpm]):(.+)/);return m?{cat:m[1].toUpperCase(),nombre:m[2].trim(),alg:[]}:{cat:def,nombre:l,alg:[]}})}
@@ -3663,11 +3534,11 @@ function saveProv(p){try{localStorage.setItem('seda_prov',JSON.stringify(p))}cat
 let proveedores=getProv();
 if(!proveedores){
   proveedores=[
-    {id:'p1',nombre:'Cárnico Ruiz',tel:'34600000001',cat:'carnico',antelacion:2},
-    {id:'p2',nombre:'Pescadería del Puerto',tel:'34600000002',cat:'pescado',antelacion:1},
-    {id:'p3',nombre:'Frutas y Verduras García',tel:'34600000003',cat:'verdura',antelacion:1},
-    {id:'p4',nombre:'Lácteos Martínez',tel:'34600000004',cat:'lacteo',antelacion:2},
-    {id:'p5',nombre:'Panadería Artesana',tel:'34600000005',cat:'panaderia',antelacion:1}
+    {id:'p1',nombre:'Cárnico Ruiz',tel:'34600000001',cat:'carnico'},
+    {id:'p2',nombre:'Pescadería del Puerto',tel:'34600000002',cat:'pescado'},
+    {id:'p3',nombre:'Frutas y Verduras García',tel:'34600000003',cat:'verdura'},
+    {id:'p4',nombre:'Lácteos Martínez',tel:'34600000004',cat:'lacteo'},
+    {id:'p5',nombre:'Panadería Artesana',tel:'34600000005',cat:'panaderia'}
   ];
   saveProv(proveedores);
 }
@@ -3843,29 +3714,11 @@ function agregarProveedor(){
   const nombre=ge('np-nombre').value.trim();
   const tel=ge('np-tel').value.trim().replace(/\s/g,'');
   const cat=ge('np-cat').value;
-  const antelacion=parseInt(ge('np-antelacion')?.value)||1;
   if(!nombre){alert('El nombre es obligatorio.');return;}
-  proveedores.push({id:'p'+Date.now(),nombre,tel,cat,antelacion});
+  proveedores.push({id:'p'+Date.now(),nombre,tel,cat});
   saveProv(proveedores);
-  ge('np-nombre').value='';ge('np-tel').value='';if(ge('np-antelacion'))ge('np-antelacion').value='';
+  ge('np-nombre').value='';ge('np-tel').value='';
   renderProvEdit();
-}
-
-// Proveedores con eventos en los próximos días para los que ya toca hacer el pedido
-// (antelación del proveedor >= días que faltan para el evento)
-function pedidosUrgentes(){
-  const hoy=new Date(); hoy.setHours(0,0,0,0);
-  const avisos=[];
-  eventos.forEach(ev=>{
-    const d=new Date(ev.fecha+'T00:00:00');
-    const diasFaltan=Math.round((d-hoy)/86400000);
-    if(diasFaltan<0||diasFaltan>7)return;
-    proveedores.forEach(p=>{
-      const ant=p.antelacion||1;
-      if(diasFaltan<=ant) avisos.push({evento:ev,proveedor:p,diasFaltan});
-    });
-  });
-  return avisos;
 }
 
 function renderProvEdit(){
@@ -4186,12 +4039,6 @@ function initDashboard(){
   // Eventos sin precio
   const evSinPrecio=eventos.filter(e=>!e.precio_venta&&new Date(e.fecha+'T00:00:00')>=hoy);
   if(evSinPrecio.length) alertas.push({tipo:'warn',msg:`${evSinPrecio.length} evento(s) sin precio de venta — el escandallo no puede calcular margen`});
-  // Pedidos a proveedores urgentes (según antelación configurada por proveedor)
-  const urgentes=pedidosUrgentes();
-  urgentes.forEach(u=>{
-    alertas.push({tipo:u.diasFaltan<=0?'danger':'warn',
-      msg:`Pedido a ${u.proveedor.nombre} · ${u.evento.nombre} (${u.diasFaltan<=0?'HOY':'en '+u.diasFaltan+' día(s)'})`});
-  });
 
   const COLOR_TIPO={coctel:'#378ADD',menu:'#7F77DD',desayuno:'#D85A30'};
   const LABEL_TIPO={coctel:'Cóctel',menu:'Menú',desayuno:'Desayuno'};
@@ -4318,18 +4165,6 @@ let contactosInternos = getContactos() || {
 if(!getContactos()) saveContactos(contactosInternos);
 
 /* ===== CONFIRMACIÓN DE EVENTO ===== */
-// Marca que se ha pulsado el enlace de envío (WA o email) a un destinatario concreto.
-// No hay forma de saber si el mensaje se llegó a enviar de verdad (WhatsApp/mailto abren
-// la app y el envío final lo hace el usuario), pero al menos queda registro de que se inició.
-function marcarEnvioConfirmacion(evId,destinatario){
-  const ev=eventos.find(e=>e.id===evId); if(!ev)return;
-  if(!ev.confirmaciones)ev.confirmaciones={};
-  ev.confirmaciones[destinatario]=new Date().toISOString();
-  saveEv(eventos);
-  const badge=ge('conf-envio-'+destinatario);
-  if(badge)badge.style.display='inline';
-}
-
 function mostrarConfirmacion(evId){
   const ev=eventos.find(e=>e.id===evId); if(!ev) return;
   const modal=ge('conf-modal');
@@ -4467,9 +4302,8 @@ _Seda Club · Sistema de gestión_`;
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgCliente)}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('cliente')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
-        <a href="https://wa.me/?text=${encodeURIComponent(msgCliente)}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'cliente')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>
-        <a href="mailto:?subject=Confirmación reserva Seda Club Hotel&body=${encodeURIComponent(msgCliente.replace(/\*/g,''))}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'cliente')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email</a>
-        <span id="conf-envio-cliente" style="${ev.confirmaciones?.cliente?'':'display:none'};font-size:11px;color:var(--success-text)"><i class="ti ti-check"></i> Enviado ${ev.confirmaciones?.cliente?new Date(ev.confirmaciones.cliente).toLocaleString('es'):''}</span>
+        <a href="https://wa.me/?text=${encodeURIComponent(msgCliente)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>
+        <a href="mailto:?subject=Confirmación reserva Seda Club Hotel&body=${encodeURIComponent(msgCliente.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email</a>
       </div>
     </div>
 
@@ -4483,9 +4317,8 @@ _Seda Club · Sistema de gestión_`;
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgMaitre)}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('maitre')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
-        ${c.maitre.tel?`<a href="https://wa.me/${c.maitre.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgMaitre)}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'maitre')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Maître</a>`:''}
-        ${c.maitre.email?`<a href="mailto:${c.maitre.email}?subject=Ficha servicio ${ev.nombre}&body=${encodeURIComponent(msgMaitre.replace(/\*/g,''))}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'maitre')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Maître</a>`:''}
-        <span id="conf-envio-maitre" style="${ev.confirmaciones?.maitre?'':'display:none'};font-size:11px;color:var(--success-text)"><i class="ti ti-check"></i> Enviado ${ev.confirmaciones?.maitre?new Date(ev.confirmaciones.maitre).toLocaleString('es'):''}</span>
+        ${c.maitre.tel?`<a href="https://wa.me/${c.maitre.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgMaitre)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Maître</a>`:''}
+        ${c.maitre.email?`<a href="mailto:${c.maitre.email}?subject=Ficha servicio ${ev.nombre}&body=${encodeURIComponent(msgMaitre.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Maître</a>`:''}
       </div>
     </div>
 
@@ -4499,9 +4332,8 @@ _Seda Club · Sistema de gestión_`;
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgJefa)}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('jefa')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
-        ${c.jefa_eventos.tel?`<a href="https://wa.me/${c.jefa_eventos.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgJefa)}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'jefa')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Jefa</a>`:''}
-        ${c.jefa_eventos.email?`<a href="mailto:${c.jefa_eventos.email}?subject=Confirmación interna ${ev.nombre}&body=${encodeURIComponent(msgJefa.replace(/\*/g,''))}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'jefa')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Jefa</a>`:''}
-        <span id="conf-envio-jefa" style="${ev.confirmaciones?.jefa?'':'display:none'};font-size:11px;color:var(--success-text)"><i class="ti ti-check"></i> Enviado ${ev.confirmaciones?.jefa?new Date(ev.confirmaciones.jefa).toLocaleString('es'):''}</span>
+        ${c.jefa_eventos.tel?`<a href="https://wa.me/${c.jefa_eventos.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgJefa)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Jefa</a>`:''}
+        ${c.jefa_eventos.email?`<a href="mailto:${c.jefa_eventos.email}?subject=Confirmación interna ${ev.nombre}&body=${encodeURIComponent(msgJefa.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Jefa</a>`:''}
       </div>
     </div>
 
@@ -4535,9 +4367,8 @@ _Seda Club · Sistema de gestión_`;
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:12px;font-size:12px;white-space:pre-wrap;line-height:1.7;max-height:280px;overflow-y:auto;margin-bottom:12px;font-family:monospace">${escH(msgCocina)}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('cocina')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
-        ${c.jefe_cocina.tel?`<a href="https://wa.me/${c.jefe_cocina.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgCocina)}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'cocina')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Cocina</a>`:''}
-        ${c.jefe_cocina.email?`<a href="mailto:${c.jefe_cocina.email}?subject=Orden producción ${ev.nombre}&body=${encodeURIComponent(msgCocina.replace(/\*/g,''))}" target="_blank" onclick="marcarEnvioConfirmacion(${ev.id},'cocina')" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Cocina</a>`:''}
-        <span id="conf-envio-cocina" style="${ev.confirmaciones?.cocina?'':'display:none'};font-size:11px;color:var(--success-text)"><i class="ti ti-check"></i> Enviado ${ev.confirmaciones?.cocina?new Date(ev.confirmaciones.cocina).toLocaleString('es'):''}</span>
+        ${c.jefe_cocina.tel?`<a href="https://wa.me/${c.jefe_cocina.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgCocina)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Cocina</a>`:''}
+        ${c.jefe_cocina.email?`<a href="mailto:${c.jefe_cocina.email}?subject=Orden producción ${ev.nombre}&body=${encodeURIComponent(msgCocina.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Cocina</a>`:''}
       </div>
     </div>`;
 
@@ -4583,7 +4414,7 @@ function irVajDashboard(evId){
 }
 
 // ── ARRANQUE ──
-async function initApp(){
+window.addEventListener('DOMContentLoaded', async function(){
   // Verificar conexión Supabase
   checkSupabase();
   // Cargar datos desde Supabase (con fallback a localStorage)
@@ -4605,88 +4436,22 @@ async function initApp(){
     mostrarSync(true);
   } catch(e){ mostrarSync(false); }
 
-  try {
-    renderAlgSel('alg-selector');
-    renderPlatosInfantil();
-    renderPltSelector();
-    renderTipoSelects();
-    const cab=ge('header-hotel-nombre');
-    if(cab&&ajustes.hotel_nombre)cab.textContent=`${ajustes.hotel_nombre} · ${ajustes.hotel_ciudad||''}`;
-    const selLugar=ge('n-lugar');
-    if(selLugar&&ajustes.lugares?.length)selLugar.innerHTML=ajustes.lugares.map(l=>`<option>${l}</option>`).join('');
-  } catch(e){
-    mostrarErrorVisible('Error preparando la interfaz: '+e.message);
-  }
-  try {
-    initAccordion();
-    if(rolActual && ROLES[rolActual]){ aplicarRol(rolActual); }
-    else {
-      // Sin rol: mostrar todas las secciones y abrir dashboard
-      openAccordion('dashboard');
-      setTimeout(()=>ge('rol-modal').style.display='flex', 400);
-    }
-  } catch(e){
-    mostrarErrorVisible('Error mostrando el menú: '+e.message);
-  }
-}
-
-/* ===== AUTENTICACIÓN ===== */
-async function mostrarLogin(){
-  ge('login-modal').style.display='flex';
-  ge('main-content').style.display='none';
-}
-
-async function ocultarLogin(){
-  ge('login-modal').style.display='none';
-  ge('main-content').style.display='';
-}
-
-async function hacerLogin(){
-  const email=ge('login-email').value.trim();
-  const pass=ge('login-pass').value;
-  const btn=ge('login-btn');
-  const err=ge('login-error');
-  err.style.display='none';
-  if(!email||!pass){err.textContent='Introduce email y contraseña.';err.style.display='block';return;}
-  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin .8s linear infinite"></i> Entrando...';
-  const {data,error}=await supa.auth.signInWithPassword({email,password:pass});
-  btn.disabled=false;btn.innerHTML='<i class="ti ti-login"></i> Entrar';
-  if(error){
-    err.textContent = error.message==='Invalid login credentials' ? 'Email o contraseña incorrectos.' : 'Error al entrar: '+error.message;
-    err.style.display='block';
-    return;
-  }
-  ocultarLogin();
-  initApp();
-}
-
-function cerrarSesion(){
-  if(!confirm('¿Cerrar sesión?'))return;
-  supa.auth.signOut().then(()=>location.reload());
-}
-
-window.addEventListener('DOMContentLoaded', async function(){
-  try {
-    const {data:{session}} = await supa.auth.getSession();
-    if(session){
-      await initApp();
-    } else {
-      mostrarLogin();
-    }
-  } catch(e){
-    // Red caída, VPN bloqueando, o cualquier fallo inesperado: mostrar login
-    // igualmente en vez de dejar la página cruda sin envolver en pestañas.
-    console.warn('Fallo en arranque, mostrando login:', e);
-    mostrarLogin();
+  renderAlgSel('alg-selector');
+  renderPlatosInfantil();
+  renderPltSelector();
+  renderTipoSelects();
+  const cab=ge('header-hotel-nombre');
+  if(cab&&ajustes.hotel_nombre)cab.textContent=`${ajustes.hotel_nombre} · ${ajustes.hotel_ciudad||''}`;
+  const selLugar=ge('n-lugar');
+  if(selLugar&&ajustes.lugares?.length)selLugar.innerHTML=ajustes.lugares.map(l=>`<option>${l}</option>`).join('');
+  initAccordion();
+  if(rolActual && ROLES[rolActual]){ aplicarRol(rolActual); }
+  else {
+    // Sin rol: mostrar todas las secciones y abrir dashboard
+    openAccordion('dashboard');
+    setTimeout(()=>ge('rol-modal').style.display='flex', 400);
   }
 });
-
-// Registrar service worker (requisito de Chrome/Android para ofrecer "Instalar app")
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('/sw.js').catch(()=>{});
-  });
-}
 
 </script>
 </body>
