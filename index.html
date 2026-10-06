@@ -921,6 +921,18 @@ textarea{resize:vertical;min-height:65px}
 <div class="sec" id="tab-ajustes">
   <div class="sec-label" style="margin-bottom:1.5rem;font-size:14px;font-weight:600;letter-spacing:.04em"><i class="ti ti-settings"></i> Ajustes del sistema</div>
 
+  <!-- Copia de seguridad -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-database-export"></i> Copia de seguridad</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px">Los datos de la app se guardan solo en este dispositivo. Descarga una copia y guárdala en un sitio seguro (correo, Drive...). Si cambias de móvil o borras los datos del navegador, la restauras desde aquí.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="exportarCopia()"><i class="ti ti-download"></i> Descargar copia</button>
+      <button class="btn-sec" onclick="ge('copia-file').click()"><i class="ti ti-upload"></i> Restaurar copia</button>
+      <input type="file" id="copia-file" accept=".json,application/json" style="display:none" onchange="importarCopia(this)"/>
+    </div>
+    <div id="copia-info" style="font-size:12px;color:var(--text-tertiary);margin-top:8px"></div>
+  </div>
+
   <!-- Hotel -->
   <div class="card" style="margin-bottom:12px">
     <div class="form-sec" style="margin-top:0"><i class="ti ti-building"></i> Datos del hotel</div>
@@ -4412,6 +4424,65 @@ function irVajDashboard(evId){
   showTab('vajilla',document.querySelectorAll('.tab')[10]);
   setTimeout(()=>{ge('vaj-ev-sel').value=evId;renderVajEvento();},50);
 }
+
+// ── COPIA DE SEGURIDAD ──
+const COPIA_EXCLUIR=['seda_rol','seda_ultima_copia'];
+function exportarCopia(){
+  try{
+    const datos={};
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.startsWith('seda_')&&!COPIA_EXCLUIR.includes(k)) datos[k]=localStorage.getItem(k);
+    }
+    if(!Object.keys(datos).length){alert('Todavía no hay datos que guardar.');return;}
+    const ahora=new Date();
+    const blob=new Blob([JSON.stringify({app:'oido-cocina',version:1,fecha:ahora.toISOString(),datos},null,1)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='oido-cocina-copia-'+ahora.toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    try{localStorage.setItem('seda_ultima_copia',ahora.toISOString())}catch{}
+    mostrarInfoCopia();
+  }catch(e){alert('No se pudo crear la copia: '+e.message)}
+}
+function importarCopia(inp){
+  const f=inp.files&&inp.files[0];
+  inp.value='';
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const c=JSON.parse(r.result);
+      if(!c||c.app!=='oido-cocina'||!c.datos||typeof c.datos!=='object') throw new Error('El archivo no es una copia de Oído Cocina.');
+      const claves=Object.keys(c.datos).filter(k=>k.startsWith('seda_')&&!COPIA_EXCLUIR.includes(k)&&typeof c.datos[k]==='string');
+      if(!claves.length) throw new Error('La copia está vacía.');
+      claves.forEach(k=>JSON.parse(c.datos[k])); // cada dato debe ser JSON válido
+      if(!confirm('Esto reemplaza los datos de este dispositivo por los de la copia del '+String(c.fecha||'').slice(0,10)+'. ¿Continuar?')) return;
+      // Guarda lo que había antes por si algo sale mal (fuera del prefijo seda_)
+      try{
+        const previo={};
+        for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('seda_'))previo[k]=localStorage.getItem(k);}
+        localStorage.setItem('oido_backup_previo',JSON.stringify({fecha:new Date().toISOString(),datos:previo}));
+      }catch{}
+      claves.forEach(k=>localStorage.setItem(k,c.datos[k]));
+      alert('Copia restaurada. La app se va a recargar.');
+      location.reload();
+    }catch(e){alert('No se pudo restaurar: '+e.message)}
+  };
+  r.readAsText(f);
+}
+function mostrarInfoCopia(){
+  const el=ge('copia-info');
+  if(!el)return;
+  let t=null;
+  try{t=localStorage.getItem('seda_ultima_copia')}catch{}
+  if(!t){el.textContent='Todavía no has descargado ninguna copia.';el.style.color='rgba(255,165,0,.85)';return;}
+  const dias=Math.floor((Date.now()-new Date(t).getTime())/86400000);
+  el.textContent='Última copia: '+t.slice(0,10)+(dias>0?' (hace '+dias+' día'+(dias===1?'':'s')+')':' (hoy)');
+  el.style.color=dias>7?'rgba(255,165,0,.85)':'var(--text-tertiary)';
+}
+try{mostrarInfoCopia()}catch{}
 
 // ── ARRANQUE ──
 window.addEventListener('DOMContentLoaded', async function(){
