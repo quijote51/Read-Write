@@ -25,11 +25,19 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 // Filas (eventos, plantillas...): upsert por id; solo se borran en la nube las filas
 // que este cliente ya conocía y ya no existen aquí (no pisa lo que crearon otros).
 // Configuración (recetas, precios, ajustes...): una fila JSON por clave en `config`.
+let _uid = null, _email = '';
+async function _leerSesion(){
+  try { const {data} = await supa.auth.getSession(); _uid = data?.session?.user?.id || null; _email = data?.session?.user?.email || ''; }
+  catch { _uid = null; _email = ''; }
+  return _uid;
+}
+supa.auth.onAuthStateChange(ev=>{ if(ev==='SIGNED_OUT' && _uid){ _uid=null; location.reload(); } });
 const _conocidos = {};
 const _timers = {};
 function _fallo(clave, err){ console.warn('Sync error:', clave, err); mostrarSync(false); }
 
 async function _subirTabla(tabla, arr){
+  if(!_uid){ mostrarSync(false); return; }
   try {
     const rows = arr.map(r=>({...r, id:String(r.id)}));
     if(rows.length){
@@ -48,8 +56,9 @@ async function _subirTabla(tabla, arr){
 }
 
 async function _subirConfig(key, valor){
+  if(!_uid){ mostrarSync(false); return; }
   try {
-    const {error} = await supa.from('config').upsert({key, value:valor, updated_at:new Date().toISOString()});
+    const {error} = await supa.from('config').upsert({hotel_id:_uid, key, value:valor, updated_at:new Date().toISOString()}, {onConflict:'hotel_id,key'});
     if(error) throw error;
     mostrarSync(true);
   } catch(err){ _fallo(key, err); }
@@ -63,7 +72,7 @@ function syncConfig(key, valor){ _programar(key, ()=>_subirConfig(key, valor)); 
 function mostrarSync(ok){
   const el = document.getElementById('sync-indicator');
   if(el){
-    el.innerHTML = ok ? '<i class="ti ti-cloud-check"></i> Sincronizado' : '<i class="ti ti-wifi-off"></i> Sin conexión';
+    el.innerHTML = ok ? '<i class="ti ti-cloud-check"></i> Sincronizado' : (_uid ? '<i class="ti ti-wifi-off"></i> Sin conexión' : '<i class="ti ti-device-mobile"></i> Solo este dispositivo');
     el.style.color = ok ? 'rgba(255,255,255,.4)' : 'rgba(255,165,0,.7)';
   }
 }
@@ -364,6 +373,20 @@ textarea{resize:vertical;min-height:65px}
 </header>
 
 <!-- MODAL SELECTOR DE ROL -->
+<div id="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1003;align-items:center;justify-content:center;padding:1rem">
+  <form class="rol-modal-inner" id="login-form" onsubmit="return entrar(event)">
+    <div style="text-align:center;margin-bottom:1.25rem">
+      <div class="rol-modal-badge"><i class="ti ti-building"></i> SEDA CLUB HOTEL · GRANADA</div>
+      <div id="login-titulo" class="rol-modal-title">O<span style="color:#c9a84c">í</span>do Cocina</div>
+      <div class="rol-modal-sub">Inicia sesión para sincronizar tus datos</div>
+    </div>
+    <div class="fg"><label for="login-email" style="color:rgba(255,255,255,.6)">Correo</label><input id="login-email" type="email" autocomplete="username" inputmode="email" required style="min-height:44px;font-size:15px"></div>
+    <div class="fg"><label for="login-pass" style="color:rgba(255,255,255,.6)">Contraseña</label><input id="login-pass" type="password" autocomplete="current-password" required style="min-height:44px;font-size:15px"></div>
+    <div id="login-error" role="alert" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:var(--radius);background:var(--danger-bg);color:var(--danger-text);font-size:13px"></div>
+    <button class="btn btn-p" id="login-btn" type="submit" style="width:100%;justify-content:center;min-height:44px;font-size:14px;font-weight:600;background:#c9a84c;color:#1a1a1a;border-color:#c9a84c">Entrar</button>
+    <button class="btn-sec" type="button" onclick="seguirSinCuenta()" style="width:100%;justify-content:center;margin-top:8px;min-height:44px;font-size:13px;background:transparent;color:rgba(255,255,255,.75);border-color:rgba(255,255,255,.25)">Seguir sin cuenta (solo este dispositivo)</button>
+  </form>
+</div>
 <div id="rol-modal" role="dialog" aria-modal="true" aria-labelledby="rol-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1002;align-items:center;justify-content:center;padding:1rem">
   <div class="rol-modal-inner">
     <div style="text-align:center">
@@ -924,10 +947,17 @@ textarea{resize:vertical;min-height:65px}
 <div class="sec" id="tab-ajustes">
   <div class="sec-label" style="margin-bottom:1.5rem;font-size:14px;font-weight:600;letter-spacing:.04em"><i class="ti ti-settings"></i> Ajustes del sistema</div>
 
+  <!-- Cuenta y sincronización -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-user-circle"></i> Cuenta y sincronización</div>
+    <p id="cuenta-estado" style="font-size:13px;color:var(--text-secondary);margin-bottom:10px"></p>
+    <button id="cuenta-btn" class="btn-sec" style="font-size:12px;min-height:44px" onclick="cuentaAccion()"></button>
+  </div>
+
   <!-- Copia de seguridad -->
   <div class="card" style="margin-bottom:12px">
     <div class="form-sec" style="margin-top:0"><i class="ti ti-database-export"></i> Copia de seguridad</div>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px">Los datos de la app se guardan solo en este dispositivo. Descarga una copia y guárdala en un sitio seguro (correo, Drive...). Si cambias de móvil o borras los datos del navegador, la restauras desde aquí.</p>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px">Los datos se guardan en este dispositivo y, con la sesión iniciada, también en la nube. Descarga una copia y guárdala en un sitio seguro (correo, Drive...). Si cambias de móvil o borras los datos del navegador, la restauras desde aquí.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" onclick="exportarCopia()"><i class="ti ti-download"></i> Descargar copia</button>
       <button class="btn-sec" onclick="ge('copia-file').click()"><i class="ti ti-upload"></i> Restaurar copia</button>
@@ -1231,9 +1261,11 @@ function fmtFecha(f){const[y,m,d]=f.split('-');const mes=['','ene','feb','mar','
 function getBadge(fecha){const hoy=new Date();hoy.setHours(0,0,0,0);const d=new Date(fecha+'T00:00:00');const diff=Math.round((d-hoy)/86400000);if(diff<0)return'<span class="badge b-info">Pasado</span>';if(diff===0)return'<span class="badge b-danger">HOY</span>';if(diff===1)return'<span class="badge b-warn">Mañana</span>';if(diff<=7)return'<span class="badge b-warn">En '+diff+' días</span>';return'<span class="badge b-success">En '+diff+' días</span>'}
 
 function getEv(){try{return JSON.parse(localStorage.getItem('seda_ev')||'[]')}catch{return[]}}
+// Los eventos de demostración (ids pequeños: 1, 2, 3…) nunca se suben a la nube
+function _esDemo(x){return typeof x.id==='number'&&x.id<1e6}
 function saveEv(e){
   try{localStorage.setItem('seda_ev',JSON.stringify(e))}catch{}
-  syncTabla('eventos',e);
+  syncTabla('eventos',e.filter(x=>!_esDemo(x)));
 }
 /* ===== EMPAREJAR PLATO ↔ RECETA ===== */
 function _norm(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim()}
@@ -4495,8 +4527,43 @@ function mostrarInfoCopia(){
 }
 try{mostrarInfoCopia()}catch{}
 
+/* ===== SESIÓN ===== */
+async function asegurarSesion(){
+  await _leerSesion();
+  if(_uid || sessionStorage.getItem('seda_sin_cuenta')) return;
+  ge('login-modal').style.display='flex';
+  setTimeout(()=>ge('login-email')&&ge('login-email').focus(),50);
+  await new Promise(res=>{ window._loginListo=res; });
+  ge('login-modal').style.display='none';
+}
+async function entrar(ev){
+  ev.preventDefault();
+  const btn=ge('login-btn'), err=ge('login-error');
+  err.style.display='none'; btn.disabled=true; btn.textContent='Entrando…';
+  try{
+    const {data,error}=await supa.auth.signInWithPassword({email:ge('login-email').value.trim(),password:ge('login-pass').value});
+    if(error) throw error;
+    _uid=data.user.id; _email=data.user.email||''; ge('login-pass').value='';
+    if(window._loginListo) window._loginListo();
+  }catch(e){
+    err.textContent=/invalid|credentials/i.test(String(e&&e.message))?'Correo o contraseña incorrectos.':'No se pudo entrar. Revisa la conexión e inténtalo de nuevo.';
+    err.style.display='block';
+  }
+  btn.disabled=false; btn.textContent='Entrar';
+  return false;
+}
+function seguirSinCuenta(){ sessionStorage.setItem('seda_sin_cuenta','1'); if(window._loginListo) window._loginListo(); }
+async function cerrarSesion(){ try{await supa.auth.signOut()}catch{} sessionStorage.removeItem('seda_sin_cuenta'); location.reload(); }
+function cuentaAccion(){ if(_uid) cerrarSesion(); else { sessionStorage.removeItem('seda_sin_cuenta'); location.reload(); } }
+function renderCuenta(){
+  const est=ge('cuenta-estado'), btn=ge('cuenta-btn'); if(!est||!btn) return;
+  if(_uid){ est.textContent='Sesión iniciada'+(_email?' como '+_email:'')+'. Tus datos se sincronizan con la nube.'; btn.innerHTML='<i class="ti ti-logout"></i> Cerrar sesión'; }
+  else { est.textContent='Sin sesión: los datos solo se guardan en este dispositivo.'; btn.innerHTML='<i class="ti ti-login"></i> Iniciar sesión'; }
+}
+
 /* ===== CARGA DESDE LA NUBE ===== */
 async function cargarNube(){
+  if(!_uid){ mostrarSync(false); return; }
   let ok=true;
   const setLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
   try {
@@ -4523,8 +4590,8 @@ async function cargarNube(){
       const r=res[i];
       if(r.error){ok=false;console.warn('Carga',t,r.error);return;}
       _conocidos[t]=new Set(r.data.map(x=>String(x.id)));
-      if(r.data.length){ const v=set(r.data); setLS(ls,v||get()); }
-      else if(get()&&get().length) syncTabla(t,get()); // primera vez: sube lo local
+      if(r.data.length){ const antes=get(); if(antes&&antes.length) setLS('seda_prenube_'+t,antes); const v=set(r.data); setLS(ls,v||get()); }
+      else if(get()&&get().length) syncTabla(t,t==='eventos'?get().filter(x=>!_esDemo(x)):get()); // primera vez: sube lo local (sin demos)
     });
     if(cfg.error){ok=false;console.warn('Carga config',cfg.error);}
     else{
@@ -4540,6 +4607,8 @@ async function cargarNube(){
 
 // ── ARRANQUE ──
 window.addEventListener('DOMContentLoaded', async function(){
+  await asegurarSesion();
+  renderCuenta();
   await cargarNube();
 
   renderAlgSel('alg-selector');
