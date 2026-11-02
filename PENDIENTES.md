@@ -13,6 +13,12 @@
 - [ ] Revisar si «Cumpleaños Eva» (mismo día, hora, pax y sitio) es un duplicado.
 - [ ] Crear en el recetario las recetas de las croquetas y del bacalao.
 
+## Hecho: ficha de alérgenos por evento (alergenos.js)
+- Botón «Alérgenos» en cada evento y en Producción: ficha para el cliente, imprimible y en texto para WhatsApp.
+- Avisa de platos sin receta y de posible huevo crudo; «revisado por» que caduca si cambia el menú.
+- [ ] Siguiente: APPCC básico (temperaturas, limpieza, muestra testigo, etiquetas) en su propio archivo.
+- [ ] Más adelante: QR público de la ficha (necesita una página pública y un cambio en Supabase).
+
 ## Otros
 - Ficha de alérgenos para revisar: https://claude.ai/artifact/UgZsEDQXMzQQ33YPzSHJqR (privada; se comparte desde su botón Compartir).
 - App para el amigo: https://oidococina-xu7i.vercel.app («Seguir sin cuenta»).

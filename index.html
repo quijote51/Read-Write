@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="/horarios.css">
 <script src="horarios.js"></script>
 <script src="inventario.js"></script>
+<script src="alergenos.js"></script>
 <script>
 // ══════════════════════════════════════
 // OÍDO COCINA · Configuración Supabase
@@ -588,6 +589,9 @@ textarea{resize:vertical;min-height:65px}
     <select id="prod-sel" onchange="renderProd()" style="flex:1">
       <option value="">Selecciona un evento</option>
     </select>
+    <button class="btn-print no-print" onclick="abrirFichaAlergenos(ge('prod-sel').value)" id="btn-alergenos" style="display:none">
+      <i class="ti ti-shield-check"></i> Alérgenos
+    </button>
     <button class="btn-print no-print" onclick="imprimirFicha()" id="btn-imprimir" style="display:none">
       <i class="ti ti-printer"></i> Imprimir ficha
     </button>
@@ -1173,15 +1177,7 @@ textarea{resize:vertical;min-height:65px}
 </div>
 
 <script>
-const ALERGENOS=[
-  {id:'gluten',icon:'🌾',label:'Gluten'},{id:'crustaceos',icon:'🦐',label:'Crustáceos'},
-  {id:'huevo',icon:'🥚',label:'Huevo'},{id:'pescado',icon:'🐟',label:'Pescado'},
-  {id:'cacahuetes',icon:'🥜',label:'Cacahuetes'},{id:'soja',icon:'🫘',label:'Soja'},
-  {id:'lacteo',icon:'🥛',label:'Lácteos'},{id:'frutos_secos',icon:'🌰',label:'Frutos secos'},
-  {id:'apio',icon:'🌿',label:'Apio'},{id:'mostaza',icon:'🟡',label:'Mostaza'},
-  {id:'sesamo',icon:'🌱',label:'Sésamo'},{id:'sulfitos',icon:'🍷',label:'Sulfitos'},
-  {id:'altramuces',icon:'🫛',label:'Altramuces'},{id:'moluscos',icon:'🦪',label:'Moluscos'}
-];
+// ALERGENOS, algLabel, algIcon y el análisis de alérgenos viven en alergenos.js
 // Tipos de servicio — sistema dinámico
 const TIPOS_DEFAULT=[
   {id:'coctel',    nombre:'Cóctel',           factor:1.5, color:'#378ADD'},
@@ -1316,8 +1312,6 @@ const RECETAS_BASE=[
 ];
 
 function ge(id){return document.getElementById(id)}
-function algLabel(id){return ALERGENOS.find(a=>a.id===id)?.label||id}
-function algIcon(id){return ALERGENOS.find(a=>a.id===id)?.icon||'<i class="ti ti-alert-triangle"></i>'}
 function fmtFecha(f){const[y,m,d]=f.split('-');const mes=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];return d+' '+mes[+m]+' '+y}
 function getBadge(fecha){const hoy=new Date();hoy.setHours(0,0,0,0);const d=new Date(fecha+'T00:00:00');const diff=Math.round((d-hoy)/86400000);if(diff<0)return'<span class="badge b-info">Pasado</span>';if(diff===0)return'<span class="badge b-danger">HOY</span>';if(diff===1)return'<span class="badge b-warn">Mañana</span>';if(diff<=7)return'<span class="badge b-warn">En '+diff+' días</span>';return'<span class="badge b-success">En '+diff+' días</span>'}
 
@@ -1361,41 +1355,6 @@ function vincularPlatos(platos){
     if(r&&r.id){ p.receta_id=r.id; cambios++; }
   });
   return cambios;
-}
-// ── Alérgenos automáticos: unión de lo marcado en el plato + lo que declara su receta (y los ingredientes) ──
-function algDePlato(p){
-  const set=new Set(p.alg||[]);
-  const r=recetaDePlato(p);
-  if(r){ (r.alg||[]).forEach(a=>set.add(a)); (r.ingredientes||[]).forEach(i=>(i.alg||[]).forEach(a=>set.add(a))); }
-  return [...set];
-}
-const ALG_PALABRAS={
-  gluten:['gluten','celiac','celíac','trigo'], crustaceos:['crustace','marisco','gamba','langostino'], moluscos:['molusco','marisco'],
-  huevo:['huevo'], pescado:['pescado'], cacahuetes:['cacahuete','cacahuet','maní'], soja:['soja'],
-  lacteo:['lácteo','lacteo','lactosa','leche'], frutos_secos:['frutos secos','fruto seco','nuez','nueces','almendra','avellana'],
-  apio:['apio'], mostaza:['mostaza'], sesamo:['sésamo','sesamo'], sulfitos:['sulfito'], altramuces:['altramuz']
-};
-function algDeTexto(txt){
-  const t=String(txt||'').toLowerCase();
-  return Object.keys(ALG_PALABRAS).filter(id=>ALG_PALABRAS[id].some(k=>t.includes(k)));
-}
-function analisisAlergenos(ev){
-  const porPlato=(ev.platos||[]).map(p=>({nombre:p.nombre,alg:algDePlato(p)}));
-  const presentes=[...new Set(porPlato.flatMap(x=>x.alg))];
-  const declarados=ev.alergenos_menu||[];
-  const faltan=presentes.filter(a=>!declarados.includes(a));
-  const invitados=algDeTexto(ev.alergias_txt).map(id=>({id,label:algLabel(id),platos:porPlato.filter(x=>x.alg.includes(id)).map(x=>x.nombre)}));
-  return {presentes,faltan,invitados};
-}
-function htmlAlertaAlergenos(ev,compacto){
-  const a=analisisAlergenos(ev), l=[];
-  a.invitados.forEach(g=>l.push(g.platos.length
-    ? `<b>${escH(g.label)}</b>: lo llevan ${g.platos.map(escH).join(', ')} → preparar alternativa`
-    : `<b>${escH(g.label)}</b>: ningún plato lo declara. Comprueba las recetas por si falta alguna marca.`));
-  if(a.faltan.length) l.push(`En los platos pero sin marcar en el menú: ${a.faltan.map(x=>escH(algLabel(x))).join(', ')}`);
-  if(!l.length) return '';
-  if(compacto) return `<div style="margin-top:6px;font-size:12px;color:#fca5a5;font-weight:600"><i class="ti ti-shield-exclamation"></i> ${l.length} aviso(s) de alérgenos: ${l.map(x=>x.replace(/<[^>]+>/g,'')).join(' · ')}</div>`;
-  return `<div class="card" style="border:.5px solid var(--danger-text);background:var(--danger-bg);margin-bottom:10px"><div style="font-size:13px;font-weight:600;color:var(--danger-text);margin-bottom:4px"><i class="ti ti-shield-exclamation"></i> Cruce de alérgenos</div>${l.map(x=>`<div style="font-size:13px;padding:2px 0">${x}</div>`).join('')}</div>`;
 }
 function getRec(){try{return JSON.parse(localStorage.getItem('seda_rec')||'null')}catch{return null}}
 function saveRec(r){try{localStorage.setItem('seda_rec',JSON.stringify(r))}catch{} syncConfig('seda_rec',r);}
@@ -2054,7 +2013,7 @@ function importarDatos(input){
 function resetearTodo(){
   if(!confirm('⚠️ ¿Borrar TODOS los datos? Esta acción no se puede deshacer.'))return;
   if(!confirm('¿Estás seguro? Se borrarán todos los eventos, recetas, plantillas y configuración.'))return;
-  ['seda_ev','seda_rec','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario'].forEach(k=>localStorage.removeItem(k));
+  ['seda_ev','seda_rec','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev'].forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
 
@@ -3054,6 +3013,7 @@ function renderEventos(){
       <div class="ev-card-footer">
         <button onclick="irProdDashboard(${ev.id})" class="btn-icon"><i class="ti ti-list-check"></i> Producción</button>
         <button onclick="editarEvento(${ev.id})" aria-label="Editar" class="btn-icon"><i class="ti ti-edit"></i> Editar</button>
+        <button onclick="abrirFichaAlergenos(${ev.id})" class="btn-icon"><i class="ti ti-shield-check"></i> Alérgenos</button>
         <button onclick="duplicarEvento(${ev.id})" aria-label="Duplicar" class="btn-icon"><i class="ti ti-copy"></i></button>
         <button onclick="editarNota(${ev.id})" aria-label="Nota" class="btn-icon"><i class="ti ti-note"></i></button>
         <button onclick="mostrarConfirmacion(${ev.id})" class="btn-icon success"><i class="ti ti-send"></i> Confirmar</button>
@@ -3189,10 +3149,11 @@ function fillProdSel(){
 function renderProd(){
   const id=parseInt(ge('prod-sel').value),cont=ge('prod-cont');
   const btnImp=ge('btn-imprimir');
-  if(!id){cont.innerHTML='<div class="empty">Selecciona un evento.</div>';btnImp.style.display='none';return;}
+  if(!id){cont.innerHTML='<div class="empty">Selecciona un evento.</div>';btnImp.style.display='none';const bA=ge('btn-alergenos');if(bA)bA.style.display='none';return;}
   const ev=eventos.find(e=>e.id===id);if(!ev)return;
   const f=getFactorEvento(ev),pax=ev.pax,total=ev.platos.length*Math.round(pax*f);
   btnImp.style.display='inline-flex';
+  const btnAlg=ge('btn-alergenos'); if(btnAlg) btnAlg.style.display='inline-flex';
 
   const alergC=ev.alergias_txt?`<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px"><div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:3px"><i class="ti ti-alert-triangle"></i> Alergias de clientes</div><div style="font-size:13px">${escH(ev.alergias_txt)}</div></div>`:'';
   const alergMenu=(ev.alergenos_menu||[]).length?`<div class="card" style="margin-bottom:10px"><div style="font-size:13px;font-weight:500;margin-bottom:5px"><i class="ti ti-shield-check"></i> Alérgenos en este menú</div><div>${(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div></div>`:'';
@@ -4803,7 +4764,8 @@ async function cargarNube(){
       ['seda_contactos',()=>contactosInternos,v=>{contactosInternos=v}],
       ['seda_horarios',()=>horarios,v=>{hzSync(v)}],
       ['seda_inventario',()=>inventario,v=>{inventario=v;const t=document.getElementById('tab-inventario');if(t&&t.offsetParent!==null&&typeof initInventario==='function')initInventario()}],
-      ['seda_pin',()=>getPinCfg(),v=>{}]
+      ['seda_pin',()=>getPinCfg(),v=>{}],
+      ['seda_alg_rev',()=>algRevisiones,v=>{setAlgRevisiones(v)}]
     ];
     const [cfg,...res]=await Promise.all([
       supa.from('config').select('key,value'),
@@ -4839,7 +4801,8 @@ async function reenviarTodo(){
       _subirTabla('vajilla',vajilla), _subirTabla('proveedores',proveedores), _subirTabla('personal',personal),
       _subirConfig('seda_rec',recetas), _subirConfig('seda_precios',preciosIng), _subirConfig('seda_tipos',tiposServicio),
       _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos), _subirConfig('seda_horarios',horarios), ...(inventario?[_subirConfig('seda_inventario',inventario)]:[]),
-      ...(getPinCfg()?[_subirConfig('seda_pin',getPinCfg())]:[])
+      ...(getPinCfg()?[_subirConfig('seda_pin',getPinCfg())]:[]),
+      ...(Object.keys(algRevisiones).length?[_subirConfig('seda_alg_rev',algRevisiones)]:[])
     ]);
   } finally { _reenviando=false; }
 }
