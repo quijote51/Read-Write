@@ -16,8 +16,13 @@
 ## Hecho: ficha de alérgenos por evento (alergenos.js)
 - Botón «Alérgenos» en cada evento y en Producción: ficha para el cliente, imprimible y en texto para WhatsApp.
 - Avisa de platos sin receta y de posible huevo crudo; «revisado por» que caduca si cambia el menú.
-- [ ] Siguiente: APPCC básico (temperaturas, limpieza, muestra testigo, etiquetas) en su propio archivo.
 - [ ] Más adelante: QR público de la ficha (necesita una página pública y un cambio en Supabase).
+
+## Hecho: APPCC básico (appcc.js)
+- Sección «APPCC» (roles Chef, Dirección y Administración): Hoy (temperaturas mañana/tarde, limpieza, muestras testigo), Recepción, Etiquetas, Registros (CSV e impresión) y Ajustes.
+- Las cámaras, zonas y plazos son de ejemplo: [ ] cambiarlos en APPCC → Ajustes por los reales.
+- [ ] Confirmar con el inspector o el consultor APPCC: rangos de temperatura, días de vida útil y si los banquetes necesitan muestra testigo (por defecto 7 días).
+- [ ] Más adelante: mover los registros a una tabla propia en Supabase cuando haya muchos (ahora van en config 'seda_appcc').
 
 ## Otros
 - Ficha de alérgenos para revisar: https://claude.ai/artifact/UgZsEDQXMzQQ33YPzSHJqR (privada; se comparte desde su botón Compartir).
