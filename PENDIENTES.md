@@ -1,10 +1,11 @@
-# Pendientes (2 de noviembre de 2026)
+# Pendientes (actualizado el 2 de noviembre de 2026)
 
 ## Seguridad
-- [ ] Ejecutar `supabase/seguridad-cambios.sql` en Supabase → SQL Editor → New query → Run.
-- [ ] Apuntar en `miembros.nombre` qué persona del horario es el miembro de cocina.
-- [ ] Activar *Leaked password protection* en Supabase → Authentication → Passwords.
-- [ ] Pasar a `main` los arreglos de la rama `ccr-06f5e2e7-sstw9j` (borrar datos locales al cerrar sesión y proteger textos), para que lleguen a la app publicada.
+- [x] SQL de seguridad de cambios de turno aplicado en Supabase (2/11/2026).
+- [x] `miembros.nombre` no hace falta: cocina@oidococina.com es una cuenta compartida. Rellenarlo solo si cada cocinero tiene su propia cuenta.
+- [ ] *Leaked password protection* no existe en el plan gratuito de Supabase. En su lugar: Authentication → Email → longitud mínima 10 y mayúsculas, minúsculas y números.
+- [ ] Cambiar las contraseñas de tu cuenta y de cocina@oidococina.com por otras de al menos 10 caracteres.
+- [x] Arreglos de seguridad, ficha de alérgenos, APPCC y apps sueltas publicados (PR #1 y #2).
 
 ## Boda peps (10/11/2026, 12:30, 15 pax, Restaurante Clandestino)
 - Alérgenos del menú marcados en la nube: gluten, crustáceos, huevo, pescado, lácteos, frutos secos, sulfitos.
@@ -34,3 +35,6 @@
 - Ficha de alérgenos para revisar: https://claude.ai/artifact/UgZsEDQXMzQQ33YPzSHJqR (privada; se comparte desde su botón Compartir).
 - App para el amigo: https://oidococina-xu7i.vercel.app («Seguir sin cuenta»).
 - [ ] Opcional: cuenta de revisor de solo lectura para ver eventos y recetas reales.
+
+## Siguiente
+- [ ] Compras: historial de precios por ingrediente, stock mínimo y consumo teórico frente a inventario (mermas), en su propio archivo.

@@ -1,5 +1,6 @@
 -- Seguridad de cambios de turno: solo responde la persona afectada.
--- Pegar entero en Supabase > SQL Editor > New query > Run.
+-- APLICADO el 2/11/2026 (con ALTER POLICY en lugar de DROP/CREATE; el resultado es el mismo).
+-- Se guarda como referencia; no hace falta volver a ejecutarlo.
 alter table public.miembros add column if not exists nombre text;
 
 alter function public.cambios_solo_estado() set search_path = '';
