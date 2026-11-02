@@ -4590,14 +4590,14 @@ async function cargarNube(){
       const r=res[i];
       if(r.error){ok=false;console.warn('Carga',t,r.error);return;}
       _conocidos[t]=new Set(r.data.map(x=>String(x.id)));
-      if(r.data.length){ const antes=get(); if(antes&&antes.length) setLS('seda_prenube_'+t,antes); const v=set(r.data); setLS(ls,v||get()); }
+      if(r.data.length){ const antes=get(); if(antes&&antes.length&&JSON.stringify(antes)!==JSON.stringify(r.data)) setLS('seda_prenube_'+t,antes); const v=set(r.data); setLS(ls,v||get()); }
       else if(get()&&get().length) syncTabla(t,t==='eventos'?get().filter(x=>!_esDemo(x)):get()); // primera vez: sube lo local (sin demos)
     });
     if(cfg.error){ok=false;console.warn('Carga config',cfg.error);}
     else{
       const m={}; cfg.data.forEach(r=>m[r.key]=r.value);
       cfgs.forEach(([k,get,set])=>{
-        if(m[k]!==undefined&&m[k]!==null){set(m[k]);setLS(k,m[k]);}
+        if(m[k]!==undefined&&m[k]!==null){ const antes=get(); if(antes!=null&&JSON.stringify(antes)!==JSON.stringify(m[k])) setLS('seda_prenube_'+k,antes); set(m[k]);setLS(k,m[k]); }
         else if(get()!=null) syncConfig(k,get()); // primera vez: sube lo local
       });
     }
