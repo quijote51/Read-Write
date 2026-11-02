@@ -3019,6 +3019,7 @@ function renderEventos(){
             <div class="ev-card-name">${ev.nombre}</div>
             ${getBadge(ev.fecha)}
           </div>
+          ${alertaMargenEvento(ev)?`<div style="margin-bottom:4px">${alertaMargenEvento(ev)}</div>`:''}
           <div class="ev-card-meta">
             <i class="ti ti-clock"></i> ${ev.hora}
             <span style="opacity:.3">·</span>
@@ -3512,6 +3513,19 @@ function calcCosteEvento(ev){
   return {totalCoste, platosConCoste};
 }
 
+// Alerta en el listado de eventos: sin precio de venta, o margen < 45 % (mismo umbral que el escandallo)
+function alertaMargenEvento(ev){
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  if(new Date(ev.fecha+'T00:00:00')<hoy) return '';
+  const chip=(t,bg,c,ic)=>`<span style="font-size:11px;font-weight:600;background:${bg};color:${c};border-radius:var(--radius);padding:2px 8px;display:inline-flex;align-items:center;gap:4px"><i class="ti ${ic}"></i> ${t}</span>`;
+  if(!ev.precio_venta) return chip('Sin precio de venta','var(--warn-bg)','var(--warn-text)','ti-alert-triangle');
+  const {totalCoste,platosConCoste}=calcCosteEvento(ev);
+  const ingresos=ev.precio_venta*ev.pax; if(!(ingresos>0)) return '';
+  const m=(ingresos-totalCoste)/ingresos*100;
+  const incompleto=platosConCoste.some(p=>!p.tieneReceta);
+  if(m<45) return chip('Margen '+Math.round(m)+'%'+(incompleto?' (coste incompleto)':''),'var(--danger-bg)','var(--danger-text)','ti-trending-down');
+  return incompleto?chip('Coste incompleto: platos sin receta','var(--bg-secondary)','var(--text-secondary)','ti-info-circle'):'';
+}
 function margenColor(margen){
   if(margen >= 65) return 'var(--success-text)';
   if(margen >= 45) return 'var(--warn-text)';
