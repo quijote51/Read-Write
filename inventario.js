@@ -81,11 +81,17 @@ const limpiaTel=t=>{let d=String(t||'').replace(/[^\d]/g,'');if(d.length===9&&/^
 
 /* ---- Dictado por voz: "pechuga de pollo tres coma cinco" ---- */
 let vozOn=false,vozLog=[],rec=null,vozMsg='';
-const norm=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9,. ]/g,' ').replace(/\s+/g,' ').trim();
+const norm=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9,. ]/g,' ').replace(/(\d)\s*[.,]\s*(?=\d)/g,'$1,').replace(/[.,](?!\d)/g,' ').replace(/(?<!\d)[.,]/g,' ').replace(/\s+/g,' ').trim();
+const UNI=new Set(['kilos','kilo','kg','kgs','gramos','gramo','unidades','unidad','uds','litros','litro','cajas','caja','piezas','pieza','botellas','botella','bolsas','bolsa','paquetes','paquete','latas','lata','bandejas','bandeja','sacos','saco']);
 const UN={cero:0,un:1,uno:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,veintiun:21,veintiuno:21,veintiuna:21,veintidos:22,veintitres:23,veinticuatro:24,veinticinco:25,veintiseis:26,veintisiete:27,veintiocho:28,veintinueve:29,treinta:30,cuarenta:40,cincuenta:50,sesenta:60,setenta:70,ochenta:80,noventa:90,cien:100,ciento:100,medio:.5,media:.5};
 const esNum=w=>/^\d+([.,]\d+)?$/.test(w)||w in UN||w==='coma'||w==='y'||w==='con';
 function parseCantidad(txt){
-  const w=norm(txt).split(' ').filter(Boolean);let fin=w.length;
+  let w=norm(txt).split(' ').filter(Boolean);
+  while(w.length&&UNI.has(w[w.length-1]))w.pop(); // «… tres kilos»
+  if(w.length>1&&!esNum(w[w.length-1])&&esNum(w[0])&&!['y','con','coma'].includes(w[0])){ // cantidad primero: «tres quisquilla»
+    let k=0;while(k<w.length&&esNum(w[k]))k++;while(k>0&&['y','con','coma'].includes(w[k-1]))k--;
+    if(k>0&&k<w.length)w=w.slice(k).concat(w.slice(0,k));}
+  let fin=w.length;
   while(fin>0&&esNum(w[fin-1])&&!(w[fin-1]==='y'||w[fin-1]==='con'||w[fin-1]==='coma'))fin--;
   if(fin===w.length)return null;
   let st=fin;while(st>0&&esNum(w[st-1]))st--;
