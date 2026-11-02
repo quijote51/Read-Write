@@ -84,7 +84,7 @@ window.htmlHorarioEvento=function(ev){
 
 /* ---- estado de la interfaz ---- */
 let tab='plantilla', semana=lunes(new Date()), edit=null, anio=new Date().getFullYear(), msg='';
-const TABS=[['plantilla','Plantilla'],['ahora','Ahora'],['extras','Extras'],['practicas','Prácticas'],['vacaciones','Vacaciones'],['equipo','Equipo']];
+const TABS=[['plantilla','Plantilla'],['ahora','Ahora'],['eventos','Eventos'],['extras','Extras'],['practicas','Prácticas'],['vacaciones','Vacaciones'],['equipo','Equipo']];
 const root=()=>document.getElementById('hz-root');
 function guardar(){try{localStorage.setItem(HZ_KEY,JSON.stringify(horarios))}catch(e){} try{syncConfig(HZ_KEY,horarios)}catch(e){}}
 
@@ -161,10 +161,33 @@ function vEquipo(){
   h+=`</div><form class="card" id="hz-f-eq"><b>Añadir persona</b><div class="hz-form"><label>Nombre<input id="hz-en" required></label><label>Puesto<input id="hz-er" required></label><label>Grupo<select id="hz-eg">${op(3)}</select></label><label>Desde<input type="date" id="hz-ed"></label></div><button class="btn btn-p" type="submit">Añadir</button></form>`;
   return h}
 
+
+/* ---- eventos y necesidad de gente ---- */
+function factorEv(ev){
+  try{ if(typeof getFactorEvento==='function') return getFactorEvento(ev) }catch(e){}
+  if(ev.factor_custom>0) return Number(ev.factor_custom);
+  const t=(typeof tiposServicio!=='undefined'&&tiposServicio?tiposServicio:[]).find(x=>x.id===ev.tipo);return (t&&t.factor)||1}
+function vEventos(){
+  const hoy=new Date(),a=iso(hoy),b=iso(sumar(hoy,21));
+  const evs=(typeof eventos!=='undefined'?eventos:[]).filter(e=>e.fecha>=a&&e.fecha<=b).sort((x,y)=>(x.fecha+(x.hora||'')).localeCompare(y.fecha+(y.hora||'')));
+  if(!evs.length)return`<div class="hz-vacio">No hay eventos en los próximos 21 días.</div>`;
+  const rp=(typeof ajustes!=='undefined'&&ajustes&&Number(ajustes.raciones_por_persona))||80;
+  const dias={};evs.forEach(e=>(dias[e.fecha]=dias[e.fecha]||[]).push(e));
+  let h=`<p style="font-size:12px;color:var(--text-secondary);margin:0 0 10px">Próximos 21 días. Referencia: una persona de cocina cubre ${rp} raciones; mínimo ${MIN_COB} personas.</p>`;
+  Object.keys(dias).forEach(f=>{
+    const lista=dias[f],d=fd(f),rac=lista.reduce((s,e)=>s+Math.round((Number(e.pax)||0)*factorEv(e)),0),nec=Math.max(MIN_COB,Math.ceil(rac/rp));
+    const z=window.hzDia(f),coc=z?z.gente.filter(p=>p.g<=3):null,falta=coc?Math.max(0,nec-coc.length):null;
+    const cls=!z?'b-info':falta>0?'b-danger':'b-success';
+    const txt=!z?'Horario de esa semana sin cargar':falta>0?`Faltan ${falta}: hay ${coc.length}, hacen falta ${nec}`:`Cubierto: ${coc.length} en cocina (hacen falta ${nec})`;
+    h+=`<div class="card"><div class="hz-fila" style="border:0;padding:0 0 6px"><b>${cap(DL[(d.getDay()+6)%7])} ${d.getDate()} ${MES[d.getMonth()]}</b><span class="badge ${cls}">${txt}</span></div>
+    <small style="color:var(--text-secondary)">${lista.length} evento${lista.length===1?'':'s'} · ${rac} raciones${coc&&coc.length?' · Cocina: '+coc.map(p=>esc(p.n)).join(', '):''}</small>
+    ${lista.map(e=>`<div class="hz-fila" style="flex-wrap:wrap;align-items:flex-start"><span><b>${esc(e.hora||'')} ${esc(e.nombre)}</b><br><small>${Number(e.pax)||0} pax${e.lugar?' · '+esc(e.lugar):''}</small></span><span>${window.htmlHorarioEvento(e)}</span></div>`).join('')}</div>`});
+  return h}
+
 function pintar(){
   const r=root();if(!r)return;
-  const f={plantilla:vPlantilla,ahora:vAhora,extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:vVac,equipo:vEquipo}[tab];
-  r.innerHTML=`<div class="hz-tabs" role="tablist">${TABS.map(([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`).join('')}</div>`+f();
+  const f={plantilla:vPlantilla,ahora:vAhora,eventos:vEventos,extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:vVac,equipo:vEquipo}[tab];
+  r.innerHTML=`<div class="hz-tabs" role="tablist">${TABS.map(([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`).join('')}</div>`+(window.HZ_APARTE?'':`<div style="text-align:right;margin:-6px 0 8px;font-size:12px"><a href="/horarios.html" target="_blank" rel="noopener" style="color:var(--text-secondary)">Abrir como app aparte ↗</a></div>`)+f();
 }
 window.initHorarios=function(){pintar()};
 
