@@ -1916,25 +1916,11 @@ function renderCompras(){
     cont.innerHTML='<div class="empty">No hay eventos en este periodo.</div>';return;
   }
 
-  // Agregar ingredientes de todas las recetas vinculadas
-  const mapa={};
-  evsFiltrados.forEach(ev=>{
-    const f=getFactorEvento(ev);
-    const raciones=Math.round(ev.pax*f);
-    ev.platos.forEach(plato=>{
-      const rec=buscarReceta(plato.nombre);
-      if(!rec)return;
-      rec.ingredientes.forEach(ing=>{
-        const key=ing.nombre.toLowerCase().trim();
-        if(!mapa[key])mapa[key]={nombre:ing.nombre,ud:ing.ud,total:0,cat:catDeIngrediente(ing.nombre),alg:ing.alg||[]};
-        mapa[key].total+=ing.cant*raciones;
-      });
-    });
-  });
-
-  const items=Object.values(mapa).sort((a,b)=>a.cat.localeCompare(b.cat)||a.nombre.localeCompare(b.nombre));
+  const sinReceta=[];
+  const mapa=calcIngredientesPedido(evsFiltrados,sinReceta);
+  const items=mapa.sort((a,b)=>a.cat.localeCompare(b.cat)||a.nombre.localeCompare(b.nombre));
   if(!items.length){
-    cont.innerHTML='<div class="empty">No hay recetas vinculadas a estos eventos.<br><small>Vincula recetas en el Recetario para generar la lista automáticamente.</small></div>';return;
+    cont.innerHTML=avisoSinReceta(sinReceta)+'<div class="empty">No hay recetas vinculadas a estos eventos.<br><small>Vincula recetas en el Recetario para generar la lista automáticamente.</small></div>';return;
   }
 
   const provCats={carnico:'<i class="ti ti-meat"></i>',pescado:'<i class="ti ti-fish"></i>',verdura:'<i class="ti ti-leaf"></i>',lacteo:'<i class="ti ti-egg"></i>',panaderia:'<i class="ti ti-bread"></i>',otros:'<i class="ti ti-package"></i>'};
@@ -1954,8 +1940,8 @@ function renderCompras(){
     <div class="stat"><div class="stat-l">Periodo</div><div class="stat-v" style="font-size:14px">${modoLabel}</div></div>
   </div>
   <div style="margin-bottom:10px;font-size:13px;color:var(--text-secondary)">
-    Eventos incluidos: ${evsFiltrados.map(e=>`<b>${e.nombre}</b> (${e.pax} pax)`).join(' · ')}
-  </div>`;
+    Eventos incluidos: ${evsFiltrados.map(e=>`<b>${escH(e.nombre)}</b> (${e.pax} pax)`).join(' · ')}
+  </div>`+avisoSinReceta(sinReceta);
 
   Object.entries(porCat).forEach(([cat,ings])=>{
     html+=`<div class="card" style="padding:0;overflow:hidden;margin-bottom:10px">
@@ -1965,11 +1951,11 @@ function renderCompras(){
       <table class="ptable">
         <thead><tr><th>Ingrediente</th><th style="text-align:right">Cantidad</th><th>Ud.</th></tr></thead>
         <tbody>
-          ${ings.map(i=>`<tr>
-            <td>${i.nombre}</td>
-            <td style="text-align:right;font-size:16px;font-weight:500">${i.total%1===0?i.total:i.total.toFixed(1)}</td>
-            <td style="color:var(--text-secondary)">${i.ud}</td>
-          </tr>`).join('')}
+          ${ings.map(i=>{const q=fmtCant(i.total,i.ud);return `<tr>
+            <td>${escH(i.nombre)}</td>
+            <td style="text-align:right;font-size:16px;font-weight:500">${q.txt}</td>
+            <td style="color:var(--text-secondary)">${escH(q.ud||'')}</td>
+          </tr>`}).join('')}
         </tbody>
       </table>
     </div>`;
@@ -3642,24 +3628,45 @@ function getEvsPedido(){
 
 function getWeekRangePed(s){const d=new Date(s+'T00:00:00');const day=d.getDay();const dl=day===0?-6:1-day;const l=new Date(d);l.setDate(d.getDate()+dl);const dm=new Date(l);dm.setDate(l.getDate()+6);return{lunes:l,domingo:dm}}
 
-function calcIngredientesPedido(evs){
+// Suma ingredientes de los eventos. Clave = nombre + unidad (no mezcla g con ud). Devuelve también los platos sin receta.
+function calcIngredientesPedido(evs, sinReceta){
   const map={};
   evs.forEach(ev=>{
     const f=getFactorEvento(ev);
     const raciones=Math.round(ev.pax*f);
-    ev.platos.forEach(plato=>{
+    (ev.platos||[]).forEach(plato=>{
       const rec=buscarReceta(plato.nombre);
-      if(!rec)return;
+      if(!rec){ if(sinReceta&&!sinReceta.some(x=>x.plato===plato.nombre&&x.ev===ev.nombre)) sinReceta.push({plato:plato.nombre,ev:ev.nombre}); return; }
       rec.ingredientes.forEach(ing=>{
-        const key=ing.nombre.toLowerCase().trim();
+        const key=ing.nombre.toLowerCase().trim()+'|'+String(ing.ud||'').toLowerCase().trim();
         const total=ing.cant*raciones;
         if(!map[key])map[key]={nombre:ing.nombre,total:0,ud:ing.ud,cat:catDeIngrediente(ing.nombre),platos:[]};
         map[key].total+=total;
-        map[key].platos.push({plato:plato.nombre,ev:ev.nombre,qty:ing.cant*raciones,ud:ing.ud});
+        map[key].platos.push({plato:plato.nombre,ev:ev.nombre,qty:total,ud:ing.ud});
       });
     });
   });
   return Object.values(map);
+}
+// 12500 g -> 12,5 kg · 2500 ml -> 2,5 l · resto: máx. 1 decimal
+function fmtCant(total,ud){
+  const u=String(ud||'').toLowerCase().trim();
+  let t=total,uu=ud;
+  if(u==='g'&&total>=1000){t=total/1000;uu='kg';}
+  else if(u==='ml'&&total>=1000){t=total/1000;uu='l';}
+  const r=Math.round(t*100)/100;
+  const txt=(Number.isInteger(r)?String(r):String(Math.round(t*10)/10)).replace('.',',');
+  return {txt,ud:uu};
+}
+// Teléfono para wa.me: solo dígitos y prefijo 34 si es un móvil/fijo español de 9 cifras
+function telWA(t){ const d=String(t||'').replace(/\D/g,''); return /^[6789]\d{8}$/.test(d)?'34'+d:d; }
+function avisoSinReceta(lista){
+  if(!lista||!lista.length) return '';
+  return `<div class="card" style="margin-bottom:12px;border:.5px solid var(--warn-text)">
+    <div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:6px"><i class="ti ti-alert-triangle"></i> Platos sin receta: no entran en la lista</div>
+    ${lista.map(x=>`<div style="font-size:13px;padding:2px 0">${escH(x.plato)} <span style="color:var(--text-secondary)">· ${escH(x.ev)}</span></div>`).join('')}
+    <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">Crea o enlaza la receta en el Recetario para que se cuenten.</div>
+  </div>`;
 }
 
 function renderPedidos(){
@@ -3674,9 +3681,10 @@ function renderPedidos(){
     cont.innerHTML='<div class="empty">Selecciona un evento o fecha para generar los pedidos.</div>';return;
   }
 
-  const ings=calcIngredientesPedido(evs);
+  const sinReceta=[];
+  const ings=calcIngredientesPedido(evs,sinReceta);
   if(!ings.length){
-    cont.innerHTML='<div class="empty">No hay ingredientes con receta vinculada para estos eventos.<br><small style="color:var(--text-secondary)">Añade recetas a los platos para generar pedidos automáticos.</small></div>';return;
+    cont.innerHTML=avisoSinReceta(sinReceta)+'<div class="empty">No hay ingredientes con receta vinculada para estos eventos.<br><small style="color:var(--text-secondary)">Añade recetas a los platos para generar pedidos automáticos.</small></div>';return;
   }
 
   // Agrupar ingredientes por categoría de proveedor
@@ -3689,9 +3697,9 @@ function renderPedidos(){
   // Eventos incluidos
   const evInfo=evs.map(e=>`${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax)`).join('\n');
 
-  let html=`<div class="card" style="margin-bottom:12px;background:var(--info-bg);border-color:var(--info-text)">
+  let html=avisoSinReceta(sinReceta)+`<div class="card" style="margin-bottom:12px;background:var(--info-bg);border-color:var(--info-text)">
     <div style="font-size:13px;font-weight:500;color:var(--info-text);margin-bottom:4px"><i class="ti ti-info-circle"></i> Pedidos generados para:</div>
-    <div style="font-size:13px;color:var(--text-primary)">${evs.map(e=>`<b>${e.nombre}</b> · ${fmtFecha(e.fecha)} · ${e.pax} pax`).join('<br>')}</div>
+    <div style="font-size:13px;color:var(--text-primary)">${evs.map(e=>`<b>${escH(e.nombre)}</b> · ${fmtFecha(e.fecha)} · ${e.pax} pax`).join('<br>')}</div>
   </div>`;
 
   // Por cada proveedor que tenga ingredientes en esta categoría
@@ -3705,14 +3713,14 @@ function renderPedidos(){
     html+=`<div class="card" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
         <div>
-          <div style="font-size:15px;font-weight:500">${catInfo.icon} ${prov.nombre}</div>
+          <div style="font-size:15px;font-weight:500">${catInfo.icon} ${escH(prov.nombre)}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${catInfo.label} · ${prov.tel?`<i class="ti ti-phone"></i> ${prov.tel}`:'<i class="ti ti-phone-off"></i> Sin teléfono'}</div>
         </div>
         <div style="display:flex;gap:6px">
           <button onclick="copiarMensaje('msg-${prov.id}')" class="btn-icon">
             <i class="ti ti-copy"></i> Copiar
           </button>
-          ${prov.tel?`<a href="https://wa.me/${prov.tel}?text=${encodeURIComponent(msg)}" target="_blank" class="btn-icon success" style="text-decoration:none;font-weight:600">
+          ${prov.tel?`<a href="https://wa.me/${telWA(prov.tel)}?text=${encodeURIComponent(msg)}" target="_blank" class="btn-icon success" style="text-decoration:none;font-weight:600">
             <i class="ti ti-brand-whatsapp"></i> WhatsApp
           </a>`:''}
         </div>
@@ -3723,11 +3731,11 @@ function renderPedidos(){
           <th style="text-align:right;padding:5px 8px;font-size:11px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border)">Total</th>
           <th style="text-align:left;padding:5px 8px;font-size:11px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border)">Ud.</th>
         </tr></thead>
-        <tbody>${ingsP.map(i=>`<tr>
-          <td style="padding:5px 8px;border-bottom:.5px solid var(--border)">${i.nombre}</td>
-          <td style="padding:5px 8px;border-bottom:.5px solid var(--border);text-align:right;font-weight:500;font-size:15px">${i.total%1===0?i.total:i.total.toFixed(1)}</td>
-          <td style="padding:5px 8px;border-bottom:.5px solid var(--border);color:var(--text-secondary)">${i.ud}</td>
-        </tr>`).join('')}</tbody>
+        <tbody>${ingsP.map(i=>{const q=fmtCant(i.total,i.ud);return `<tr>
+          <td style="padding:5px 8px;border-bottom:.5px solid var(--border)">${escH(i.nombre)}</td>
+          <td style="padding:5px 8px;border-bottom:.5px solid var(--border);text-align:right;font-weight:500;font-size:15px">${q.txt}</td>
+          <td style="padding:5px 8px;border-bottom:.5px solid var(--border);color:var(--text-secondary)">${escH(q.ud||'')}</td>
+        </tr>`}).join('')}</tbody>
       </table>
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:10px;font-family:monospace;font-size:12px;color:var(--text-primary);white-space:pre-wrap;line-height:1.6" id="msg-${prov.id}">${escH(msg)}</div>
     </div>`;
@@ -3741,7 +3749,7 @@ function renderPedidos(){
   if(sinProv.length){
     html+=`<div class="card" style="border:.5px solid var(--warn-text)">
       <div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:8px"><i class="ti ti-alert-triangle"></i> Ingredientes sin proveedor asignado</div>
-      ${sinProv.map(i=>`<div style="font-size:13px;padding:3px 0;border-bottom:.5px solid var(--border)">${i.nombre} — <b>${i.total%1===0?i.total:i.total.toFixed(1)} ${i.ud}</b></div>`).join('')}
+      ${sinProv.map(i=>{const q=fmtCant(i.total,i.ud);return `<div style="font-size:13px;padding:3px 0;border-bottom:.5px solid var(--border)">${escH(i.nombre)} — <b>${q.txt} ${escH(q.ud||'')}</b></div>`}).join('')}
     </div>`;
   }
 
@@ -3753,7 +3761,7 @@ function generarMensaje(prov,ings,evs){
   const hoy=new Date();
   const fechaHoy=`${pad(hoy.getDate())}/${pad(hoy.getMonth()+1)}/${hoy.getFullYear()}`;
   const eventosStr=evs.map(e=>`- ${e.nombre} (${fmtFecha(e.fecha)}, ${e.pax} pax)`).join('\n');
-  const linesIng=ings.map(i=>`• ${i.nombre}: ${i.total%1===0?i.total:i.total.toFixed(1)} ${i.ud}`).join('\n');
+  const linesIng=ings.map(i=>{const q=fmtCant(i.total,i.ud);return `• ${i.nombre}: ${q.txt} ${q.ud||''}`.trim()}).join('\n');
   return `Hola ${prov.nombre}, buenos días 👋
 
 Te paso el pedido del Seda Club Hotel para los siguientes eventos:
