@@ -82,11 +82,12 @@ const limpiaTel=t=>{let d=String(t||'').replace(/[^\d]/g,'');if(d.length===9&&/^
 /* ---- Dictado por voz: "pechuga de pollo tres coma cinco" ---- */
 let vozOn=false,vozLog=[],rec=null,vozMsg='';
 const norm=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9,. ]/g,' ').replace(/(\d)\s*[.,]\s*(?=\d)/g,'$1,').replace(/[.,](?!\d)/g,' ').replace(/(?<!\d)[.,]/g,' ').replace(/\s+/g,' ').trim();
-const UNI=new Set(['kilos','kilo','kg','kgs','gramos','gramo','unidades','unidad','uds','litros','litro','cajas','caja','piezas','pieza','botellas','botella','bolsas','bolsa','paquetes','paquete','latas','lata','bandejas','bandeja','sacos','saco']);
+const UNI=new Set(['kilos','kilo','hilos','hilo','kilogramos','kilogramo','kg','kgs','gramos','gramo','unidades','unidad','uds','litros','litro','cajas','caja','piezas','pieza','botellas','botella','bolsas','bolsa','paquetes','paquete','latas','lata','bandejas','bandeja','sacos','saco']);
 const UN={cero:0,un:1,uno:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,veintiun:21,veintiuno:21,veintiuna:21,veintidos:22,veintitres:23,veinticuatro:24,veinticinco:25,veintiseis:26,veintisiete:27,veintiocho:28,veintinueve:29,treinta:30,cuarenta:40,cincuenta:50,sesenta:60,setenta:70,ochenta:80,noventa:90,cien:100,ciento:100,medio:.5,media:.5};
 const esNum=w=>/^\d+([.,]\d+)?$/.test(w)||w in UN||w==='coma'||w==='y'||w==='con';
 function parseCantidad(txt){
   let w=norm(txt).split(' ').filter(Boolean);
+  w=w.map((t,k)=>UNI.has(t)&&w[k+1]==='y'&&(w[k+2]==='medio'||w[k+2]==='media')&&!(k>0&&esNum(w[k-1])&&!['y','con','coma'].includes(w[k-1]))?'un':t); // «kilo y medio»
   w=w.filter((t,k)=>!(UNI.has(t)&&k>0&&esNum(w[k-1])&&!['y','con','coma'].includes(w[k-1]))); // «tres kilos y medio» → «tres y medio»
   while(w.length&&UNI.has(w[w.length-1]))w.pop(); // «… tres kilos»
   if(w.length>1&&!esNum(w[w.length-1])&&esNum(w[0])&&!['y','con','coma'].includes(w[0])){ // cantidad primero: «tres quisquilla»
@@ -124,27 +125,44 @@ function aplicarCant(i,v){
   if(inp){const sec=inp.closest('details');if(sec)sec.open=true;inp.value=v===undefined?'':v;inp.dispatchEvent(new Event('input',{bubbles:true}));
     const row=inp.closest('.iv-row');row.classList.add('iv-flash');setTimeout(()=>row.classList.remove('iv-flash'),1500);row.scrollIntoView({block:'center',behavior:'smooth'})}
   else{if(v===undefined)delete c.c[i];else c.c[i]=v;guardar();pintar()}}
-function dictado(txt){
+function resolver(txt){
   const p=parseCantidad(txt);
-  if(!p||!p.nombre){vozLog.unshift({txt,est:'no',n:'No entendí cantidad o artículo.'});pintaVoz();return}
+  if(!p){const nm=norm(txt).split(' ').filter(x=>x&&!UNI.has(x)&&!['de','del','la','el','los','las'].includes(x)).join(' ');
+    if(nm&&candidatos(nm).length)return{est:'espera',nombre:nm};
+    return{est:'no',n:'No entendí cantidad o artículo.'}}
+  if(!p.nombre)return{est:'cant',v:p.v};
   const cs=candidatos(p.nombre);
-  if(!cs.length){vozLog.unshift({txt,est:'no',n:'No encontré «'+p.nombre+'» en el inventario.'});pintaVoz();return}
+  if(!cs.length)return{est:'no',n:'No encontré «'+p.nombre+'» en el inventario.'};
   const top=cs.filter(x=>x.sc>=cs[0].sc-1e-9);
-  if(top.length>1){vozLog.unshift({txt,est:'elige',v:p.v,op:cs.slice(0,4).map(x=>x.i)});pintaVoz();return}
-  const i=cs[0].i,old=cant(i);aplicarCant(i,p.v);
-  vozLog.unshift({txt,est:'ok',i,v:p.v,old});pintaVoz()}
+  if(top.length>1)return{est:'elige',v:p.v,op:cs.slice(0,4).map(x=>x.i)};
+  return{est:'ok',i:cs[0].i,v:p.v}}
+let pend=null; // trozo suelto: artículo sin cantidad (o cantidad sin artículo) esperando su pareja
+function dictado(txts){
+  const L=[].concat(txts).filter(Boolean);if(!L.length)return;
+  const ahora=Date.now(),vivo=pend&&ahora-pend.t<10000;
+  let r=null,txt=L[0];
+  if(vivo)for(const t of L){const x=resolver(pend.txt+' '+t);if(x.est==='ok'||x.est==='elige'){r=x;txt=pend.txt+' '+t;break}}
+  if(!r){for(const t of L){const x=resolver(t);if(x.est==='ok'||x.est==='elige'){r=x;txt=t;break}if(!r||(r.est==='no'&&x.est!=='no')){r=x;txt=t}}}
+  vozLog=vozLog.filter(l=>l.est!=='espera');
+  if(r.est==='espera'||r.est==='cant'){pend={txt,t:ahora};vozLog.unshift({txt,est:'espera',n:r.est==='espera'?'«'+r.nombre+'»: ahora di la cantidad…':'Cantidad '+fmt(r.v)+': ahora di el artículo…'});pintaVoz();return}
+  pend=null;
+  if(r.est==='ok'){const old=cant(r.i);aplicarCant(r.i,r.v);vozLog.unshift({txt,est:'ok',i:r.i,v:r.v,old})}
+  else if(r.est==='elige')vozLog.unshift({txt,est:'elige',v:r.v,op:r.op});
+  else vozLog.unshift({txt,est:'no',n:r.n});
+  pintaVoz()}
 function pintaVoz(){const e=ge('iv-voz');if(!e)return;vozLog=vozLog.slice(0,8);
   e.innerHTML=vozOn||vozLog.length||vozMsg?`<div class="iv-voz"><div class="iv-vh"><b>${vozOn?'🎤 Escuchando… di el artículo y la cantidad':'Dictado'}</b>${vozOn?'':''}</div><small>Ejemplo: «pechuga de pollo tres coma cinco». Cada frase se aplica sola; puedes deshacerla.</small>${vozMsg?`<div class="hz-aviso warn">${esc(vozMsg)}</div>`:''}
     ${vozLog.map((l,k)=>l.est==='ok'?`<div class="iv-vl ok"><span>${esc(I().articulos[l.i].n)} → <b>${fmt(l.v)}</b> ${esc(I().articulos[l.i].u)}</span><button class="btn-sec" data-vundo="${k}">Deshacer</button></div>`
       :l.est==='elige'?`<div class="iv-vl"><span>«${esc(l.txt)}» ¿cuál?</span><span class="iv-vo">${l.op.map(i=>`<button class="btn-sec" data-vsel="${k}:${i}">${esc(I().articulos[i].n)}</button>`).join('')}</span></div>`
+      :l.est==='espera'?`<div class="iv-vl"><span>⏳ ${esc(l.n)}</span></div>`
       :l.est==='deshecho'?`<div class="iv-vl"><span><s>${esc(l.txt)}</s> deshecho</span></div>`
       :`<div class="iv-vl no"><span>«${esc(l.txt)}» — ${esc(l.n)}</span></div>`).join('')}</div>`:''}
 function vozToggle(){
   if(vozOn){vozOn=false;try{rec&&rec.stop()}catch(e){}pintar();return}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){vozMsg='Este navegador no admite dictado. Usa Chrome (Android u ordenador) o Safari en iPhone.';pintar();pintaVoz();return}
-  vozMsg='';rec=new SR();rec.lang='es-ES';rec.continuous=true;rec.interimResults=false;
-  rec.onresult=ev=>{for(let k=ev.resultIndex;k<ev.results.length;k++)if(ev.results[k].isFinal)dictado(ev.results[k][0].transcript)};
+  vozMsg='';rec=new SR();rec.lang='es-ES';rec.continuous=true;rec.interimResults=false;rec.maxAlternatives=3;
+  rec.onresult=ev=>{for(let k=ev.resultIndex;k<ev.results.length;k++)if(ev.results[k].isFinal){const alts=[];for(let a=0;a<ev.results[k].length;a++)alts.push(ev.results[k][a].transcript);dictado(alts)}};
   rec.onerror=ev=>{if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){vozOn=false;vozMsg='Sin permiso de micrófono. Actívalo en los ajustes del navegador.';pintar()}};
   rec.onend=()=>{if(vozOn){try{rec.start()}catch(e){vozOn=false;pintar()}}};
   vozOn=true;try{rec.start()}catch(e){}pintar()}
