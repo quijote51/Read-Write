@@ -183,6 +183,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 .sec.active{display:block}
 
 /* ── ACCORDION ── */
+.cal-chip{min-width:0}
+@media(max-width:600px){
+  .cal-cell{min-height:58px!important;padding:3px!important}
+  .cal-chip{font-size:0!important;height:6px;padding:0!important;border-radius:3px!important;margin-bottom:3px!important}
+}
 .acc-item{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:6px;overflow:hidden;transition:border-color var(--t),box-shadow var(--t)}
 .acc-item.open{border-color:rgba(201,168,76,.4);border-left-color:var(--gold);border-left-width:3px;box-shadow:var(--shadow-sm),0 0 0 0 transparent}
 .acc-header{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;font-size:14px;font-weight:500;width:100%;background:none;border:none;color:var(--text-primary);font-family:inherit;text-align:left;transition:background var(--t);user-select:none;-webkit-tap-highlight-color:transparent}
@@ -1406,6 +1411,7 @@ function initAccordion(){
   const tabsBar = ge('tabs-bar');
   if(tabsBar) tabsBar.style.display='none';
   const container = document.querySelector('.app');
+  let ultimo = null; // último acordeón colocado: los que están fuera de .app se colocan tras él
   document.querySelectorAll('.sec[id^="tab-"]').forEach(sec=>{
     const name = sec.id.replace('tab-','');
     const meta = ACC_TABS[name];
@@ -1427,7 +1433,11 @@ function initAccordion(){
     inner.className = 'acc-body-inner';
     const content = document.createElement('div');
     content.className = 'acc-content';
-    sec.parentNode.insertBefore(wrapper,sec);
+    if(container && sec.parentNode===container) container.insertBefore(wrapper,sec);
+    else if(container && ultimo) ultimo.after(wrapper);
+    else if(container) container.appendChild(wrapper);
+    else sec.parentNode.insertBefore(wrapper,sec);
+    ultimo = wrapper;
     content.appendChild(sec);
     inner.appendChild(content);
     body.appendChild(inner);
@@ -2705,7 +2715,7 @@ function renderCalendario(){
     }
   });
 
-  let html='<div style="display:grid;grid-template-columns:repeat(7,1fr)">';
+  let html='<div class="cal-grid7" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr))">';
 
   // Celdas vacías antes del primer día
   for(let i=0;i<diaSemana;i++){
@@ -2719,8 +2729,8 @@ function renderCalendario(){
     const esFinde=col>=5;
     const totalPax=evs.reduce((s,e)=>s+e.pax,0);
 
-    html+=`<div onclick="verDiaCalendario(${dia})"
-      style="min-height:80px;padding:6px;border-right:.5px solid var(--border);border-bottom:.5px solid var(--border);
+    html+=`<div class="cal-cell" onclick="verDiaCalendario(${dia})"
+      style="min-height:80px;min-width:0;padding:6px;border-right:.5px solid var(--border);border-bottom:.5px solid var(--border);
       cursor:${evs.length?'pointer':'default'};
       background:${esHoy?'rgba(201,168,76,.07)':esFinde?'var(--bg-secondary)':'var(--bg-primary)'};
       ${esHoy?'box-shadow:inset 0 2px 0 rgba(201,168,76,.5)':''}
@@ -2733,10 +2743,10 @@ function renderCalendario(){
         ${dia}
       </div>
       ${evs.slice(0,3).map(ev=>`
-        <div style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;
+        <div class="cal-chip" title="${escH(String(ev.nombre||''))}" style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;
           background:${getTipoColor(ev.tipo)};color:white;
           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;font-weight:500">
-          ${ev.hora} ${ev.nombre}
+          ${escH(String(ev.hora||''))} ${escH(String(ev.nombre||''))}
         </div>`).join('')}
       ${evs.length>3?`<div style="font-size:10px;color:var(--text-secondary);margin-top:2px;font-weight:500">+${evs.length-3} más</div>`:''}
       ${evs.length>0&&totalPax?`<div style="font-size:9px;color:var(--text-tertiary);margin-top:3px"><i class="ti ti-users" style="font-size:9px"></i> ${totalPax}</div>`:''}
