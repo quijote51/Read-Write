@@ -105,9 +105,11 @@ window.htmlHorarioEvento=function(ev){
 
 /* ---- estado de la interfaz ---- */
 let tab='plantilla', semana=lunes(new Date()), edit=null, anio=new Date().getFullYear(), msg='';
-const TABS=[['plantilla','Plantilla'],['ahora','Ahora'],['eventos','Eventos'],['extras','Extras'],['practicas','Prácticas'],['vacaciones','Vacaciones'],['equipo','Equipo']];
+const SOLO=()=>window.HZ_SOLO_LEER===true;
+const TABS=[['plantilla','Plantilla'],['mi','Mi semana'],['ahora','Ahora'],['eventos','Eventos'],['extras','Extras'],['practicas','Prácticas'],['vacaciones','Vacaciones'],['equipo','Equipo']];
 const root=()=>document.getElementById('hz-root');
 function guardar(ks){
+  if(SOLO())return;
   const t=Date.now();H().ts=t;H().wts=H().wts||{};[].concat(ks||[]).forEach(k=>{H().wts[k]=t});
   try{localStorage.setItem(HZ_KEY,JSON.stringify(horarios))}catch(e){} try{syncConfig(HZ_KEY,horarios)}catch(e){}}
 
@@ -130,23 +132,24 @@ function barra(){return `<div class="hz-bar">${barraIn()}</div>`}
 function vPlantilla(){
   const k=iso(semana),hoy=iso(new Date()),vacia=sinTurnos(k),eq=equipoSem(k);
   const prev=Object.keys(H().semanas).filter(x=>x<k&&!sinTurnos(x)).sort().pop();
-  let h=`<div class="hz-bar">${barraIn()}<span style="flex:1"></span>${vacia&&prev?`<button class="btn btn-p" data-a="copiar" data-p="${prev}">Copiar semana del ${corto(fd(prev))}</button>`:''}</div>`;
+  let h=`<div class="hz-bar">${barraIn()}<span style="flex:1"></span> ${vacia&&prev&&!SOLO()?`<button class="btn btn-p" data-a="copiar" data-p="${prev}">Copiar semana del ${corto(fd(prev))}</button>`:''}</div>`;
   if(vacia)h+=`<div class="hz-aviso warn">Esta semana no tiene turnos. Toca una celda para escribirlos${prev?' o copia la última semana con datos':''}.</div>`;
-  else{const av=avisos(k);h+=av.length?`<div class="hz-aviso warn"><b>${av.length} aviso${av.length===1?'':'s'}</b><ul>${av.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:`<div class="hz-aviso ok">Sin avisos: cobertura, descansos y horas dentro de las reglas.</div>`}
+  else if(!SOLO()){const av=avisos(k);h+=av.length?`<div class="hz-aviso warn"><b>${av.length} aviso${av.length===1?'':'s'}</b><ul>${av.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:`<div class="hz-aviso ok">Sin avisos: cobertura, descansos y horas dentro de las reglas.</div>`}
   h+=`<div class="hz-tabla"><table><thead><tr><th class="nom">Equipo</th>${DIAS.map((n,i)=>`<th class="${iso(sumar(semana,i))===hoy?'hoy':''}">${n}<br>${sumar(semana,i).getDate()}</th>`).join('')}<th>h/sem</th></tr></thead><tbody>`;
   GRUPOS.forEach((g,gi)=>{const m=eq.filter(e=>e.g===gi);if(!m.length)return;h+=`<tr class="grp"><td colspan="9">${g}</td></tr>`;
     m.forEach(e=>{const a=fila(k,e.n),tot=a.reduce((x,t)=>x+horas(t),0);
       h+=`<tr><td class="nom"><b>${esc(e.n)}</b><small>${esc(e.rol)}</small></td>${a.map((t,i)=>{let c=tipo(t);if(c==='trab'&&e.g===0)c='jefe';
         const sel=edit&&edit.k===k&&edit.e===e.n&&edit.i===i?' sel':'';
-        return`<td><button class="hz-cel ${c}${sel}" data-e="${esc(e.n)}" data-i="${i}" aria-label="${esc(e.n)}, ${DL[i]}">${c==='vacio'?'+':t.split('\n').map(s=>`<span>${esc(s)}</span>`).join('')}</button></td>`}).join('')}<td class="h ${tot>MAX_H?'alta':''}">${tot?fmtH(tot):'–'}</td></tr>`})});
+        const cont=c==='vacio'?(SOLO()?'':'+'):t.split('\n').map(s=>`<span>${esc(s)}</span>`).join('');
+        return SOLO()?`<td><div class="hz-cel ${c}" style="cursor:default">${cont}</div></td>`:`<td><button class="hz-cel ${c}${sel}" data-e="${esc(e.n)}" data-i="${i}" aria-label="${esc(e.n)}, ${DL[i]}">${cont}</button></td>`}).join('')}<td class="h ${tot>MAX_H?'alta':''}">${tot?fmtH(tot):'–'}</td></tr>`})});
   h+=`<tr class="cob"><td class="nom">Cobertura</td>${[0,1,2,3,4,5,6].map(i=>{const c=cobertura(k,i);return`<td><span class="hz-cobp ${vacia?'':c>=MIN_COB?'ok':c===2?'warn':'bad'}">${vacia?'–':c}</span></td>`}).join('')}<td></td></tr></tbody></table></div>`;
-  if(edit&&edit.k===k){const t=fila(k,edit.e)[edit.i],d=sumar(semana,edit.i);
+  if(!SOLO()&&edit&&edit.k===k){const t=fila(k,edit.e)[edit.i],d=sumar(semana,edit.i);
     h+=`<div class="hz-editor"><b>${esc(edit.e)} · ${DL[edit.i]} ${d.getDate()} ${MES[d.getMonth()]}</b>
     <label for="hz-turno" style="font-size:12px;color:var(--text-secondary)">Turno (un bloque por línea; el partido son dos líneas)</label>
     <textarea id="hz-turno" rows="2" placeholder="08:00-16:00">${esc(t)}</textarea>
     <div class="hz-chips">${[['Libre','LIBRE'],['Vacaciones','VACACIONES'],['Baja','BAJA MATERNAL'],['06:30-14:30','06:30-14:30'],['08:00-16:00','08:00-16:00'],['12:00-20:00','12:00-20:00'],['14:30-22:30','14:30-22:30'],['16:00-00:00','16:00-00:00'],['Partido','12:00-16:00\n20:00-00:00']].map(([n,v])=>`<button class="btn-sec hz-sm" data-q="${esc(v)}">${n}</button>`).join('')}</div>
     <div class="hz-bar"><button class="btn btn-p" data-a="gturno">Guardar</button><button class="btn-sec" data-a="cturno">Cancelar</button><button class="btn-sec" data-a="bturno">Borrar celda</button></div></div>`}
-  return h+panelGenerar()}
+  return h+(SOLO()?'':waPanel(k)+panelGenerar())}
 
 function vAhora(){
   const n=new Date(),k=iso(lunes(n)),di=(n.getDay()+6)%7,hr=n.getHours()+n.getMinutes()/60;
@@ -294,6 +297,34 @@ function generarSemana(k,seed){
       if(!best||pen<best.pen)best={pen,sol:cur.slice()}}
     if(!best||pen<best.pen)best={pen,sol:cur.slice()}}
   return{pers,sol:best.sol,pen:best.pen}}
+/* ---- Mi semana ---- */
+function yo(){try{return localStorage.getItem('hz_yo')||''}catch(e){return''}}
+function vMi(){
+  const hoy=new Date(),k0=iso(lunes(hoy)),k1=iso(sumar(lunes(hoy),7)),me=yo();
+  const activos=equipoSem(k0).filter(e=>e.g<5||true);
+  if(!me||!H().equipo.some(e=>e.n===me))
+    return `<div class="card"><b>¿Quién eres?</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 10px">Se guarda en este móvil; después verás directamente tu semana.</p><div class="hz-chips">${activos.map(e=>`<button class="btn-sec" data-yo="${esc(e.n)}">${esc(e.n)}</button>`).join('')}</div></div>`;
+  const sem=(k,tit)=>{
+    if(sinTurnos(k))return`<div class="card"><b>${tit}</b><div class="hz-vacio">Todavía no hay horario cargado.</div></div>`;
+    const a=fila(k,me),hoyI=iso(hoy);let tot=0;
+    const filas=a.map((t,i)=>{const d=sumar(fd(k),i),h=horas(t);tot+=h;const c=tipo(t),esHoy=iso(d)===hoyI;
+      return`<div class="hz-fila" style="${esHoy?'background:var(--bg-tertiary);margin:0 -8px;padding:8px;border-radius:8px':''}"><span><b>${DIAS[i]} ${d.getDate()}</b> <small>${MES[d.getMonth()]}${esHoy?' · hoy':''}</small></span><span class="hz-pill ${c==='trab'?'trab':c==='vacio'?'libre':c}" style="white-space:pre-line;text-align:right">${esc(t?t.replace('\n',' + '):'—')}${h?` · ${fmtH(h)} h`:''}</span></div>`}).join('');
+    return`<div class="card"><div class="hz-fila" style="border:0;padding:0 0 4px"><b>${tit}</b><small>${fmtH(tot)} h</small></div>${filas}</div>`};
+  return `<div class="hz-bar" style="justify-content:space-between"><b style="font-size:16px">${esc(me)}</b><button class="btn-sec hz-sm" data-yo="">No soy yo</button></div>`+sem(k0,'Esta semana · '+corto(fd(k0))+' – '+corto(sumar(fd(k0),6)))+sem(k1,'Semana siguiente · '+corto(fd(k1))+' – '+corto(sumar(fd(k1),6)))}
+
+/* ---- Texto para WhatsApp ---- */
+const DC=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+function corta(t){if(!t)return'–';const u=t.toUpperCase();if(u.includes('RECUPERA'))return'libre (recup.)';if(u.includes('LIBRE'))return'libre';if(u.includes('VACACIONES'))return'vacaciones';if(u.includes('BAJA'))return'baja';return t.split('\n').map(x=>x.replace(/:00/g,'')).join(' + ')}
+function textoSemana(k){
+  const f=sumar(fd(k),6);
+  let o=`*Horario de cocina · ${corto(fd(k))} – ${corto(f)}*\n`;
+  equipoSem(k).forEach(e=>{const a=fila(k,e.n);if(a.every(x=>!x))return;o+=`\n*${e.n}*: `+a.map((t,i)=>`${DC[i]} ${corta(t)}`).join(' · ')});
+  return o}
+let waAbierto=false;
+function waPanel(k){
+  if(sinTurnos(k))return'';
+  return `<div class="card"><div class="hz-bar" style="margin:0"><b>Horario para WhatsApp</b><span style="flex:1"></span><button class="btn-sec" data-a="wa">${waAbierto?'Ocultar':'Ver y copiar'}</button></div>${waAbierto?`<textarea id="hz-wa" rows="10" readonly style="margin-top:10px;font-size:12px">${esc(textoSemana(k))}</textarea><div class="hz-bar" style="margin:8px 0 0"><button class="btn btn-p" data-a="wacopiar">Copiar texto</button><span id="hz-wa-msg" style="font-size:12px;color:var(--text-secondary)"></span></div>`:''}</div>`}
+
 let ultGen=null,genMsg='';
 function primeraVacia(){let d=lunes(new Date());for(let i=0;i<60;i++){if(sinTurnos(iso(d)))return iso(d);d=sumar(d,7)}return iso(lunes(new Date()))}
 function generar(k0,n,seed){
@@ -323,10 +354,14 @@ function panelGenerar(){
   ${genMsg?`<div class="hz-aviso ${ultGen&&ultGen.ks.length?'ok':'warn'}" style="margin:10px 0 0">${genMsg}</div>`:''}
   <p style="font-size:11px;color:var(--text-secondary);margin:8px 0 0">Solo rellena semanas vacías. Reglas: 2 días libres seguidos, 40 h, 12 h de descanso, cobertura mínima 3, máximo 1 libre en sábado y domingo, jefatura o cocinero a mediodía y de noche, desayuno cubierto. Si hay un evento, refuerza ese día según las raciones.</p></div>`}
 
+let tabIni=false;
+const tabsVisibles=()=>SOLO()?[['mi','Mi semana'],['plantilla','Cuadrante'],['ahora','Ahora']]:TABS;
 function pintar(){
   const r=root();if(!r)return;
-  const f={plantilla:vPlantilla,ahora:vAhora,eventos:vEventos,extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:vVac,equipo:vEquipo}[tab];
-  r.innerHTML=`<div class="hz-tabs" role="tablist">${TABS.map(([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`).join('')}</div>`+(window.HZ_APARTE?'':`<div style="text-align:right;margin:-6px 0 8px;font-size:12px"><a href="/horarios.html" target="_blank" rel="noopener" style="color:var(--text-secondary)">Abrir como app aparte ↗</a></div>`)+f();
+  if(SOLO()&&!tabIni){tab='mi';tabIni=true}
+  if(SOLO()&&!tabsVisibles().some(x=>x[0]===tab))tab='mi';
+  const f={plantilla:vPlantilla,mi:vMi,ahora:vAhora,eventos:vEventos,extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:vVac,equipo:vEquipo}[tab];
+  r.innerHTML=`<div class="hz-tabs" role="tablist">${tabsVisibles().map(([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`).join('')}</div>`+(window.HZ_APARTE?'':`<div style="text-align:right;margin:-6px 0 8px;font-size:12px"><a href="/horarios.html" target="_blank" rel="noopener" style="color:var(--text-secondary)">Abrir como app aparte ↗</a></div>`)+f();
 }
 window.initHorarios=function(){pintar()};
 
@@ -345,7 +380,8 @@ function aplicarVac(v,poner){
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
   const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;edit=null;msg='';pintar();return}
-  const c=e.target.closest('.hz-cel');if(c){edit={k:iso(semana),e:c.dataset.e,i:+c.dataset.i};pintar();const x=document.getElementById('hz-turno');if(x)x.focus();return}
+  const c=e.target.closest('.hz-cel');if(c){if(SOLO())return;edit={k:iso(semana),e:c.dataset.e,i:+c.dataset.i};pintar();const x=document.getElementById('hz-turno');if(x)x.focus();return}
+  const y=e.target.closest('[data-yo]');if(y){try{localStorage.setItem('hz_yo',y.dataset.yo)}catch(er){}pintar();return}
   const q=e.target.closest('[data-q]');if(q){document.getElementById('hz-turno').value=q.dataset.q;return}
   const a=e.target.closest('[data-a]')?.dataset.a;
   if(a==='ant'){semana=sumar(semana,-7);edit=null;pintar()}else if(a==='sig'){semana=sumar(semana,7);edit=null;pintar()}
@@ -355,6 +391,9 @@ document.addEventListener('click',e=>{
   else if(a==='gturno'){fila(edit.k,edit.e)[edit.i]=document.getElementById('hz-turno').value.trim();guardar(edit.k);edit=null;pintar()}
   else if(a==='bturno'){fila(edit.k,edit.e)[edit.i]='';guardar(edit.k);edit=null;pintar()}
   else if(a==='cturno'){edit=null;pintar()}
+  else if(a==='wa'){waAbierto=!waAbierto;pintar()}
+  else if(a==='wacopiar'){const ta=document.getElementById('hz-wa'),m=document.getElementById('hz-wa-msg');ta.select();
+    (navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(()=>{m.textContent='Copiado'},()=>{try{document.execCommand('copy');m.textContent='Copiado'}catch(e){m.textContent='Selecciona el texto y cópialo'}})}
   else if(a==='generar'){const d=fd(document.getElementById('hz-g0').value||primeraVacia());generar(iso(lunes(d)),+document.getElementById('hz-gn').value,1);pintar()}
   else if(a==='otra'){const u=deshacerGen();generar(u.k0,u.n,u.seed+1);pintar()}
   else if(a==='deshacer'){deshacerGen();pintar()}

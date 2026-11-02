@@ -91,8 +91,9 @@ const $=id=>document.getElementById(id);
 const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 
 function estado(ok,txt){const e=$('sync');e.className=ok?'':'mal';e.textContent=txt||(ok?'☁ Sincronizado':(_uid?'Sin conexión':'Solo este dispositivo'))}
-function syncConfig(key,val){clearTimeout(_t[key]);_t[key]=setTimeout(()=>subir(key,val),700)}
+function syncConfig(key,val){if(window.HZ_SOLO_LEER)return;clearTimeout(_t[key]);_t[key]=setTimeout(()=>subir(key,val),700)}
 async function subir(key,val){
+  if(window.HZ_SOLO_LEER)return;
   if(!_uid||!supa){estado(false);try{localStorage.setItem('hz_pendiente','1')}catch(e){}return}
   try{const{error}=await supa.from('config').upsert({hotel_id:_uid,key,value:val,updated_at:new Date().toISOString()},{onConflict:'hotel_id,key'});
     if(error)throw error;try{localStorage.removeItem('hz_pendiente')}catch(e){}estado(true)}
@@ -112,26 +113,36 @@ async function entrar(ev){
     $('login').style.display='none';await arrancar()}
   catch(e){er.textContent=/invalid|credentials/i.test(String(e&&e.message))?'Correo o contraseña incorrectos.':'No se pudo entrar. Revisa la conexión e inténtalo de nuevo.';er.style.display='block'}
   b.disabled=false;b.textContent='Entrar';return false}
-async function salir(){try{await supa.auth.signOut()}catch(e){}try{localStorage.removeItem('seda_cuenta')}catch(e){}location.reload()}
+async function salir(){try{await supa.auth.signOut()}catch(e){}try{localStorage.removeItem('seda_cuenta');localStorage.removeItem('hz_rol');localStorage.removeItem('hz_yo')}catch(e){}location.reload()}
 
 async function cargar(){
   const cache=LS('hz_cache');if(cache){eventos=cache.eventos||[];ajustes=cache.ajustes||{};tiposServicio=cache.tipos||[]}
   if(!supa||!_uid||navigator.onLine===false){estado(false);return}
   try{
     const ayer=new Date(Date.now()-864e5).toISOString().slice(0,10);
-    const[c,e]=await Promise.all([supa.from('config').select('key,value').in('key',['seda_horarios','seda_ajustes','seda_tipos']),supa.from('eventos').select('*').gte('fecha',ayer).order('fecha')]);
+    const solo=window.HZ_SOLO_LEER===true;
+    const[c,e]=await Promise.all([supa.from('config').select('key,value').in('key',solo?['seda_horarios']:['seda_horarios','seda_ajustes','seda_tipos']),solo?Promise.resolve({data:[]}):supa.from('eventos').select('*').gte('fecha',ayer).order('fecha')]);
     if(c.error)throw c.error;if(e.error)throw e.error;
     const m={};c.data.forEach(r=>m[r.key]=r.value);
-    if(m.seda_ajustes)ajustes=m.seda_ajustes;if(m.seda_tipos)tiposServicio=m.seda_tipos;
-    eventos=e.data.map(x=>({...x,pax:Number(x.pax)||0}));
-    LS('hz_cache',{eventos,ajustes,tipos:tiposServicio});
+    if(!solo){
+      if(m.seda_ajustes)ajustes=m.seda_ajustes;if(m.seda_tipos)tiposServicio=m.seda_tipos;
+      eventos=e.data.map(x=>({...x,pax:Number(x.pax)||0}));
+      LS('hz_cache',{eventos,ajustes,tipos:tiposServicio});
+    }
     if(m.seda_horarios)hzSync(m.seda_horarios);
-    else subir('seda_horarios',horarios); // primera vez
+    else if(!solo)subir('seda_horarios',horarios); // primera vez
     estado(true);
   }catch(err){console.warn('Carga',err);estado(false)}
 }
+async function detectarRol(){
+  let r=LS('hz_rol');
+  if(supa&&_uid&&navigator.onLine!==false){
+    try{const{data,error}=await supa.from('miembros').select('rol').eq('user_id',_uid);
+      if(!error){r=(data&&data[0]&&data[0].rol)||'admin';LS('hz_rol',r)}}catch(e){}}
+  window.HZ_SOLO_LEER=(r==='cocina');return r}
 async function arrancar(){
   $('salir').style.display='';
+  await detectarRol();
   initHorarios();            // pinta ya con lo guardado en el dispositivo
   await cargar();initHorarios();
 }
