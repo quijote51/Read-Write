@@ -19,6 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <link rel="stylesheet" href="/horarios.css">
 <script src="horarios.js"></script>
+<script src="inventario.js"></script>
 <script>
 // ══════════════════════════════════════
 // OÍDO COCINA · Configuración Supabase
@@ -492,6 +493,7 @@ textarea{resize:vertical;min-height:65px}
   <button class="tab" data-tab="historial" onclick="showTab('historial',this)"><i class="ti ti-chart-bar"></i> Historial</button>
   <button class="tab" data-tab="personal" onclick="showTab('personal',this)"><i class="ti ti-users"></i> Personal</button>
   <button class="tab" data-tab="horarios" onclick="showTab('horarios',this)"><i class="ti ti-calendar-time"></i> Horarios</button>
+  <button class="tab" data-tab="inventario" onclick="showTab('inventario',this)"><i class="ti ti-clipboard-list"></i> Inventario</button>
   <button class="tab" data-tab="ajustes" onclick="showTab('ajustes',this)"><i class="ti ti-settings"></i> Ajustes</button>
   <button class="tab" data-tab="nuevo" onclick="showTab('nuevo',this)"><i class="ti ti-plus"></i> Nuevo evento</button>
 </div>
@@ -949,6 +951,9 @@ textarea{resize:vertical;min-height:65px}
 
 <!-- HORARIOS DE COCINA -->
 <div class="sec" id="tab-horarios"><div id="hz-root"></div></div>
+
+<!-- INVENTARIO -->
+<div class="sec" id="tab-inventario"><div id="iv-root"></div></div>
 
 <!-- GESTIÓN DE PERSONAL -->
 <div class="sec" id="tab-personal">
@@ -1488,6 +1493,7 @@ const ACC_TABS = {
   historial:  {icon:'ti-chart-bar',         label:'Historial'},
   personal:   {icon:'ti-users',             label:'Personal'},
   horarios:   {icon:'ti-calendar-time',     label:'Horarios cocina'},
+  inventario: {icon:'ti-clipboard-list',    label:'Inventario'},
   ajustes:    {icon:'ti-settings',          label:'Ajustes'},
   nuevo:      {icon:'ti-plus',              label:'Nuevo evento'},
 };
@@ -1549,6 +1555,7 @@ function callTabInit(name){
   if(name==='historial')initHistorial();
   if(name==='personal')initPersonal();
   if(name==='horarios')initHorarios();
+  if(name==='inventario')initInventario();
   if(name==='ajustes')initAjustes();
 }
 
@@ -1582,11 +1589,11 @@ function showTab(name,btn){
 
 /* ===== SELECTOR DE ROL ===== */
 const ROLES = {
-  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina','horarios']},
+  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina','horarios','inventario']},
   sala:      {icon:'<i class="ti ti-tools-kitchen-2"></i>',  nombre:'Sala / Maître',  tabs:['dashboard','bebidas','vajilla','eventos']},
   eventos:   {icon:'<i class="ti ti-calendar-event"></i>',   nombre:'Jefa de eventos',tabs:['dashboard','eventos','calendario','plantillas','escandallo','nuevo']},
-  direccion: {icon:'<i class="ti ti-chart-bar"></i>',        nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos','horarios']},
-  admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','horarios','ajustes','nuevo']}
+  direccion: {icon:'<i class="ti ti-chart-bar"></i>',        nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos','horarios','inventario']},
+  admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','horarios','inventario','ajustes','nuevo']}
 };
 
 let rolActual = localStorage.getItem('seda_rol') || null;
@@ -2046,7 +2053,7 @@ function importarDatos(input){
 function resetearTodo(){
   if(!confirm('⚠️ ¿Borrar TODOS los datos? Esta acción no se puede deshacer.'))return;
   if(!confirm('¿Estás seguro? Se borrarán todos los eventos, recetas, plantillas y configuración.'))return;
-  ['seda_ev','seda_rec','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios'].forEach(k=>localStorage.removeItem(k));
+  ['seda_ev','seda_rec','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario'].forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
 
@@ -4781,6 +4788,7 @@ async function cargarNube(){
       ['seda_bodega',()=>bodegaBase,v=>{bodegaBase=v}],
       ['seda_contactos',()=>contactosInternos,v=>{contactosInternos=v}],
       ['seda_horarios',()=>horarios,v=>{hzSync(v)}],
+      ['seda_inventario',()=>inventario,v=>{inventario=v;const t=document.getElementById('tab-inventario');if(t&&t.offsetParent!==null&&typeof initInventario==='function')initInventario()}],
       ['seda_pin',()=>getPinCfg(),v=>{}]
     ];
     const [cfg,...res]=await Promise.all([
@@ -4816,7 +4824,7 @@ async function reenviarTodo(){
       _subirTabla('eventos',eventos.filter(x=>!_esDemo(x))), _subirTabla('plantillas',plantillas),
       _subirTabla('vajilla',vajilla), _subirTabla('proveedores',proveedores), _subirTabla('personal',personal),
       _subirConfig('seda_rec',recetas), _subirConfig('seda_precios',preciosIng), _subirConfig('seda_tipos',tiposServicio),
-      _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos), _subirConfig('seda_horarios',horarios),
+      _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos), _subirConfig('seda_horarios',horarios), ...(inventario?[_subirConfig('seda_inventario',inventario)]:[]),
       ...(getPinCfg()?[_subirConfig('seda_pin',getPinCfg())]:[])
     ]);
   } finally { _reenviando=false; }
