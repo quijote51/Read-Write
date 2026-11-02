@@ -415,6 +415,20 @@ textarea{resize:vertical;min-height:65px}
     <button class="btn-sec" type="button" onclick="seguirSinCuenta()" style="width:100%;justify-content:center;margin-top:8px;min-height:44px;font-size:13px;background:transparent;color:rgba(255,255,255,.75);border-color:rgba(255,255,255,.25)">Seguir sin cuenta (solo este dispositivo)</button>
   </form>
 </div>
+<div id="pin-modal" role="dialog" aria-modal="true" aria-labelledby="pin-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1004;align-items:center;justify-content:center;padding:16px">
+  <form class="rol-modal-inner" onsubmit="return _pinEnviar(event)" style="max-width:340px">
+    <div style="text-align:center;margin-bottom:1rem">
+      <div class="rol-modal-badge"><i class="ti ti-lock"></i> ACCESO PROTEGIDO</div>
+      <div id="pin-titulo" class="rol-modal-title" style="font-size:1.4rem">PIN</div>
+      <div id="pin-sub" class="rol-modal-sub"></div>
+    </div>
+    <div class="fg"><label for="pin-1" id="pin-l1" style="color:rgba(255,255,255,.6)">PIN</label><input id="pin-1" type="password" inputmode="numeric" autocomplete="off" maxlength="8" style="min-height:44px;font-size:18px;letter-spacing:.3em;text-align:center"></div>
+    <div class="fg" id="pin-g2" style="display:none"><label for="pin-2" style="color:rgba(255,255,255,.6)">Repite el PIN</label><input id="pin-2" type="password" inputmode="numeric" autocomplete="off" maxlength="8" style="min-height:44px;font-size:18px;letter-spacing:.3em;text-align:center"></div>
+    <div id="pin-error" role="alert" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:var(--radius);background:var(--danger-bg);color:var(--danger-text);font-size:13px"></div>
+    <button class="btn btn-p" type="submit" style="width:100%;justify-content:center;min-height:44px;font-size:14px;font-weight:600;background:#c9a84c;color:#1a1a1a;border-color:#c9a84c">Aceptar</button>
+    <button class="btn-sec" type="button" onclick="_pinCancelar()" style="width:100%;justify-content:center;margin-top:8px;min-height:44px;font-size:13px;background:transparent;color:rgba(255,255,255,.75);border-color:rgba(255,255,255,.25)">Cancelar</button>
+  </form>
+</div>
 <div id="rol-modal" role="dialog" aria-modal="true" aria-labelledby="rol-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1002;align-items:center;justify-content:center;padding:1rem">
   <div class="rol-modal-inner">
     <div style="text-align:center">
@@ -975,6 +989,13 @@ textarea{resize:vertical;min-height:65px}
 <div class="sec" id="tab-ajustes">
   <div class="sec-label" style="margin-bottom:1.5rem;font-size:14px;font-weight:600;letter-spacing:.04em"><i class="ti ti-settings"></i> Ajustes del sistema</div>
 
+  <!-- PIN de acceso -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="form-sec" style="margin-top:0"><i class="ti ti-lock"></i> PIN de acceso</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px">Protege los roles Dirección y Administración. Se pide una vez cada vez que abres la app.</p>
+    <button class="btn-sec" style="font-size:12px;min-height:44px" onclick="cambiarPin()"><i class="ti ti-key"></i> Crear o cambiar PIN</button>
+  </div>
+
   <!-- Cuenta y sincronización -->
   <div class="card" style="margin-bottom:12px">
     <div class="form-sec" style="margin-top:0"><i class="ti ti-user-circle"></i> Cuenta y sincronización</div>
@@ -1514,7 +1535,66 @@ function abrirSelectorRol(){
   ge('rol-modal').style.display='flex';
 }
 
-function seleccionarRol(rol){
+// ── PIN para Dirección y Administración ──
+// Es un cierre contra uso casual (móvil olvidado en cocina), no seguridad fuerte: el PIN se comprueba en el propio dispositivo.
+const ROLES_PIN=['direccion','admin'];
+function getPinCfg(){ try{return JSON.parse(localStorage.getItem('seda_pin')||'null')}catch{return null} }
+async function _hashPin(pin,salt){
+  const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+pin));
+  return [...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+let _pinRes=null;
+function _pinAbrir(titulo,sub,crear){
+  ge('pin-titulo').textContent=titulo; ge('pin-sub').textContent=sub;
+  ge('pin-1').value=''; ge('pin-2').value=''; ge('pin-error').style.display='none';
+  ge('pin-g2').style.display=crear?'':'none'; ge('pin-modal').dataset.crear=crear?'1':'';
+  ge('pin-modal').style.display='flex'; setTimeout(()=>ge('pin-1').focus(),50);
+  return new Promise(res=>{ _pinRes=res; });
+}
+function _pinCerrar(v){ ge('pin-modal').style.display='none'; const r=_pinRes; _pinRes=null; if(r) r(v); }
+function _pinCancelar(){ _pinCerrar(null); }
+function _pinError(m){ const e=ge('pin-error'); e.textContent=m; e.style.display='block'; }
+function _pinEnviar(ev){
+  ev.preventDefault();
+  const p=ge('pin-1').value.trim();
+  if(!/^\d{4,8}$/.test(p)){ _pinError('El PIN son entre 4 y 8 números.'); return false; }
+  if(ge('pin-modal').dataset.crear){ if(p!==ge('pin-2').value.trim()){ _pinError('Los dos PIN no coinciden.'); return false; } }
+  _pinCerrar(p); return false;
+}
+async function _crearPin(titulo){
+  const p=await _pinAbrir(titulo,'Elige un PIN de 4 a 8 números. Se pedirá para entrar en Dirección y Administración.',true);
+  if(!p) return false;
+  const salt=Math.random().toString(36).slice(2)+Date.now().toString(36);
+  const cfg={salt,hash:await _hashPin(p,salt)};
+  try{localStorage.setItem('seda_pin',JSON.stringify(cfg))}catch{}
+  syncConfig('seda_pin',cfg);
+  return true;
+}
+async function verificarPin(){
+  if(sessionStorage.getItem('seda_pin_ok')==='1') return true;
+  const cfg=getPinCfg();
+  if(!cfg){ if(!(await _crearPin('Crea un PIN'))) return false; sessionStorage.setItem('seda_pin_ok','1'); return true; }
+  let sub='Este rol está protegido.';
+  for(;;){
+    const p=await _pinAbrir('Introduce el PIN',sub,false);
+    if(!p) return false;
+    if(await _hashPin(p,cfg.salt)===cfg.hash){ sessionStorage.setItem('seda_pin_ok','1'); return true; }
+    sub='PIN incorrecto. Inténtalo otra vez.';
+    await new Promise(r=>setTimeout(r,500)); // espera entre intentos
+  }
+}
+async function cambiarPin(){
+  const cfg=getPinCfg();
+  if(cfg){
+    const p=await _pinAbrir('PIN actual','Escribe el PIN actual para cambiarlo.',false);
+    if(!p) return;
+    if(await _hashPin(p,cfg.salt)!==cfg.hash){ alert('PIN incorrecto.'); return; }
+  }
+  if(await _crearPin('Nuevo PIN')) alert('PIN cambiado.');
+}
+
+async function seleccionarRol(rol){
+  if(ROLES_PIN.includes(rol) && !(await verificarPin())) return;
   rolActual = rol;
   localStorage.setItem('seda_rol', rol);
   ge('rol-modal').style.display='none';
@@ -4621,7 +4701,8 @@ async function cargarNube(){
       ['seda_tipos',()=>tiposServicio,v=>{tiposServicio=v}],
       ['seda_ajustes',()=>ajustes,v=>{ajustes=v}],
       ['seda_bodega',()=>bodegaBase,v=>{bodegaBase=v}],
-      ['seda_contactos',()=>contactosInternos,v=>{contactosInternos=v}]
+      ['seda_contactos',()=>contactosInternos,v=>{contactosInternos=v}],
+      ['seda_pin',()=>getPinCfg(),v=>{}]
     ];
     const [cfg,...res]=await Promise.all([
       supa.from('config').select('key,value'),
@@ -4656,7 +4737,8 @@ async function reenviarTodo(){
       _subirTabla('eventos',eventos.filter(x=>!_esDemo(x))), _subirTabla('plantillas',plantillas),
       _subirTabla('vajilla',vajilla), _subirTabla('proveedores',proveedores), _subirTabla('personal',personal),
       _subirConfig('seda_rec',recetas), _subirConfig('seda_precios',preciosIng), _subirConfig('seda_tipos',tiposServicio),
-      _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos)
+      _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos),
+      ...(getPinCfg()?[_subirConfig('seda_pin',getPinCfg())]:[])
     ]);
   } finally { _reenviando=false; }
 }
@@ -4680,10 +4762,11 @@ window.addEventListener('DOMContentLoaded', async function(){
   const selLugar=ge('n-lugar');
   if(selLugar&&ajustes.lugares?.length)selLugar.innerHTML=ajustes.lugares.map(l=>`<option>${l}</option>`).join('');
   initAccordion();
-  if(rolActual && ROLES[rolActual]){ aplicarRol(rolActual); }
+  if(rolActual && ROLES[rolActual] && !(ROLES_PIN.includes(rolActual)&&sessionStorage.getItem('seda_pin_ok')!=='1')){ aplicarRol(rolActual); }
   else {
-    // Sin rol: mostrar todas las secciones y abrir dashboard
-    openAccordion('dashboard');
+    // Rol protegido sin PIN: ocultar todo hasta elegir rol. Sin rol (primera vez): mostrar todo y abrir dashboard
+    if(rolActual && ROLES_PIN.includes(rolActual)) document.querySelectorAll('.acc-item').forEach(i=>i.style.display='none');
+    else openAccordion('dashboard');
     setTimeout(()=>ge('rol-modal').style.display='flex', 400);
   }
 });
