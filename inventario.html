@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Inventario mensual de cocina · Seda Club Hotel Granada">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inventario">
+<title>Inventario · Seda Club Hotel</title>
+<link rel="manifest" href="/manifest-inventario.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/inventario-favicon-32.png">
+<link rel="apple-touch-icon" href="/inventario-apple-180.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<link rel="stylesheet" href="/horarios.css">
+<script src="/inventario.js"></script>
+<style>
+:root{
+  --bg-primary:#ffffff;--bg-secondary:#f5f4f0;--bg-tertiary:#eeede9;
+  --text-primary:#1a1a1a;--text-secondary:#6b6a66;--text-tertiary:#9b9a96;
+  --border:#e0dfd9;--border-md:#c8c7c1;
+  --info-bg:#e6f1fb;--info-text:#185fa5;--warn-bg:#faeeda;--warn-text:#854f0b;
+  --danger-bg:#fcebeb;--danger-text:#a32d2d;--success-bg:#eaf3de;--success-text:#3b6d11;
+  --radius:8px;--radius-lg:12px;--gold:#c9a84c;--shadow-xs:0 1px 2px rgba(0,0,0,.05)}
+@media(prefers-color-scheme:dark){:root{
+  --bg-primary:#1e1e1c;--bg-secondary:#141412;--bg-tertiary:#2a2a27;
+  --text-primary:#f0efe9;--text-secondary:#a8a79f;--text-tertiary:#6b6a62;
+  --border:#3a3a36;--border-md:#4a4a46;
+  --info-bg:#0c3a5c;--info-text:#7fc3f5;--warn-bg:#4a2e08;--warn-text:#f5c070;
+  --danger-bg:#4a1515;--danger-text:#f08080;--success-bg:#1a3a0a;--success-text:#90c860}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-secondary);color:var(--text-primary);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.45}
+header{background:#1a1a1a;color:#f0efe9;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));padding-top:max(12px,env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.01em}
+header h1 span{color:var(--gold)}
+header small{color:rgba(255,255,255,.55);font-size:11px}
+#sync{font-size:12px;color:rgba(255,255,255,.6)}
+#sync.mal{color:#ffa500}
+.sp{flex:1}
+main{max-width:1100px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--shadow-xs)}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--radius);font-weight:500}
+.b-warn{background:var(--warn-bg);color:var(--warn-text)}.b-danger{background:var(--danger-bg);color:var(--danger-text)}
+.b-success{background:var(--success-bg);color:var(--success-text)}.b-info{background:var(--info-bg);color:var(--info-text)}
+input,select,textarea{font-size:13px;background:var(--bg-primary);color:var(--text-primary);border:.5px solid var(--border-md);border-radius:var(--radius);padding:8px 10px;width:100%;font-family:inherit}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.btn{padding:8px 18px;font-size:13px;cursor:pointer;border-radius:var(--radius);font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-p{background:var(--text-primary);color:var(--bg-primary);border:none}
+.btn-sec{background:none;border:.5px solid var(--border-md);color:var(--text-primary);cursor:pointer;padding:7px 14px;font-size:13px;border-radius:var(--radius);font-family:inherit}
+.btn-sec:hover{background:var(--bg-tertiary)}
+header .btn-sec{color:#f0efe9;border-color:rgba(255,255,255,.25);padding:5px 10px;font-size:12px}
+#login{position:fixed;inset:0;background:#1a1a1a;display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+#login form{width:100%;max-width:340px;color:#f0efe9}
+#login h2{margin:0 0 4px;font-size:22px;text-align:center}#login h2 span{color:var(--gold)}
+#login p{margin:0 0 16px;text-align:center;color:rgba(255,255,255,.6);font-size:13px}
+#login label{display:block;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px}
+#login input{min-height:44px;font-size:15px;margin-bottom:12px;background:#2a2a27;color:#f0efe9;border-color:#4a4a46}
+#login .btn{width:100%;justify-content:center;min-height:44px;font-size:14px;font-weight:600;background:var(--gold);color:#1a1a1a;border:none}
+#login-error{display:none;margin-bottom:10px;padding:8px 12px;border-radius:var(--radius);background:var(--danger-bg);color:var(--danger-text);font-size:13px}
+</style>
+<style>.hz-aviso{padding:8px 12px;border-radius:var(--radius);font-size:13px}.hz-aviso.warn{background:var(--warn-bg);color:var(--warn-text)}.hz-vacio{color:var(--text-secondary);text-align:center}</style>
+</head>
+<body>
+<header>
+  <h1>Inventario <span>Seda</span><br><small>Seda Club Hotel · Granada</small></h1>
+  <span class="sp"></span>
+  <span id="sync">…</span>
+  <button class="btn-sec" id="salir" style="display:none" onclick="salir()">Salir</button>
+</header>
+<main><div id="iv-root"></div></main>
+
+<div id="login" role="dialog" aria-modal="true" aria-labelledby="login-t">
+  <form onsubmit="return entrar(event)">
+    <h2 id="login-t">Inventario <span>Seda</span></h2>
+    <p>Entra con tu cuenta de Oído Cocina</p>
+    <label for="l-email">Correo</label><input id="l-email" type="email" autocomplete="username" inputmode="email" required>
+    <label for="l-pass">Contraseña</label><input id="l-pass" type="password" autocomplete="current-password" required>
+    <div id="login-error" role="alert"></div>
+    <button class="btn" id="l-btn" type="submit">Entrar</button>
+  </form>
+</div>
+
+<script>
+const SUPA_URL='https://gxkxslkdqgwovgxcuzkr.supabase.co', SUPA_KEY='sb_publishable_xAUprOgWQi0HhYms69zUhA_yiTwDYPK';
+const supa=(typeof supabase!=='undefined')?supabase.createClient(SUPA_URL,SUPA_KEY):null;
+let _uid=null,_email='';
+const _t={};
+const $=id=>document.getElementById(id);
+const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+
+function estado(ok,txt){const e=$('sync');e.className=ok?'':'mal';e.textContent=txt||(ok?'☁ Sincronizado':(_uid?'Sin conexión':'Solo este dispositivo'))}
+function syncConfig(key,val){clearTimeout(_t[key]);_t[key]=setTimeout(()=>subir(key,val),700)}
+async function subir(key,val){
+  if(!_uid||!supa){estado(false);return}
+  try{const{error}=await supa.from('config').upsert({hotel_id:_uid,key,value:val,updated_at:new Date().toISOString()},{onConflict:'hotel_id,key'});
+    if(error)throw error;estado(true)}
+  catch(e){console.warn('Sync',e);estado(false)}
+}
+async function leerSesion(){
+  try{if(supa){const{data}=await supa.auth.getSession();_uid=data?.session?.user?.id||null;_email=data?.session?.user?.email||''}}catch(e){_uid=null}
+  if(_uid)LS('seda_cuenta',{uid:_uid,email:_email});
+  else if(navigator.onLine===false){const c=LS('seda_cuenta');if(c&&c.uid){_uid=c.uid;_email=c.email||''}}
+  return _uid}
+async function entrar(ev){
+  ev.preventDefault();const b=$('l-btn'),er=$('login-error');er.style.display='none';b.disabled=true;b.textContent='Entrando…';
+  try{if(!supa)throw new Error('sin conexión');
+    const{data,error}=await supa.auth.signInWithPassword({email:$('l-email').value.trim(),password:$('l-pass').value});
+    if(error)throw error;_uid=data.user.id;_email=data.user.email||'';LS('seda_cuenta',{uid:_uid,email:_email});$('l-pass').value='';
+    $('login').style.display='none';await arrancar()}
+  catch(e){er.textContent=/invalid|credentials/i.test(String(e&&e.message))?'Correo o contraseña incorrectos.':'No se pudo entrar. Revisa la conexión e inténtalo de nuevo.';er.style.display='block'}
+  b.disabled=false;b.textContent='Entrar';return false}
+async function salir(){try{await supa.auth.signOut()}catch(e){}try{localStorage.removeItem('seda_cuenta');localStorage.removeItem('iv_rol');localStorage.removeItem('seda_inventario')}catch(e){}location.reload()}
+
+async function esCocina(){
+  let r=LS('iv_rol');
+  if(supa&&_uid&&navigator.onLine!==false){
+    try{const{data,error}=await supa.from('miembros').select('rol').eq('user_id',_uid);if(!error){r=(data&&data[0]&&data[0].rol)||'admin';LS('iv_rol',r)}}catch(e){}}
+  return r==='cocina'}
+async function cargar(){
+  if(!supa||!_uid||navigator.onLine===false){estado(false);return}
+  try{
+    const{data,error}=await supa.from('config').select('value').eq('key','seda_inventario');
+    if(error)throw error;
+    const nube=data&&data[0]&&data[0].value,loc=inventario;
+    if(nube&&(!loc||(nube.ts||0)>=(loc.ts||0))){inventario=nube;LS('seda_inventario',nube)}
+    else if(loc&&(!nube||(loc.ts||0)>(nube.ts||0)))await subir('seda_inventario',loc);
+    estado(true)}
+  catch(err){console.warn('Carga',err);estado(false)}
+}
+async function arrancar(){
+  $('salir').style.display='';
+  if(await esCocina()){$('iv-root').innerHTML='<div class="card hz-vacio">Esta app es solo para dirección y chef. Los horarios están en la app Horarios.</div>';estado(true);return}
+  initInventario();           // pinta ya con lo guardado en el dispositivo
+  await cargar();initInventario();
+}
+window.addEventListener('online',()=>{if(_uid)arrancar()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&_uid&&navigator.onLine!==false&&!(document.activeElement&&document.activeElement.tagName==='INPUT'))cargar().then(initInventario)});
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+window.addEventListener('DOMContentLoaded',async()=>{
+  if(await leerSesion())arrancar();
+  else{estado(false,'Sin sesión');$('login').style.display='flex';setTimeout(()=>$('l-email').focus(),50)}
+});
+</script>
+</body>
+</html>

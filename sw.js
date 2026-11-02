@@ -2,8 +2,8 @@
 // - Páginas (navegación): red primero, y si falla, la copia guardada.
 // - Archivos de la app y de CDN (iconos, SDK, fuentes): caché primero y se refresca en segundo plano.
 // - Supabase y cualquier otra cosa: directo a la red (los datos viven en localStorage y se sincronizan aparte).
-const CACHE = 'oido-cocina-v7';
-const SHELL = ['/', '/index.html', '/horarios.js', '/inventario.js', '/horarios.css', '/horarios.html', '/manifest-horarios.json', '/horarios-192.png', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32x32.png'];
+const CACHE = 'oido-cocina-v8';
+const SHELL = ['/', '/index.html', '/horarios.js', '/inventario.js', '/horarios.css', '/horarios.html', '/manifest-horarios.json', '/horarios-192.png', '/inventario.html', '/manifest-inventario.json', '/inventario-192.png', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32x32.png'];
 const CDN = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (e) => {
@@ -23,7 +23,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
 
   if (req.mode === 'navigate') {
-    const clave = url.pathname === '/horarios.html' ? '/horarios.html' : '/index.html';
+    const clave = ['/horarios.html','/inventario.html'].includes(url.pathname) ? url.pathname : '/index.html';
     e.respondWith(
       fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(ca => ca.put(clave, c)); return r; })
         .catch(() => caches.match(clave).then(r => r || caches.match('/index.html')).then(r => r || caches.match('/')))
