@@ -21,12 +21,16 @@ const total=c=>I().articulos.reduce((s,_,i)=>s+valor(i,c),0);
 const secciones=()=>{const o=[];I().articulos.forEach(a=>{if(!o.includes(a.s))o.push(a.s)});return o};
 const prev=()=>{const k=claves(),i=k.indexOf(fecha);return i>0?I().conteos[k[i-1]]:null};
 
+const vari=(i,c,pv)=>{if(!pv)return null;const ct=cant(i,c),an=cant(i,pv);if(ct==null||!an)return null;const d=ct-an,pc=d/an;return{d,pc,big:Math.abs(pc)>=.5&&Math.abs(d)*precio(i,c)>=10}};
+const fmt=n=>(Math.round(n*100)/100).toLocaleString('es-ES',{maximumFractionDigits:2});
+function deltaHtml(i,c,pv){const v=vari(i,c,pv);if(!v||!v.d)return '';return `${v.d>0?'+':''}${fmt(v.d)} (${v.d>0?'+':''}${Math.round(v.pc*100)}%) vs mes ant.`}
 function guardar(){
   clearTimeout(tmr);tmr=setTimeout(()=>{
     I().ts=Date.now();
     try{localStorage.setItem('seda_inventario',JSON.stringify(inventario))}catch(e){}
     if(typeof syncConfig==='function')syncConfig('seda_inventario',inventario)},500)}
 
+function nGrandes(){const c=cont(),pv=prev();if(!pv)return 0;return I().articulos.reduce((n,_,i)=>n+((vari(i,c,pv)||{}).big?1:0),0)}
 function cabecera(){
   const ks=claves(),c=cont(),pv=prev(),t=total(c);
   const dif=pv?t-total(pv):null;
@@ -35,18 +39,19 @@ function cabecera(){
       <label class="iv-f">Inventario del<select id="iv-fecha">${ks.slice().reverse().map(k=>`<option value="${k}" ${k===fecha?'selected':''}>${dmy(k)}</option>`).join('')}</select></label>
       <div class="iv-tot"><small>Valor total</small><b id="iv-total">${eur(t)}</b>${dif!==null?`<small id="iv-dif" class="${dif>0?'sube':'baja'}">${dif>0?'+':''}${eur(dif)} vs ${dmy(ks[ks.indexOf(fecha)-1])}</small>`:'<small id="iv-dif"></small>'}</div>
     </div>
-    <div class="iv-acc"><button class="btn-sec" data-iv="nuevo">Nuevo inventario</button><button class="btn-sec" data-iv="csv">Descargar CSV</button><button class="btn-sec" data-iv="add">Añadir artículo</button><button class="btn-sec ${provAb?'on':''}" data-iv="prov">Proveedores</button></div>
+    <div class="iv-acc"><button class="btn-sec" data-iv="nuevo">Nuevo inventario</button><button class="btn-sec" data-iv="csv">Descargar CSV</button><button class="btn-sec" data-iv="add">Añadir artículo</button><button class="btn-sec ${provAb?'on':''}" data-iv="prov">Proveedores</button><button class="btn-sec ${vozOn?'on':''}" data-iv="voz">${vozOn?'⏹ Parar dictado':'🎤 Dictar'}</button></div>
+    <div id="iv-voz"></div>
     ${msg?`<div class="hz-aviso warn" style="margin-top:10px">${msg}</div>`:''}
     <div id="iv-form"></div>
     <div id="iv-prov">${provAb&&PV()?provHtml():''}</div>
     <div class="iv-filtros"><input id="iv-q" type="search" placeholder="Buscar artículo…" value="${esc(q)}" autocomplete="off">
-      ${[['todos','Todos'],['sin','Sin cantidad'],['rev','A revisar']].map(([k,n])=>`<button class="btn-sec ${modo===k?'on':''}" data-iv="m-${k}">${n}</button>`).join('')}</div>
+      ${[['todos','Todos'],['sin','Sin cantidad'],['rev','A revisar'],['var','Cambios grandes'+(nGrandes()?' ('+nGrandes()+')':'')]].map(([k,n])=>`<button class="btn-sec ${modo===k?'on':''}" data-iv="m-${k}">${n}</button>`).join('')}</div>
   </div>`}
 
 function filaHtml(a,i,c,pv){
   const ct=cant(i,c),rev=(c.r||[]).includes(i),ant=pv?cant(i,pv):null;
   return `<div class="iv-row" data-i="${i}">
-    <div class="iv-n"><b>${esc(a.n)}</b><small>${esc(a.u)}</small></div>
+    <div class="iv-n"><b>${esc(a.n)}</b><small>${esc(a.u)}</small><small class="iv-d ${(vari(i,c,pv)||{}).big?'big':''}">${deltaHtml(i,c,pv)}</small></div>
     <label class="iv-in">€/${esc(a.u.toLowerCase())}<input class="iv-p" type="text" inputmode="decimal" value="${precio(i,c)}"></label>
     <label class="iv-in">Cant.<input class="iv-c" type="text" inputmode="decimal" value="${ct??''}" placeholder="${ant?ant:''}"></label>
     <div class="iv-v">${eur(valor(i,c))}</div>
@@ -59,6 +64,7 @@ function lista(){
       if(b&&!a.n.toLowerCase().includes(b))return;
       if(modo==='sin'&&cant(i,c))return;
       if(modo==='rev'&&!(c.r||[]).includes(i))return;
+      if(modo==='var'&&!(vari(i,c,pv)||{}).big)return;
       ids.push(i)});
     if(!ids.length)return;
     const st=ids.reduce((x,i)=>x+valor(i,c),0),abre=b||modo!=='todos'||abiertas.has(s);
@@ -73,11 +79,75 @@ function provHtml(){
     <form id="iv-fprov" class="iv-form"><label>Nombre<input id="iv-pn" required></label><label>Teléfono<input id="iv-pt" inputmode="tel" placeholder="34612345678"></label><label>Qué vende<select id="iv-pc">${opt('otros')}</select></label><button class="btn btn-p" type="submit">Agregar proveedor</button></form></div>`}
 const limpiaTel=t=>{let d=String(t||'').replace(/[^\d]/g,'');if(d.length===9&&/^[679]/.test(d))d='34'+d;return d};
 
+/* ---- Dictado por voz: "pechuga de pollo tres coma cinco" ---- */
+let vozOn=false,vozLog=[],rec=null,vozMsg='';
+const norm=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9,. ]/g,' ').replace(/\s+/g,' ').trim();
+const UN={cero:0,un:1,uno:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,veintiun:21,veintiuno:21,veintiuna:21,veintidos:22,veintitres:23,veinticuatro:24,veinticinco:25,veintiseis:26,veintisiete:27,veintiocho:28,veintinueve:29,treinta:30,cuarenta:40,cincuenta:50,sesenta:60,setenta:70,ochenta:80,noventa:90,cien:100,ciento:100,medio:.5,media:.5};
+const esNum=w=>/^\d+([.,]\d+)?$/.test(w)||w in UN||w==='coma'||w==='y'||w==='con';
+function parseCantidad(txt){
+  const w=norm(txt).split(' ').filter(Boolean);let fin=w.length;
+  while(fin>0&&esNum(w[fin-1])&&!(w[fin-1]==='y'||w[fin-1]==='con'||w[fin-1]==='coma'))fin--;
+  if(fin===w.length)return null;
+  let st=fin;while(st>0&&esNum(w[st-1]))st--;
+  while(st<w.length&&(w[st]==='y'||w[st]==='con'||w[st]==='coma'))st++;
+  const seg=w.slice(st);let tot=0,dec=null,vio=false;
+  for(let k=0;k<seg.length;k++){const t=seg[k];
+    if(t==='coma'){dec='';continue}
+    if(t==='y'||t==='con')continue;
+    if(/^\d+([.,]\d+)?$/.test(t)){const n=parseFloat(t.replace(',','.'));if(dec!==null)dec+=String(n);else tot+=n;vio=true;continue}
+    const n=UN[t];if(n===undefined)continue;vio=true;
+    if(dec!==null)dec+=String(n);else tot+=n}
+  if(!vio)return null;
+  if(dec)tot+=parseFloat('0.'+dec);
+  return{v:Math.round(tot*100)/100,nombre:w.slice(0,st).filter(x=>!['de','del','la','el','los','las','kilos','kilo','kg','kgs','unidades','unidad','litros','litro','cajas','caja','piezas','pieza','botellas','botella'].includes(x)).join(' ')};
+}
+const stem=t=>t.length>3?t.replace(/(es|s)$/,''):t;
+function candidatos(nombre){
+  const d=nombre.split(' ').filter(Boolean).map(stem);if(!d.length)return[];
+  const res=[];I().articulos.forEach((a,i)=>{
+    const at=norm(a.n).split(' ').filter(Boolean).map(stem);
+    const m=d.filter(x=>at.some(y=>y===x||(x.length>3&&y.startsWith(x))||(y.length>3&&x.startsWith(y))));
+    if(m.length<d.length)return;
+    res.push({i,sc:m.length/d.length*.6+d.length/at.length*.4-(at.length>d.length?0:0)})});
+  return res.sort((a,b)=>b.sc-a.sc);
+}
+function aplicarCant(i,v){
+  const c=cont(),a=I().articulos[i];abiertas.add(a.s);
+  const inp=document.querySelector(`#iv-root .iv-row[data-i="${i}"] .iv-c`);
+  if(inp){const sec=inp.closest('details');if(sec)sec.open=true;inp.value=v===undefined?'':v;inp.dispatchEvent(new Event('input',{bubbles:true}));
+    const row=inp.closest('.iv-row');row.classList.add('iv-flash');setTimeout(()=>row.classList.remove('iv-flash'),1500);row.scrollIntoView({block:'center',behavior:'smooth'})}
+  else{if(v===undefined)delete c.c[i];else c.c[i]=v;guardar();pintar()}}
+function dictado(txt){
+  const p=parseCantidad(txt);
+  if(!p||!p.nombre){vozLog.unshift({txt,est:'no',n:'No entendí cantidad o artículo.'});pintaVoz();return}
+  const cs=candidatos(p.nombre);
+  if(!cs.length){vozLog.unshift({txt,est:'no',n:'No encontré «'+p.nombre+'» en el inventario.'});pintaVoz();return}
+  const top=cs.filter(x=>x.sc>=cs[0].sc-1e-9);
+  if(top.length>1){vozLog.unshift({txt,est:'elige',v:p.v,op:cs.slice(0,4).map(x=>x.i)});pintaVoz();return}
+  const i=cs[0].i,old=cant(i);aplicarCant(i,p.v);
+  vozLog.unshift({txt,est:'ok',i,v:p.v,old});pintaVoz()}
+function pintaVoz(){const e=ge('iv-voz');if(!e)return;vozLog=vozLog.slice(0,8);
+  e.innerHTML=vozOn||vozLog.length||vozMsg?`<div class="iv-voz"><div class="iv-vh"><b>${vozOn?'🎤 Escuchando… di el artículo y la cantidad':'Dictado'}</b>${vozOn?'':''}</div><small>Ejemplo: «pechuga de pollo tres coma cinco». Cada frase se aplica sola; puedes deshacerla.</small>${vozMsg?`<div class="hz-aviso warn">${esc(vozMsg)}</div>`:''}
+    ${vozLog.map((l,k)=>l.est==='ok'?`<div class="iv-vl ok"><span>${esc(I().articulos[l.i].n)} → <b>${fmt(l.v)}</b> ${esc(I().articulos[l.i].u)}</span><button class="btn-sec" data-vundo="${k}">Deshacer</button></div>`
+      :l.est==='elige'?`<div class="iv-vl"><span>«${esc(l.txt)}» ¿cuál?</span><span class="iv-vo">${l.op.map(i=>`<button class="btn-sec" data-vsel="${k}:${i}">${esc(I().articulos[i].n)}</button>`).join('')}</span></div>`
+      :l.est==='deshecho'?`<div class="iv-vl"><span><s>${esc(l.txt)}</s> deshecho</span></div>`
+      :`<div class="iv-vl no"><span>«${esc(l.txt)}» — ${esc(l.n)}</span></div>`).join('')}</div>`:''}
+function vozToggle(){
+  if(vozOn){vozOn=false;try{rec&&rec.stop()}catch(e){}pintar();return}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){vozMsg='Este navegador no admite dictado. Usa Chrome (Android u ordenador) o Safari en iPhone.';pintar();pintaVoz();return}
+  vozMsg='';rec=new SR();rec.lang='es-ES';rec.continuous=true;rec.interimResults=false;
+  rec.onresult=ev=>{for(let k=ev.resultIndex;k<ev.results.length;k++)if(ev.results[k].isFinal)dictado(ev.results[k][0].transcript)};
+  rec.onerror=ev=>{if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){vozOn=false;vozMsg='Sin permiso de micrófono. Actívalo en los ajustes del navegador.';pintar()}};
+  rec.onend=()=>{if(vozOn){try{rec.start()}catch(e){vozOn=false;pintar()}}};
+  vozOn=true;try{rec.start()}catch(e){}pintar()}
+window.ivDictar=dictado;
+
 function pintar(){
   const r=ge('iv-root');if(!r)return;
   if(!I().articulos.length&&!claves().length){r.innerHTML='<div class="card hz-vacio">Todavía no hay inventario cargado.</div>';return}
   if(!fecha||!I().conteos[fecha])fecha=claves().pop();
-  r.innerHTML=cabecera()+`<div id="iv-lista">${lista()}</div>`}
+  r.innerHTML=cabecera()+`<div id="iv-lista">${lista()}</div>`;pintaVoz()}
 
 function actualiza(){
   const c=cont(),t=total(c);ge('iv-total').textContent=eur(t);
@@ -111,6 +181,7 @@ document.addEventListener('input',e=>{
   if(e.target.classList.contains('iv-c')){if(v===null||e.target.value.trim()==='')delete c.c[i];else c.c[i]=v}
   else if(e.target.classList.contains('iv-p')){if(v===null)return;if(!c.p)I().articulos[i].p=v;else c.p[i]=v}
   row.querySelector('.iv-v').textContent=eur(valor(i,c));
+  const dd=row.querySelector('.iv-d');if(dd){const pv0=prev();dd.textContent=deltaHtml(i,c,pv0);dd.classList.toggle('big',!!(vari(i,c,pv0)||{}).big)}
   const sec=row.closest('details');const st=sec.querySelector('[data-st]');
   st.textContent=eur([...sec.querySelectorAll('.iv-row')].reduce((x,r)=>x+valor(+r.dataset.i,c),0));
   actualiza();guardar()});
@@ -121,9 +192,11 @@ document.addEventListener('toggle',e=>{const d=e.target;if(d.classList&&d.classL
 document.addEventListener('click',e=>{
   const r=ge('iv-root');if(!r||!r.contains(e.target))return;
   const rv=e.target.closest('[data-r]');if(rv){const i=+rv.dataset.r,c=cont();c.r=c.r||[];const p=c.r.indexOf(i);p>=0?c.r.splice(p,1):c.r.push(i);rv.classList.toggle('on');guardar();if(modo==='rev')ge('iv-lista').innerHTML=lista();return}
+  const vu=e.target.closest('[data-vundo]');if(vu){const l=vozLog[+vu.dataset.vundo];if(l&&l.est==='ok'){aplicarCant(l.i,l.old);l.est='deshecho'}pintaVoz();return}
+  const vs=e.target.closest('[data-vsel]');if(vs){const[k,i]=vs.dataset.vsel.split(':').map(Number),l=vozLog[k];if(l){const old=cant(i);aplicarCant(i,l.v);l.est='ok';l.i=i;l.old=old}pintaVoz();return}
   const pd=e.target.closest('[data-pdel]');if(pd&&PV()){const L=PV().lista(),p=L.find(x=>x.id===pd.dataset.pdel);if(p&&confirm('¿Eliminar a '+p.nombre+'?')){PV().guardar(L.filter(x=>x.id!==p.id));pintar()}return}
   const b=e.target.closest('[data-iv]');if(!b)return;const a=b.dataset.iv;
-  if(a==='nuevo')nuevo();else if(a==='csv')csv();else if(a==='prov'){provAb=!provAb;pintar()}else if(a==='add')formAdd();
+  if(a==='nuevo')nuevo();else if(a==='csv')csv();else if(a==='prov'){provAb=!provAb;pintar()}else if(a==='voz')vozToggle();else if(a==='add')formAdd();
   else if(a.startsWith('m-')){modo=a.slice(2);pintar()}});
 document.addEventListener('submit',e=>{
   if(e.target.id==='iv-fprov'&&PV()){e.preventDefault();const n=ge('iv-pn').value.trim();if(!n)return;
