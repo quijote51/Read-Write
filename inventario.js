@@ -87,6 +87,7 @@ const UN={cero:0,un:1,uno:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,o
 const esNum=w=>/^\d+([.,]\d+)?$/.test(w)||w in UN||w==='coma'||w==='y'||w==='con';
 function parseCantidad(txt){
   let w=norm(txt).split(' ').filter(Boolean);
+  w=w.filter((t,k)=>!(UNI.has(t)&&k>0&&esNum(w[k-1])&&!['y','con','coma'].includes(w[k-1]))); // «tres kilos y medio» → «tres y medio»
   while(w.length&&UNI.has(w[w.length-1]))w.pop(); // «… tres kilos»
   if(w.length>1&&!esNum(w[w.length-1])&&esNum(w[0])&&!['y','con','coma'].includes(w[0])){ // cantidad primero: «tres quisquilla»
     let k=0;while(k<w.length&&esNum(w[k]))k++;while(k>0&&['y','con','coma'].includes(w[k-1]))k--;
