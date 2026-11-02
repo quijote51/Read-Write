@@ -1333,6 +1333,23 @@ function buscarReceta(nombrePlato){
   return mejor;
 }
 
+// Plato -> receta: primero por receta_id (no se rompe si cambias el nombre), si no por nombre.
+function recetaDePlato(plato){
+  if(!plato) return null;
+  if(plato.receta_id){ const r=recetas.find(x=>x.id===plato.receta_id); if(r) return r; }
+  return buscarReceta(plato.nombre);
+}
+// Guarda receta_id solo cuando el nombre coincide EXACTO con una receta (las coincidencias aproximadas no se fijan).
+function vincularPlatos(platos){
+  let cambios=0;
+  (platos||[]).forEach(p=>{
+    if(p.receta_id) return;
+    const n=_norm(p.nombre); if(!n) return;
+    const r=recetas.find(x=>_norm(x.nombre)===n);
+    if(r&&r.id){ p.receta_id=r.id; cambios++; }
+  });
+  return cambios;
+}
 function getRec(){try{return JSON.parse(localStorage.getItem('seda_rec')||'null')}catch{return null}}
 function saveRec(r){try{localStorage.setItem('seda_rec',JSON.stringify(r))}catch{} syncConfig('seda_rec',r);}
 
@@ -2724,6 +2741,7 @@ function guardarPlt(){
   const bodega=ge('plt-bodega').value.trim();
   function pp(txt,def){return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([FCPMfcpm]):(.+)/);return m?{cat:m[1].toUpperCase(),nombre:m[2].trim(),alg:[]}:{cat:def,nombre:l,alg:[]}})}
   const platos=[...pp(ge('plt-fr').value,'F'),...pp(ge('plt-ca').value,'C'),...pp(ge('plt-po').value,'P'),...pp(ge('plt-pr').value,'M')];
+  vincularPlatos(platos);
   const editId=ge('plt-edit-id').value;
   if(editId){
     const idx=plantillas.findIndex(p=>p.id===editId);
@@ -3064,6 +3082,7 @@ function actualizarEvento(id){
   if(!nombre||!fecha||!pax){alert('Nombre, fecha y pax son obligatorios.');return;}
   function pp(txt,def){return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([FCPMfcpm]):(.+)/);return m?{cat:m[1].toUpperCase(),nombre:m[2].trim(),alg:[]}:{cat:def,nombre:l,alg:[]}})}
   const platos=[...pp(ge('n-fr').value,'F'),...pp(ge('n-ca').value,'C'),...pp(ge('n-po').value,'P'),...pp(ge('n-pr').value,'M')];
+  vincularPlatos(platos);
   const ninos=parseInt(ge('n-ninos').value)||0;
   const precio_nino=parseFloat(ge('n-precio-nino').value)||0;
   const platosInfantilSel=[...document.querySelectorAll('#n-platos-infantil .alg-cb.sel')].map(el=>{const pid=el.id.replace('inf-','');return PLATOS_INFANTIL.find(p=>p.id===pid);}).filter(Boolean);
@@ -3098,6 +3117,7 @@ function guardarEvento(){
   if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin .8s linear infinite"></i> Guardando...';}
   function pp(txt,def){return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([FCPMfcpm]):(.+)/);return m?{cat:m[1].toUpperCase(),nombre:m[2].trim(),alg:[]}:{cat:def,nombre:l,alg:[]}})}
   const platos=[...pp(ge('n-fr').value,'F'),...pp(ge('n-ca').value,'C'),...pp(ge('n-po').value,'P'),...pp(ge('n-pr').value,'M')];
+  vincularPlatos(platos);
   const ninos=parseInt(ge('n-ninos').value)||0;
   const precio_nino=parseFloat(ge('n-precio-nino').value)||0;
   const platosInfantilSel=[...document.querySelectorAll('#n-platos-infantil .alg-cb.sel')].map(el=>{const pid=el.id.replace('inf-','');return PLATOS_INFANTIL.find(p=>p.id===pid);}).filter(Boolean);
@@ -3131,7 +3151,7 @@ function renderProd(){
     items.forEach(p=>{
       const qty=Math.round(pax*f);
       const aH=(p.alg||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
-      const rec=buscarReceta(p.nombre);
+      const rec=recetaDePlato(p);
       const rb=rec?`<button class="no-print" onclick="showTab('recetario',document.querySelectorAll('.tab')[3]);verReceta('${rec.id}')" style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--info-bg);color:var(--info-text);border:none;cursor:pointer"><i class="ti ti-book"></i> Ver</button>`:'';
       t+=`<tr><td style="font-weight:500">${p.nombre}</td><td>${aH||'—'}</td><td style="text-align:right;font-size:17px;font-weight:500">${qty}</td><td style="text-align:center" class="no-print">${rb}</td></tr>`;
     });
@@ -3447,7 +3467,7 @@ function calcCosteEvento(ev){
   let totalCoste = 0;
   let platosConCoste = [];
   ev.platos.forEach(plato => {
-    const rec = buscarReceta(plato.nombre);
+    const rec = recetaDePlato(plato);
     const costeRacion = rec ? calcCosteReceta(rec, 1) : 0;
     const costePlato = costeRacion * raciones;
     totalCoste += costePlato;
@@ -3730,7 +3750,7 @@ function calcIngredientesPedido(evs, sinReceta){
     const f=getFactorEvento(ev);
     const raciones=Math.round(ev.pax*f);
     (ev.platos||[]).forEach(plato=>{
-      const rec=buscarReceta(plato.nombre);
+      const rec=recetaDePlato(plato);
       if(!rec){ if(sinReceta&&!sinReceta.some(x=>x.plato===plato.nombre&&x.ev===ev.nombre)) sinReceta.push({plato:plato.nombre,ev:ev.nombre}); return; }
       rec.ingredientes.forEach(ing=>{
         const key=ing.nombre.toLowerCase().trim()+'|'+String(ing.ud||'').toLowerCase().trim();
@@ -4753,6 +4773,8 @@ window.addEventListener('DOMContentLoaded', async function(){
   if(_uid && navigator.onLine!==false && localStorage.getItem('seda_pendiente')==='1') await reenviarTodo();
   else await cargarNube();
 
+  // Enlaza (receta_id) los platos que ya coinciden exactamente con una receta
+  try{ if(eventos.reduce((n,e)=>n+vincularPlatos(e.platos),0)>0) saveEv(eventos); }catch(e){ console.warn('vincular',e); }
   renderAlgSel('alg-selector');
   renderPlatosInfantil();
   renderPltSelector();
