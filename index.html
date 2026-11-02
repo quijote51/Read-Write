@@ -3767,6 +3767,7 @@ const PROV_CATS={
   otros:   {icon:'<i class="ti ti-package"></i>',    label:'Otros',keywords:[]}
 };
 
+window.IV_PROV={lista:()=>proveedores,guardar:arr=>{proveedores.splice(0,proveedores.length,...arr);saveProv(proveedores)}};
 function getProv(){try{return JSON.parse(localStorage.getItem('seda_prov')||'null')}catch{return null}}
 function saveProv(p){try{localStorage.setItem('seda_prov',JSON.stringify(p))}catch{} syncTabla('proveedores',p);}
 

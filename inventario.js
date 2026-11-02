@@ -7,7 +7,9 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const eur=n=>(Math.round(n*100)/100).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:'always'})+' €';
 const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?null:n};
 const dmy=k=>k.split('-').reverse().join('-');
-let fecha='',q='',modo='todos',msg='',abiertas=new Set(),tmr=null;
+let fecha='',q='',modo='todos',msg='',abiertas=new Set(),tmr=null,provAb=false;
+const PCAT=[['carnico','Cárnico'],['pescado','Pescadero'],['verdura','Fruta y verdura'],['lacteo','Lácteos y huevos'],['panaderia','Panadería'],['otros','Otros']];
+const PV=()=>window.IV_PROV;
 
 const I=()=>{if(!inventario)inventario={articulos:[],conteos:{},ts:0};return inventario};
 const claves=()=>Object.keys(I().conteos).sort();
@@ -33,9 +35,10 @@ function cabecera(){
       <label class="iv-f">Inventario del<select id="iv-fecha">${ks.slice().reverse().map(k=>`<option value="${k}" ${k===fecha?'selected':''}>${dmy(k)}</option>`).join('')}</select></label>
       <div class="iv-tot"><small>Valor total</small><b id="iv-total">${eur(t)}</b>${dif!==null?`<small id="iv-dif" class="${dif>0?'sube':'baja'}">${dif>0?'+':''}${eur(dif)} vs ${dmy(ks[ks.indexOf(fecha)-1])}</small>`:'<small id="iv-dif"></small>'}</div>
     </div>
-    <div class="iv-acc"><button class="btn-sec" data-iv="nuevo">Nuevo inventario</button><button class="btn-sec" data-iv="csv">Descargar CSV</button><button class="btn-sec" data-iv="add">Añadir artículo</button></div>
+    <div class="iv-acc"><button class="btn-sec" data-iv="nuevo">Nuevo inventario</button><button class="btn-sec" data-iv="csv">Descargar CSV</button><button class="btn-sec" data-iv="add">Añadir artículo</button><button class="btn-sec ${provAb?'on':''}" data-iv="prov">Proveedores</button></div>
     ${msg?`<div class="hz-aviso warn" style="margin-top:10px">${msg}</div>`:''}
     <div id="iv-form"></div>
+    <div id="iv-prov">${provAb&&PV()?provHtml():''}</div>
     <div class="iv-filtros"><input id="iv-q" type="search" placeholder="Buscar artículo…" value="${esc(q)}" autocomplete="off">
       ${[['todos','Todos'],['sin','Sin cantidad'],['rev','A revisar']].map(([k,n])=>`<button class="btn-sec ${modo===k?'on':''}" data-iv="m-${k}">${n}</button>`).join('')}</div>
   </div>`}
@@ -61,6 +64,14 @@ function lista(){
     const st=ids.reduce((x,i)=>x+valor(i,c),0),abre=b||modo!=='todos'||abiertas.has(s);
     out.push(`<details class="iv-sec" data-s="${esc(s)}" ${abre?'open':''}><summary><span>${esc(s)}</span><small>${ids.length} art.</small><b data-st="${esc(s)}">${eur(st)}</b></summary>${ids.map(i=>filaHtml(I().articulos[i],i,c,pv)).join('')}</details>`)});
   return out.length?out.join(''):'<div class="card hz-vacio">No hay artículos con ese filtro.</div>'}
+
+function provHtml(){
+  const L=PV().lista();
+  const opt=c=>PCAT.map(([k,n])=>`<option value="${k}" ${k===c?'selected':''}>${n}</option>`).join('');
+  return `<div class="iv-prov"><b>Proveedores</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 10px">Teléfono con prefijo y sin +, por ejemplo 34612345678. Se usan en los pedidos por WhatsApp.</p>
+    ${L.map(p=>`<div class="iv-pv" data-id="${esc(p.id)}"><input data-pv="nombre" value="${esc(p.nombre)}" aria-label="Nombre"><input data-pv="tel" value="${esc(p.tel||'')}" inputmode="tel" placeholder="34612345678" aria-label="Teléfono"><select data-pv="cat" aria-label="Categoría">${opt(p.cat)}</select><button class="iv-r" data-pdel="${esc(p.id)}" aria-label="Eliminar" title="Eliminar">✕</button></div>`).join('')||'<div class="hz-vacio">Todavía no hay proveedores.</div>'}
+    <form id="iv-fprov" class="iv-form"><label>Nombre<input id="iv-pn" required></label><label>Teléfono<input id="iv-pt" inputmode="tel" placeholder="34612345678"></label><label>Qué vende<select id="iv-pc">${opt('otros')}</select></label><button class="btn btn-p" type="submit">Agregar proveedor</button></form></div>`}
+const limpiaTel=t=>{let d=String(t||'').replace(/[^\d]/g,'');if(d.length===9&&/^[679]/.test(d))d='34'+d;return d};
 
 function pintar(){
   const r=ge('iv-root');if(!r)return;
@@ -103,15 +114,21 @@ document.addEventListener('input',e=>{
   const sec=row.closest('details');const st=sec.querySelector('[data-st]');
   st.textContent=eur([...sec.querySelectorAll('.iv-row')].reduce((x,r)=>x+valor(+r.dataset.i,c),0));
   actualiza();guardar()});
-document.addEventListener('change',e=>{if(e.target.id==='iv-fecha'){fecha=e.target.value;msg='';pintar()}});
+document.addEventListener('change',e=>{if(e.target.id==='iv-fecha'){fecha=e.target.value;msg='';pintar();return}
+  const f=e.target.closest('[data-pv]');if(f&&PV()){const row=f.closest('.iv-pv'),L=PV().lista().map(p=>({...p})),p=L.find(x=>x.id===row.dataset.id);if(!p)return;
+    const k=f.dataset.pv;p[k]=k==='tel'?limpiaTel(f.value):f.value.trim();if(k==='nombre'&&!p.nombre)return;PV().guardar(L);if(k==='tel')f.value=p.tel}});
 document.addEventListener('toggle',e=>{const d=e.target;if(d.classList&&d.classList.contains('iv-sec')){d.open?abiertas.add(d.dataset.s):abiertas.delete(d.dataset.s)}},true);
 document.addEventListener('click',e=>{
   const r=ge('iv-root');if(!r||!r.contains(e.target))return;
   const rv=e.target.closest('[data-r]');if(rv){const i=+rv.dataset.r,c=cont();c.r=c.r||[];const p=c.r.indexOf(i);p>=0?c.r.splice(p,1):c.r.push(i);rv.classList.toggle('on');guardar();if(modo==='rev')ge('iv-lista').innerHTML=lista();return}
+  const pd=e.target.closest('[data-pdel]');if(pd&&PV()){const L=PV().lista(),p=L.find(x=>x.id===pd.dataset.pdel);if(p&&confirm('¿Eliminar a '+p.nombre+'?')){PV().guardar(L.filter(x=>x.id!==p.id));pintar()}return}
   const b=e.target.closest('[data-iv]');if(!b)return;const a=b.dataset.iv;
-  if(a==='nuevo')nuevo();else if(a==='csv')csv();else if(a==='add')formAdd();
+  if(a==='nuevo')nuevo();else if(a==='csv')csv();else if(a==='prov'){provAb=!provAb;pintar()}else if(a==='add')formAdd();
   else if(a.startsWith('m-')){modo=a.slice(2);pintar()}});
-document.addEventListener('submit',e=>{if(e.target.id!=='iv-fadd')return;e.preventDefault();
+document.addEventListener('submit',e=>{
+  if(e.target.id==='iv-fprov'&&PV()){e.preventDefault();const n=ge('iv-pn').value.trim();if(!n)return;
+    PV().guardar([...PV().lista(),{id:'p'+Date.now(),nombre:n,tel:limpiaTel(ge('iv-pt').value),cat:ge('iv-pc').value}]);msg='Proveedor agregado: '+esc(n)+'.';pintar();return}
+  if(e.target.id!=='iv-fadd')return;e.preventDefault();
   const s=ge('iv-as').value.trim(),n=ge('iv-an').value.trim();if(!s||!n)return;
   I().articulos.push({s,n,u:ge('iv-au').value,p:num(ge('iv-ap').value)||0});abiertas.add(s);msg='Artículo añadido en '+esc(s)+'.';guardar();pintar()});
 

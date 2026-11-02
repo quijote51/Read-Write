@@ -59,3 +59,6 @@
 .iv-v{text-align:right;font-size:13px;font-variant-numeric:tabular-nums}
 .iv-r{background:none;border:.5px solid var(--border-md);border-radius:8px;height:30px;cursor:pointer;color:var(--text-tertiary);font-size:14px}.iv-r.on{background:#faeeda;color:#633806;border-color:#e2b86a}
 @media(max-width:640px){.iv-row{grid-template-columns:1fr 1fr 34px;grid-template-areas:"n n n" "p c r" "v v v"}.iv-n{grid-area:n}.iv-row>.iv-in:nth-of-type(1){grid-area:p}.iv-row>.iv-in:nth-of-type(2){grid-area:c}.iv-v{grid-area:v;text-align:right;font-weight:600}.iv-r{grid-area:r;align-self:end}}
+.iv-prov{margin-top:12px;padding-top:12px;border-top:.5px solid var(--border)}
+.iv-pv{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 34px;gap:8px;align-items:center;margin-bottom:8px}.iv-pv input,.iv-pv select{min-width:0;width:100%}
+@media(max-width:640px){.iv-pv{grid-template-columns:1fr 1fr 34px;grid-template-areas:"n n x" "t c c"}.iv-pv input:nth-child(1){grid-area:n}.iv-pv input:nth-child(2){grid-area:t}.iv-pv select{grid-area:c}.iv-pv .iv-r{grid-area:x}}
