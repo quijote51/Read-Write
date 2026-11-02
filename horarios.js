@@ -24,7 +24,7 @@ function hzSeed(){
 }
 function hzNormaliza(v){
   if(!v||typeof v!=='object') return hzSeed();
-  v.equipo=Array.isArray(v.equipo)?v.equipo:hzSeed().equipo; v.semanas=v.semanas||{}; v.extras=v.extras||{}; v.practicas=v.practicas||{}; v.vac=v.vac||[];
+  v.equipo=Array.isArray(v.equipo)?v.equipo:hzSeed().equipo; v.semanas=v.semanas||{}; v.extras=v.extras||{}; v.practicas=v.practicas||{}; v.vac=v.vac||[]; v.ts=v.ts||0; v.wts=v.wts||{};
   // Semanas cargadas desde fotos que aún no estén en este dispositivo o en la nube (no pisa lo ya editado)
   const sd=hzSeed();
   for(const k in sd.semanas) if(!v.semanas[k]) v.semanas[k]=sd.semanas[k];
@@ -32,9 +32,22 @@ function hzNormaliza(v){
   sd.vac.filter(x=>/octubre/.test(x.n||'')).forEach(x=>{ if(!v.vac.some(y=>y.e===x.e&&y.i===x.i&&y.f===x.f)) v.vac.push(x); });
   return v;
 }
+const hzClon=o=>JSON.parse(JSON.stringify(o));
+/* Combina lo local con lo de la nube: gana el conjunto más reciente (ts) y, semana a semana, la semana editada más tarde (wts). */
+function hzElige(l,c){
+  l=hzNormaliza(hzClon(l)); if(!c) return l; c=hzNormaliza(hzClon(c));
+  const base=(l.ts||0)>(c.ts||0)?l:c, otro=base===l?c:l, r=hzClon(base);
+  for(const k in otro.semanas){const tb=(base.wts||{})[k]||0,to=(otro.wts||{})[k]||0;
+    if(!(k in r.semanas)||to>tb){r.semanas[k]=hzClon(otro.semanas[k]);r.wts[k]=to}}
+  r.ts=Math.max(l.ts||0,c.ts||0); return r}
+function hzSync(nube){
+  horarios=hzElige(horarios,nube);
+  try{localStorage.setItem(HZ_KEY,JSON.stringify(horarios))}catch(e){}
+  if(JSON.stringify(horarios)!==JSON.stringify(hzNormaliza(hzClon(nube)))){try{syncConfig(HZ_KEY,horarios)}catch(e){}}
+}
 function hzLoad(){
   try{const g=JSON.parse(localStorage.getItem(HZ_KEY)||'null'); if(g) return hzNormaliza(g)}catch(e){}
-  const s=hzSeed(); try{localStorage.setItem(HZ_KEY,JSON.stringify(s))}catch(e){} return s;
+  const s=hzNormaliza(hzSeed()); try{localStorage.setItem(HZ_KEY,JSON.stringify(s))}catch(e){} return s;
 }
 let horarios = hzLoad();
 
@@ -94,7 +107,9 @@ window.htmlHorarioEvento=function(ev){
 let tab='plantilla', semana=lunes(new Date()), edit=null, anio=new Date().getFullYear(), msg='';
 const TABS=[['plantilla','Plantilla'],['ahora','Ahora'],['eventos','Eventos'],['extras','Extras'],['practicas','Prácticas'],['vacaciones','Vacaciones'],['equipo','Equipo']];
 const root=()=>document.getElementById('hz-root');
-function guardar(){try{localStorage.setItem(HZ_KEY,JSON.stringify(horarios))}catch(e){} try{syncConfig(HZ_KEY,horarios)}catch(e){}}
+function guardar(ks){
+  const t=Date.now();H().ts=t;H().wts=H().wts||{};[].concat(ks||[]).forEach(k=>{H().wts[k]=t});
+  try{localStorage.setItem(HZ_KEY,JSON.stringify(horarios))}catch(e){} try{syncConfig(HZ_KEY,horarios)}catch(e){}}
 
 function avisos(k){
   const av=[],s=H().semanas[k];if(!s)return av;
@@ -102,6 +117,9 @@ function avisos(k){
     const h=a.reduce((x,t)=>x+horas(t),0);if(h>MAX_H)av.push(`${e.n} suma ${fmtH(h)} h (máximo ${MAX_H} h)`);
     for(let i=0;i<6;i++){const t1=tramos(a[i]),t2=tramos(a[i+1]);if(!t1.length||!t2.length)continue;
       const d=Math.min(...t2.map(x=>x[0]))+24-Math.max(...t1.map(x=>x[1]));if(d<MIN_DESC)av.push(`${e.n}: solo ${fmtH(d)} h de descanso entre ${DL[i]} y ${DL[i+1]}`)}});
+  const kp=iso(sumar(fd(k),-7));
+  if(H().semanas[kp]&&!sinTurnos(kp))equipoSem(k).forEach(e=>{const t1=tramos((H().semanas[kp][e.n]||[])[6]),t2=tramos((s[e.n]||[])[0]);if(!t1.length||!t2.length)return;
+    const d=Math.min(...t2.map(x=>x[0]))+24-Math.max(...t1.map(x=>x[1]));if(d<MIN_DESC)av.push(`${e.n}: solo ${fmtH(d)} h de descanso entre el domingo anterior y el lunes`)});
   for(let i=0;i<7;i++){const c=cobertura(k,i);if(c<MIN_COB)av.push(`${cap(DL[i])}: ${c} persona${c===1?'':'s'} (mínimo ${MIN_COB})`)}
   [5,6].forEach(i=>{const l=equipoSem(k).filter(e=>tipo((s[e.n]||[])[i])==='libre').length;if(l>1)av.push(`${cap(DL[i])}: ${l} personas libres (máximo 1)`)});
   return av}
@@ -164,7 +182,7 @@ function vVac(){
 
 function vEquipo(){
   const op=g=>GRUPOS.map((n,i)=>`<option value="${i}"${i===g?' selected':''}>${n}</option>`).join('');
-  let h=`<div class="card"><b>Equipo</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Pon la fecha «hasta» a quien se va y «desde» a quien entra: cada uno conserva su historial y solo aparece en las semanas que le corresponden.</p>`;
+  let h=(msg?`<div class="hz-aviso warn">${msg}</div>`:'')+`<div class="card"><b>Equipo</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Pon la fecha «hasta» a quien se va y «desde» a quien entra: cada uno conserva su historial y solo aparece en las semanas que le corresponden.</p>`;
   h+=H().equipo.map((e,i)=>`<div class="hz-eq"><b>${esc(e.n)}</b><input data-eq="${i}" data-f="rol" value="${esc(e.rol)}" aria-label="Puesto"><select data-eq="${i}" data-f="g" aria-label="Grupo">${op(e.g)}</select><label>Desde<input type="date" data-eq="${i}" data-f="desde" value="${e.desde||''}"></label><label>Hasta<input type="date" data-eq="${i}" data-f="hasta" value="${e.hasta||''}"></label></div>`).join('');
   h+=`</div><form class="card" id="hz-f-eq"><b>Añadir persona</b><div class="hz-form"><label>Nombre<input id="hz-en" required></label><label>Puesto<input id="hz-er" required></label><label>Grupo<select id="hz-eg">${op(3)}</select></label><label>Desde<input type="date" id="hz-ed"></label></div><button class="btn btn-p" type="submit">Añadir</button></form>`;
   return h}
@@ -200,10 +218,11 @@ function pintar(){
 window.initHorarios=function(){pintar()};
 
 /* ---- vacaciones -> horario ---- */
+const tocadas=[];
 function aplicarVac(v,poner){
-  const txt=v.t==='maternal'?'BAJA MATERNAL':'VACACIONES',falta=[];
+  const txt=v.t==='maternal'?'BAJA MATERNAL':'VACACIONES',falta=[];tocadas.length=0;
   for(let d=fd(v.i),f=fd(v.f);d<=f;d=sumar(d,1)){
-    const k=iso(lunes(d)),i=(d.getDay()+6)%7,a=fila(k,v.e);
+    const k=iso(lunes(d)),i=(d.getDay()+6)%7,a=fila(k,v.e);if(!tocadas.includes(k))tocadas.push(k);
     if(poner)a[i]=txt;else if(/VACACIONES|BAJA/i.test(a[i]))a[i]='';
     if(poner&&!sinTurnos(k)&&cobertura(k,i)<MIN_COB)falta.push(`${DL[i]} ${d.getDate()} ${MES[d.getMonth()]} (${cobertura(k,i)})`);
   }
@@ -219,25 +238,25 @@ document.addEventListener('click',e=>{
   if(a==='ant'){semana=sumar(semana,-7);edit=null;pintar()}else if(a==='sig'){semana=sumar(semana,7);edit=null;pintar()}
   else if(a==='hoy'){semana=lunes(new Date());edit=null;pintar()}
   else if(a==='aant'){anio--;pintar()}else if(a==='asig'){anio++;pintar()}
-  else if(a==='copiar'){const p=e.target.closest('[data-p]').dataset.p,k=iso(semana);H().semanas[k]={};equipoSem(k).forEach(m=>{H().semanas[k][m.n]=[...fila(p,m.n)]});guardar();pintar()}
-  else if(a==='gturno'){fila(edit.k,edit.e)[edit.i]=document.getElementById('hz-turno').value.trim();guardar();edit=null;pintar()}
-  else if(a==='bturno'){fila(edit.k,edit.e)[edit.i]='';guardar();edit=null;pintar()}
+  else if(a==='copiar'){const p=e.target.closest('[data-p]').dataset.p,k=iso(semana);H().semanas[k]={};equipoSem(k).forEach(m=>{H().semanas[k][m.n]=[...fila(p,m.n)]});guardar(k);pintar()}
+  else if(a==='gturno'){fila(edit.k,edit.e)[edit.i]=document.getElementById('hz-turno').value.trim();guardar(edit.k);edit=null;pintar()}
+  else if(a==='bturno'){fila(edit.k,edit.e)[edit.i]='';guardar(edit.k);edit=null;pintar()}
   else if(a==='cturno'){edit=null;pintar()}
-  const d=e.target.closest('[data-del]');if(d){H()[tab][iso(semana)].splice(+d.dataset.del,1);guardar();pintar()}
-  const v=e.target.closest('[data-vdel]');if(v){const p=H().vac.splice(+v.dataset.vdel,1)[0];aplicarVac(p,false);msg='';guardar();pintar()}
+  const d=e.target.closest('[data-del]');if(d){H()[tab][iso(semana)].splice(+d.dataset.del,1);guardar(iso(semana));pintar()}
+  const v=e.target.closest('[data-vdel]');if(v){const p=H().vac.splice(+v.dataset.vdel,1)[0];aplicarVac(p,false);msg='';guardar(tocadas.slice());pintar()}
 });
 document.addEventListener('change',e=>{
   const x=e.target.closest('[data-eq]');if(!x)return;
   const p=H().equipo[+x.dataset.eq],f=x.dataset.f;p[f]=f==='g'?+x.value:x.value.trim();guardar()});
 document.addEventListener('submit',e=>{
   const id=e.target.id;if(!id||!id.startsWith('hz-f-'))return;e.preventDefault();const $=s=>document.getElementById(s);
-  if(id==='hz-f-pers'){const t=e.target.dataset.t,k=iso(semana);(H()[t][k]=H()[t][k]||[]).push({n:$('hz-pn').value.trim(),rol:$('hz-pr').value.trim(),t:DIAS.map((_,i)=>$('hz-pt'+i).value.trim())});guardar();pintar()}
+  if(id==='hz-f-pers'){const t=e.target.dataset.t,k=iso(semana);(H()[t][k]=H()[t][k]||[]).push({n:$('hz-pn').value.trim(),rol:$('hz-pr').value.trim(),t:DIAS.map((_,i)=>$('hz-pt'+i).value.trim())});guardar(k);pintar()}
   else if(id==='hz-f-vac'){if($('hz-vf').value<$('hz-vi').value)return;
     const v={e:$('hz-ve').value,t:$('hz-vt').value,i:$('hz-vi').value,f:$('hz-vf').value,n:$('hz-vn').value.trim()};
     H().vac.push(v);const falta=aplicarVac(v,true);
     msg=falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'';
-    guardar();pintar()}
-  else if(id==='hz-f-eq'){const n=$('hz-en').value.trim();if(H().equipo.some(p=>p.n.toLowerCase()===n.toLowerCase()))return;
+    guardar(tocadas.slice());pintar()}
+  else if(id==='hz-f-eq'){const n=$('hz-en').value.trim();if(H().equipo.some(p=>p.n.toLowerCase()===n.toLowerCase())){msg=`Ya hay alguien llamado ${esc(n)} en el equipo.`;pintar();return}msg='';
     H().equipo.push({n,rol:$('hz-er').value.trim(),g:+$('hz-eg').value,desde:$('hz-ed').value,hasta:''});guardar();pintar()}
 });
 })();

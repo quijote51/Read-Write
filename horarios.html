@@ -125,9 +125,8 @@ async function cargar(){
     if(m.seda_ajustes)ajustes=m.seda_ajustes;if(m.seda_tipos)tiposServicio=m.seda_tipos;
     eventos=e.data.map(x=>({...x,pax:Number(x.pax)||0}));
     LS('hz_cache',{eventos,ajustes,tipos:tiposServicio});
-    const pend=localStorage.getItem('hz_pendiente')==='1';
-    if(m.seda_horarios&&!pend){horarios=hzNormaliza(m.seda_horarios);LS('seda_horarios',horarios)}
-    else subir('seda_horarios',horarios); // primera vez o cambios hechos sin conexión
+    if(m.seda_horarios)hzSync(m.seda_horarios);
+    else subir('seda_horarios',horarios); // primera vez
     estado(true);
   }catch(err){console.warn('Carga',err);estado(false)}
 }

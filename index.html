@@ -4780,7 +4780,7 @@ async function cargarNube(){
       ['seda_ajustes',()=>ajustes,v=>{ajustes=v}],
       ['seda_bodega',()=>bodegaBase,v=>{bodegaBase=v}],
       ['seda_contactos',()=>contactosInternos,v=>{contactosInternos=v}],
-      ['seda_horarios',()=>horarios,v=>{horarios=hzNormaliza(v)}],
+      ['seda_horarios',()=>horarios,v=>{hzSync(v)}],
       ['seda_pin',()=>getPinCfg(),v=>{}]
     ];
     const [cfg,...res]=await Promise.all([
@@ -4798,7 +4798,7 @@ async function cargarNube(){
     else{
       const m={}; cfg.data.forEach(r=>m[r.key]=r.value);
       cfgs.forEach(([k,get,set])=>{
-        if(m[k]!==undefined&&m[k]!==null){ const antes=get(); if(antes!=null&&JSON.stringify(antes)!==JSON.stringify(m[k])) setLS('seda_prenube_'+k,antes); set(m[k]);setLS(k,m[k]); }
+        if(m[k]!==undefined&&m[k]!==null){ const antes=get(); if(antes!=null&&JSON.stringify(antes)!==JSON.stringify(m[k])) setLS('seda_prenube_'+k,antes); set(m[k]);if(k!=='seda_horarios')setLS(k,m[k]); }
         else if(get()!=null) syncConfig(k,get()); // primera vez: sube lo local
       });
     }
