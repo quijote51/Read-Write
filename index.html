@@ -1350,6 +1350,41 @@ function vincularPlatos(platos){
   });
   return cambios;
 }
+// ── Alérgenos automáticos: unión de lo marcado en el plato + lo que declara su receta (y los ingredientes) ──
+function algDePlato(p){
+  const set=new Set(p.alg||[]);
+  const r=recetaDePlato(p);
+  if(r){ (r.alg||[]).forEach(a=>set.add(a)); (r.ingredientes||[]).forEach(i=>(i.alg||[]).forEach(a=>set.add(a))); }
+  return [...set];
+}
+const ALG_PALABRAS={
+  gluten:['gluten','celiac','celíac','trigo'], crustaceos:['crustace','marisco','gamba','langostino'], moluscos:['molusco','marisco'],
+  huevo:['huevo'], pescado:['pescado'], cacahuetes:['cacahuete','cacahuet','maní'], soja:['soja'],
+  lacteo:['lácteo','lacteo','lactosa','leche'], frutos_secos:['frutos secos','fruto seco','nuez','nueces','almendra','avellana'],
+  apio:['apio'], mostaza:['mostaza'], sesamo:['sésamo','sesamo'], sulfitos:['sulfito'], altramuces:['altramuz']
+};
+function algDeTexto(txt){
+  const t=String(txt||'').toLowerCase();
+  return Object.keys(ALG_PALABRAS).filter(id=>ALG_PALABRAS[id].some(k=>t.includes(k)));
+}
+function analisisAlergenos(ev){
+  const porPlato=(ev.platos||[]).map(p=>({nombre:p.nombre,alg:algDePlato(p)}));
+  const presentes=[...new Set(porPlato.flatMap(x=>x.alg))];
+  const declarados=ev.alergenos_menu||[];
+  const faltan=presentes.filter(a=>!declarados.includes(a));
+  const invitados=algDeTexto(ev.alergias_txt).map(id=>({id,label:algLabel(id),platos:porPlato.filter(x=>x.alg.includes(id)).map(x=>x.nombre)}));
+  return {presentes,faltan,invitados};
+}
+function htmlAlertaAlergenos(ev,compacto){
+  const a=analisisAlergenos(ev), l=[];
+  a.invitados.forEach(g=>l.push(g.platos.length
+    ? `<b>${escH(g.label)}</b>: lo llevan ${g.platos.map(escH).join(', ')} → preparar alternativa`
+    : `<b>${escH(g.label)}</b>: ningún plato lo declara. Comprueba las recetas por si falta alguna marca.`));
+  if(a.faltan.length) l.push(`En los platos pero sin marcar en el menú: ${a.faltan.map(x=>escH(algLabel(x))).join(', ')}`);
+  if(!l.length) return '';
+  if(compacto) return `<div style="margin-top:6px;font-size:12px;color:#fca5a5;font-weight:600"><i class="ti ti-shield-exclamation"></i> ${l.length} aviso(s) de alérgenos: ${l.map(x=>x.replace(/<[^>]+>/g,'')).join(' · ')}</div>`;
+  return `<div class="card" style="border:.5px solid var(--danger-text);background:var(--danger-bg);margin-bottom:10px"><div style="font-size:13px;font-weight:600;color:var(--danger-text);margin-bottom:4px"><i class="ti ti-shield-exclamation"></i> Cruce de alérgenos</div>${l.map(x=>`<div style="font-size:13px;padding:2px 0">${x}</div>`).join('')}</div>`;
+}
 function getRec(){try{return JSON.parse(localStorage.getItem('seda_rec')||'null')}catch{return null}}
 function saveRec(r){try{localStorage.setItem('seda_rec',JSON.stringify(r))}catch{} syncConfig('seda_rec',r);}
 
@@ -2118,6 +2153,7 @@ function renderPantallaCocina(){
       <span style="color:rgba(255,255,255,.9);font-weight:600"><i class="ti ti-stack" style="color:var(--gold)"></i> ${raciones} uds/plato</span>
     </div>
     ${ev.alergias_txt?`<div style="margin-top:8px;font-size:13px;color:#fbbf24;font-weight:600;background:rgba(251,191,36,.1);border-radius:var(--radius);padding:4px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
+    ${htmlAlertaAlergenos(ev,true)}
   </div>
 
   ${CATS_ORDER.map(cat=>{
@@ -3150,7 +3186,7 @@ function renderProd(){
     t+=`<tr><td colspan="4" class="cat-hdr" style="border-left:3px solid ${cat.color}">${cat.label}</td></tr>`;
     items.forEach(p=>{
       const qty=Math.round(pax*f);
-      const aH=(p.alg||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
+      const aH=algDePlato(p).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
       const rec=recetaDePlato(p);
       const rb=rec?`<button class="no-print" onclick="showTab('recetario',document.querySelectorAll('.tab')[3]);verReceta('${rec.id}')" style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--info-bg);color:var(--info-text);border:none;cursor:pointer"><i class="ti ti-book"></i> Ver</button>`:'';
       t+=`<tr><td style="font-weight:500">${p.nombre}</td><td>${aH||'—'}</td><td style="text-align:right;font-size:17px;font-weight:500">${qty}</td><td style="text-align:center" class="no-print">${rb}</td></tr>`;
@@ -3193,7 +3229,7 @@ function renderProd(){
     <div class="stat"><div class="stat-l">Factor</div><div class="stat-v">${f.toFixed(1)}×</div></div>
     <div class="stat"><div class="stat-l">Platos distintos</div><div class="stat-v">${ev.platos.length}</div></div>
     <div class="stat"><div class="stat-l">Raciones totales</div><div class="stat-v">${total}</div></div>
-  </div>`+alergC+alergMenu+t+infHTML;
+  </div>`+alergC+htmlAlertaAlergenos(ev)+alergMenu+t+infHTML;
 }
 
 function imprimirFicha(){
