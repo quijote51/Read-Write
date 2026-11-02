@@ -24,7 +24,15 @@
 const SUPA_URL  = 'https://gxkxslkdqgwovgxcuzkr.supabase.co';
 const SUPA_KEY  = 'sb_publishable_xAUprOgWQi0HhYms69zUhA_yiTwDYPK';
 
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+function _supaOffline(){
+  const fallo = {error:{message:'sin conexión'}, data:null};
+  const q = {}; ['select','upsert','delete','in','order','limit'].forEach(m=>q[m]=()=>q);
+  q.then = (ok,ko)=>Promise.resolve(fallo).then(ok,ko);
+  return { from:()=>q, auth:{
+    getSession:async()=>({data:{session:null}}), onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
+    signInWithPassword:async()=>({data:null,error:{message:'sin conexión'}}), signOut:async()=>({error:null}) } };
+}
+const supa = (typeof supabase!=='undefined') ? supabase.createClient(SUPA_URL, SUPA_KEY) : _supaOffline();
 
 // ── Capa de sincronización: localStorage primero, Supabase en segundo plano ──
 // Filas (eventos, plantillas...): upsert por id; solo se borran en la nube las filas
@@ -34,12 +42,17 @@ let _uid = null, _email = '';
 async function _leerSesion(){
   try { const {data} = await supa.auth.getSession(); _uid = data?.session?.user?.id || null; _email = data?.session?.user?.email || ''; }
   catch { _uid = null; _email = ''; }
+  try{
+    if(_uid){ localStorage.setItem('seda_cuenta', JSON.stringify({uid:_uid,email:_email})); }
+    else if(navigator.onLine===false){ const c=JSON.parse(localStorage.getItem('seda_cuenta')||'null'); if(c&&c.uid){ _uid=c.uid; _email=c.email||''; } }
+  }catch{}
   return _uid;
 }
 supa.auth.onAuthStateChange(ev=>{ if(ev==='SIGNED_OUT' && _uid){ _uid=null; location.reload(); } });
 const _conocidos = {};
 const _timers = {};
-function _fallo(clave, err){ console.warn('Sync error:', clave, err); mostrarSync(false); }
+function _fallo(clave, err){ console.warn('Sync error:', clave, err); try{localStorage.setItem('seda_pendiente','1')}catch{} mostrarSync(false); }
+function _okSync(){ mostrarSync(true); }
 
 async function _subirTabla(tabla, arr){
   if(!_uid){ mostrarSync(false); return; }
@@ -56,7 +69,7 @@ async function _subirTabla(tabla, arr){
       if(error) throw error;
     }
     _conocidos[tabla] = vivos;
-    mostrarSync(true);
+    _okSync();
   } catch(err){ _fallo(tabla, err); }
 }
 
@@ -65,7 +78,7 @@ async function _subirConfig(key, valor){
   try {
     const {error} = await supa.from('config').upsert({hotel_id:_uid, key, value:valor, updated_at:new Date().toISOString()}, {onConflict:'hotel_id,key'});
     if(error) throw error;
-    mostrarSync(true);
+    _okSync();
   } catch(err){ _fallo(key, err); }
 }
 
@@ -4610,11 +4623,30 @@ async function cargarNube(){
   mostrarSync(ok);
 }
 
+// Reenvía todo lo local a la nube (cambios hechos sin conexión). No baja nada: así no se pisa lo local.
+let _reenviando=false;
+async function reenviarTodo(){
+  if(!_uid||_reenviando) return; _reenviando=true;
+  try{ localStorage.removeItem('seda_pendiente'); }catch{}
+  try{
+    await Promise.all([
+      _subirTabla('eventos',eventos.filter(x=>!_esDemo(x))), _subirTabla('plantillas',plantillas),
+      _subirTabla('vajilla',vajilla), _subirTabla('proveedores',proveedores), _subirTabla('personal',personal),
+      _subirConfig('seda_rec',recetas), _subirConfig('seda_precios',preciosIng), _subirConfig('seda_tipos',tiposServicio),
+      _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos)
+    ]);
+  } finally { _reenviando=false; }
+}
+window.addEventListener('online',()=>{ if(localStorage.getItem('seda_pendiente')==='1') reenviarTodo(); else mostrarSync(!!_uid); });
+window.addEventListener('offline',()=>mostrarSync(false));
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+
 // ── ARRANQUE ──
 window.addEventListener('DOMContentLoaded', async function(){
   await asegurarSesion();
   renderCuenta();
-  await cargarNube();
+  if(_uid && navigator.onLine!==false && localStorage.getItem('seda_pendiente')==='1') await reenviarTodo();
+  else await cargarNube();
 
   renderAlgSel('alg-selector');
   renderPlatosInfantil();
