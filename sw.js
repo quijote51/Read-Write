@@ -2,8 +2,8 @@
 // - Páginas (navegación): red primero, y si falla, la copia guardada.
 // - Archivos de la app y de CDN (iconos, SDK, fuentes): caché primero y se refresca en segundo plano.
 // - Supabase y cualquier otra cosa: directo a la red (los datos viven en localStorage y se sincronizan aparte).
-const CACHE = 'oido-cocina-v2';
-const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32x32.png'];
+const CACHE = 'oido-cocina-v3';
+const SHELL = ['/', '/index.html', '/horarios.js', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32x32.png'];
 const CDN = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (e) => {

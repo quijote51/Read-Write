@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.50.0/tabler-icons.min.css">
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="horarios.js"></script>
 <script>
 // ══════════════════════════════════════
 // OÍDO COCINA · Configuración Supabase
@@ -361,6 +362,48 @@ textarea{resize:vertical;min-height:65px}
 .print-header{display:none}
 .print-footer{display:none}
 .ficha-print{display:none}
+/* Horarios de cocina */
+.hz-tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:.5px solid var(--border);margin-bottom:12px}
+.hz-tabs button{flex:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--text-secondary);font:500 13px inherit;font-family:inherit;padding:10px 12px;cursor:pointer;min-height:40px}
+.hz-tabs button[aria-selected="true"]{color:var(--text-primary);border-bottom-color:var(--gold)}
+.hz-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
+.hz-sem{font-weight:600;min-width:11ch;text-align:center;font-variant-numeric:tabular-nums}
+.hz-sm{padding:3px 9px;font-size:12px}
+.hz-aviso{padding:10px 12px;border-radius:var(--radius);font-size:13px;margin-bottom:10px}
+.hz-aviso.warn{background:var(--warn-bg);color:var(--warn-text)}.hz-aviso.ok{background:var(--success-bg);color:var(--success-text)}
+.hz-aviso ul{margin:4px 0 0;padding-left:1.1rem}
+.hz-tabla{overflow-x:auto;border:.5px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-primary);margin-bottom:10px}
+.hz-tabla table{border-collapse:separate;border-spacing:0;width:100%;min-width:760px;font-size:12px}
+.hz-tabla th,.hz-tabla td{padding:5px 6px;border-bottom:.5px solid var(--border);text-align:center;vertical-align:middle}
+.hz-tabla thead th{font-weight:600;color:var(--text-secondary);font-size:11px}
+.hz-tabla thead th.hoy{color:var(--gold)}
+.hz-tabla th.nom,.hz-tabla td.nom{text-align:left;position:sticky;left:0;background:var(--bg-primary);z-index:1;min-width:104px;border-right:.5px solid var(--border)}
+.hz-tabla td.nom b{display:block}.hz-tabla td.nom small{color:var(--text-secondary);font-size:11px}
+.hz-tabla tr.grp td{background:var(--bg-secondary);color:var(--text-secondary);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;text-align:left}
+.hz-cel{display:flex;flex-direction:column;gap:2px;width:100%;min-height:34px;border:0;border-radius:6px;padding:4px 3px;font:500 11px inherit;font-family:inherit;cursor:pointer;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.hz-cel.trab{background:#e1f5ee;color:#085041}.hz-cel.jefe{background:#e6f1fb;color:#0c447c}.hz-cel.libre{background:#faeeda;color:#633806}
+.hz-cel.vac{background:#fcebeb;color:#791f1f}.hz-cel.baja{background:#fbeaf0;color:#72243e}.hz-cel.extra{background:#eeedfe;color:#3c3489}
+.hz-cel.vacio{background:transparent;color:var(--text-tertiary);border:1px dashed var(--border-md)}.hz-cel.sel{outline:2px solid var(--gold)}
+.hz-tabla td.h{font-weight:600;font-variant-numeric:tabular-nums}.hz-tabla td.h.alta{color:var(--danger-text)}
+.hz-tabla tr.cob td{font-weight:600;border-bottom:0}
+.hz-cobp{display:inline-block;min-width:28px;padding:2px 8px;border-radius:99px}
+.hz-cobp.ok{background:#e1f5ee;color:#085041}.hz-cobp.warn{background:#faeeda;color:#633806}.hz-cobp.bad{background:#fcebeb;color:#791f1f}
+.hz-editor{background:var(--bg-primary);border:1px solid var(--gold);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.hz-chips{display:flex;flex-wrap:wrap;gap:6px}
+.hz-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:10px}
+.hz-fila{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:.5px solid var(--border)}
+.hz-fila:last-child{border-bottom:0}.hz-fila small{color:var(--text-secondary)}
+.hz-pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.hz-pill.trab{background:#e1f5ee;color:#085041}.hz-pill.libre{background:#faeeda;color:#633806}.hz-pill.vac{background:#fcebeb;color:#791f1f}.hz-pill.baja{background:#fbeaf0;color:#72243e}.hz-pill.extra{background:#eeedfe;color:#3c3489}
+.hz-vacio{color:var(--text-secondary);padding:12px 0;font-size:13px}
+.hz-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
+.hz-form label,.hz-dias label,.hz-eq label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text-secondary)}
+.hz-dias{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:6px;margin:8px 0}
+.hz-eq{display:grid;grid-template-columns:90px 1fr 1fr 130px 130px;gap:8px;align-items:end;padding:8px 0;border-bottom:.5px solid var(--border)}
+@media(max-width:700px){.hz-eq{grid-template-columns:1fr 1fr}}
+.hz-saldo{height:8px;border-radius:99px;background:var(--bg-tertiary);overflow:hidden;margin-top:4px}.hz-saldo i{display:block;height:100%}
+.hz-meses{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;margin:6px 0}.hz-meses span{height:14px;border-radius:3px;background:var(--bg-tertiary)}
+.hz-meses .v{background:#791f1f}.hz-meses .i{background:#0c447c}.hz-meses .x{background:#ef9f27}.hz-meses .m{background:#72243e}
 </style>
 </head>
 <body>
@@ -489,6 +532,7 @@ textarea{resize:vertical;min-height:65px}
   <button class="tab" data-tab="cocina" onclick="showTab('cocina',this)"><i class="ti ti-chef-hat"></i> Pantalla</button>
   <button class="tab" data-tab="historial" onclick="showTab('historial',this)"><i class="ti ti-chart-bar"></i> Historial</button>
   <button class="tab" data-tab="personal" onclick="showTab('personal',this)"><i class="ti ti-users"></i> Personal</button>
+  <button class="tab" data-tab="horarios" onclick="showTab('horarios',this)"><i class="ti ti-calendar-time"></i> Horarios</button>
   <button class="tab" data-tab="ajustes" onclick="showTab('ajustes',this)"><i class="ti ti-settings"></i> Ajustes</button>
   <button class="tab" data-tab="nuevo" onclick="showTab('nuevo',this)"><i class="ti ti-plus"></i> Nuevo evento</button>
 </div>
@@ -943,6 +987,9 @@ textarea{resize:vertical;min-height:65px}
   </div>
   <div id="hist-cont"></div>
 </div>
+
+<!-- HORARIOS DE COCINA -->
+<div class="sec" id="tab-horarios"><div id="hz-root"></div></div>
 
 <!-- GESTIÓN DE PERSONAL -->
 <div class="sec" id="tab-personal">
@@ -1481,6 +1528,7 @@ const ACC_TABS = {
   cocina:     {icon:'ti-chef-hat',          label:'Pantalla cocina'},
   historial:  {icon:'ti-chart-bar',         label:'Historial'},
   personal:   {icon:'ti-users',             label:'Personal'},
+  horarios:   {icon:'ti-calendar-time',     label:'Horarios cocina'},
   ajustes:    {icon:'ti-settings',          label:'Ajustes'},
   nuevo:      {icon:'ti-plus',              label:'Nuevo evento'},
 };
@@ -1541,6 +1589,7 @@ function callTabInit(name){
   if(name==='cocina')initPantallaCocina();
   if(name==='historial')initHistorial();
   if(name==='personal')initPersonal();
+  if(name==='horarios')initHorarios();
   if(name==='ajustes')initAjustes();
 }
 
@@ -1574,11 +1623,11 @@ function showTab(name,btn){
 
 /* ===== SELECTOR DE ROL ===== */
 const ROLES = {
-  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina']},
+  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina','horarios']},
   sala:      {icon:'<i class="ti ti-tools-kitchen-2"></i>',  nombre:'Sala / Maître',  tabs:['dashboard','bebidas','vajilla','eventos']},
   eventos:   {icon:'<i class="ti ti-calendar-event"></i>',   nombre:'Jefa de eventos',tabs:['dashboard','eventos','calendario','plantillas','escandallo','nuevo']},
-  direccion: {icon:'<i class="ti ti-chart-bar"></i>',        nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos']},
-  admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','ajustes','nuevo']}
+  direccion: {icon:'<i class="ti ti-chart-bar"></i>',        nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos','horarios']},
+  admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','horarios','ajustes','nuevo']}
 };
 
 let rolActual = localStorage.getItem('seda_rol') || null;
@@ -2038,7 +2087,7 @@ function importarDatos(input){
 function resetearTodo(){
   if(!confirm('⚠️ ¿Borrar TODOS los datos? Esta acción no se puede deshacer.'))return;
   if(!confirm('¿Estás seguro? Se borrarán todos los eventos, recetas, plantillas y configuración.'))return;
-  ['seda_ev','seda_rec','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos'].forEach(k=>localStorage.removeItem(k));
+  ['seda_ev','seda_rec','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios'].forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
 
@@ -2153,7 +2202,7 @@ function renderPantallaCocina(){
       <span style="color:rgba(255,255,255,.9);font-weight:600"><i class="ti ti-stack" style="color:var(--gold)"></i> ${raciones} uds/plato</span>
     </div>
     ${ev.alergias_txt?`<div style="margin-top:8px;font-size:13px;color:#fbbf24;font-weight:600;background:rgba(251,191,36,.1);border-radius:var(--radius);padding:4px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
-    ${htmlAlertaAlergenos(ev,true)}
+    ${htmlAlertaAlergenos(ev,true)}${htmlHorarioEvento(ev)}
   </div>
 
   ${CATS_ORDER.map(cat=>{
@@ -3230,7 +3279,7 @@ function renderProd(){
     <div class="stat"><div class="stat-l">Factor</div><div class="stat-v">${f.toFixed(1)}×</div></div>
     <div class="stat"><div class="stat-l">Platos distintos</div><div class="stat-v">${ev.platos.length}</div></div>
     <div class="stat"><div class="stat-l">Raciones totales</div><div class="stat-v">${total}</div></div>
-  </div>`+alergC+htmlAlertaAlergenos(ev)+alergMenu+t+infHTML;
+  </div>`+alergC+htmlAlertaAlergenos(ev)+htmlHorarioEvento(ev)+alergMenu+t+infHTML;
 }
 
 function imprimirFicha(){
@@ -4772,6 +4821,7 @@ async function cargarNube(){
       ['seda_ajustes',()=>ajustes,v=>{ajustes=v}],
       ['seda_bodega',()=>bodegaBase,v=>{bodegaBase=v}],
       ['seda_contactos',()=>contactosInternos,v=>{contactosInternos=v}],
+      ['seda_horarios',()=>horarios,v=>{horarios=hzNormaliza(v)}],
       ['seda_pin',()=>getPinCfg(),v=>{}]
     ];
     const [cfg,...res]=await Promise.all([
@@ -4807,7 +4857,7 @@ async function reenviarTodo(){
       _subirTabla('eventos',eventos.filter(x=>!_esDemo(x))), _subirTabla('plantillas',plantillas),
       _subirTabla('vajilla',vajilla), _subirTabla('proveedores',proveedores), _subirTabla('personal',personal),
       _subirConfig('seda_rec',recetas), _subirConfig('seda_precios',preciosIng), _subirConfig('seda_tipos',tiposServicio),
-      _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos),
+      _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos), _subirConfig('seda_horarios',horarios),
       ...(getPinCfg()?[_subirConfig('seda_pin',getPinCfg())]:[])
     ]);
   } finally { _reenviando=false; }
