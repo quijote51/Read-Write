@@ -40,3 +40,4 @@
 .hz-saldo{height:8px;border-radius:99px;background:var(--bg-tertiary);overflow:hidden;margin-top:4px}.hz-saldo i{display:block;height:100%}
 .hz-meses{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;margin:6px 0}.hz-meses span{height:14px;border-radius:3px;background:var(--bg-tertiary)}
 .hz-meses .v{background:#791f1f}.hz-meses .i{background:#0c447c}.hz-meses .x{background:#ef9f27}.hz-meses .m{background:#72243e}
+.hz-tabla table.hz-t{min-width:0}.hz-t td.n{text-align:left}

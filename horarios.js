@@ -106,7 +106,7 @@ window.htmlHorarioEvento=function(ev){
 /* ---- estado de la interfaz ---- */
 let tab='plantilla', semana=lunes(new Date()), edit=null, anio=new Date().getFullYear(), msg='';
 const SOLO=()=>window.HZ_SOLO_LEER===true;
-const TABS=[['plantilla','Plantilla'],['mi','Mi semana'],['ahora','Ahora'],['eventos','Eventos'],['extras','Extras'],['practicas','Prácticas'],['vacaciones','Vacaciones'],['equipo','Equipo']];
+const TABS=[['plantilla','Plantilla'],['mi','Mi semana'],['horas','Horas'],['cambios','Cambios'],['ahora','Ahora'],['eventos','Eventos'],['extras','Extras'],['practicas','Prácticas'],['vacaciones','Vacaciones'],['equipo','Equipo']];
 const root=()=>document.getElementById('hz-root');
 function guardar(ks){
   if(SOLO())return;
@@ -297,6 +297,61 @@ function generarSemana(k,seed){
       if(!best||pen<best.pen)best={pen,sol:cur.slice()}}
     if(!best||pen<best.pen)best={pen,sol:cur.slice()}}
   return{pers,sol:best.sol,pen:best.pen}}
+/* ---- Contador de horas ---- */
+let mesH=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+function horasMes(ym){ // ym 'YYYY-MM': semanas cuyo lunes cae en el mes y tienen turnos
+  const res={};
+  Object.keys(H().semanas).filter(k=>k.slice(0,7)===ym&&!sinTurnos(k)).sort().forEach(k=>{
+    equipoSem(k).forEach(e=>{const a=fila(k,e.n);if(a.every(x=>!x))return;
+      const h=a.reduce((x,t)=>x+horas(t),0),aus=a.filter(t=>{const u=(t||'').toUpperCase();return u.includes('VACACIONES')||u.includes('BAJA')}).length;
+      const esp=Math.max(0,MAX_H-Math.min(5,aus)*8),r=res[e.n]||(res[e.n]={h:0,esp:0,sem:[]});
+      r.h+=h;r.esp+=esp;r.sem.push({k,h,esp})})});
+  return res}
+function vHoras(){
+  const ym=mesH.getFullYear()+'-'+String(mesH.getMonth()+1).padStart(2,'0'),R=horasMes(ym);
+  const nom=Object.keys(R).filter(n=>R[n].h||R[n].esp).sort((a,b)=>(R[b].h-R[b].esp)-(R[a].h-R[a].esp));
+  const bar=`<div class="hz-bar"><button class="btn-sec" data-a="mesant" aria-label="Mes anterior">←</button><div class="hz-sem">${cap(mesH.toLocaleDateString('es-ES',{month:'long',year:'numeric'}))}</div><button class="btn-sec" data-a="messig" aria-label="Mes siguiente">→</button></div>`;
+  if(!nom.length)return bar+'<div class="card hz-vacio">No hay semanas con turnos en este mes.</div>';
+  const yoN=SOLO()?yo():'';
+  const fila_=n=>{const r=R[n],d=r.h-r.esp,c=d>0.05?'alta':'';
+    return`<tr${n===yoN?' style="font-weight:700"':''}><td class="n">${esc(n)}</td><td>${fmtH(r.h)}</td><td>${fmtH(r.esp)}</td><td class="h ${c}">${d>0?'+':''}${fmtH(d)}</td></tr>`};
+  const lista=SOLO()?(yoN&&R[yoN]?[yoN]:[]):nom;
+  return bar+`<div class="card"><div class="hz-tabla"><table class="hz-t"><thead><tr><th>Persona</th><th>Hechas</th><th>Debidas</th><th>Saldo</th></tr></thead><tbody>${lista.map(fila_).join('')}</tbody></table></div><p style="font-size:12px;color:var(--text-secondary);margin:10px 0 0">Debidas = ${MAX_H} h por semana con turnos, menos 8 h por cada día de vacaciones o baja. Saldo positivo = horas a devolver en descanso o pagar. Cuenta las semanas que empiezan en este mes.</p></div>`}
+
+/* ---- Cambios de turno ---- */
+const CH=()=>window.HZ_CAMB;
+let cf={dia:'',con:'',de:''},cmsg='';
+const ESTADO={pendiente:['Espera respuesta','libre'],aceptado:['Espera tu OK','extra'],aprobado:['Aprobado','trab'],rechazado:['Rechazado','vac']};
+function diasCambio(){const o=[],hoy=new Date();for(let i=1;i<15;i++){const d=sumar(new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate()),i),k=iso(lunes(d));if(sinTurnos(k))continue;o.push({v:k+'|'+((d.getDay()+6)%7),d,k,i:(d.getDay()+6)%7})}return o}
+function vCambios(){
+  const me=SOLO()?yo():(cf.de||yo()),lista=CH().lista();
+  let h=cmsg?`<div class="hz-aviso warn">${cmsg}</div>`:'';
+  if(SOLO()&&!me)return h+`<div class="card hz-vacio">Primero elige quién eres en <b>Mi semana</b>.</div>`;
+  const dias=diasCambio(),sel=dias.find(x=>x.v===cf.dia);
+  let con=[];
+  if(sel&&me){const mio=fila(sel.k,me)[sel.i]||'';con=equipoSem(sel.k).filter(e=>e.n!==me).map(e=>({n:e.n,t:fila(sel.k,e.n)[sel.i]||''})).filter(x=>x.t&&x.t!==mio&&!/VACACIONES|BAJA/i.test(x.t))}
+  const mioT=sel&&me?(fila(sel.k,me)[sel.i]||''):'';
+  h+=`<div class="card"><b>Pedir un cambio de turno</b><div style="display:grid;gap:8px;margin-top:10px">`+
+    (SOLO()?'':`<label>Quién<select data-cf="de"><option value="">—</option>${equipoSem(iso(lunes(new Date()))).map(e=>`<option ${e.n===me?'selected':''}>${esc(e.n)}</option>`).join('')}</select></label>`)+
+    `<label>Día<select data-cf="dia"><option value="">Elige el día</option>${dias.map(x=>`<option value="${x.v}" ${x.v===cf.dia?'selected':''}>${DIAS[x.i]} ${x.d.getDate()} ${MES[x.d.getMonth()]}${me&&fila(x.k,me)[x.i]?' · '+esc(fila(x.k,me)[x.i].replace('\n',' + ')):''}</option>`).join('')}</select></label>`+
+    (sel&&me?`<label>Cambiar con<select data-cf="con"><option value="">Elige compañero</option>${con.map(x=>`<option value="${esc(x.n)}" ${x.n===cf.con?'selected':''}>${esc(x.n)} · ${esc(x.t.replace('\n',' + '))}</option>`).join('')}</select></label>`:'')+
+    `<button class="btn btn-p" data-a="cpedir" ${sel&&me&&cf.con?'':'disabled'}>Pedir cambio</button></div>${sel&&me&&cf.con?`<p style="font-size:12px;color:var(--text-secondary);margin:8px 0 0">${esc(me)} hace ${esc((con.find(x=>x.n===cf.con)||{t:''}).t.replace('\n',' + '))} y ${esc(cf.con)} hace ${esc(mioT.replace('\n',' + ')||'libre')}.</p>`:''}</div>`;
+  const vis=lista.filter(c=>SOLO()?(c.de===me||c.a===me||c.estado==='aprobado'):true).slice(0,30);
+  h+=`<div class="card"><b>Solicitudes</b>${vis.length?vis.map(c=>{
+    const d=sumar(fd(c.semana),c.dia),[et,cl]=ESTADO[c.estado]||[c.estado,'libre'];let ac='';
+    if(c.estado==='pendiente'&&c.a===me)ac=`<button class="btn btn-p hz-sm" data-cc="${c.id}" data-a="cacepta">Aceptar</button><button class="btn-sec hz-sm" data-cc="${c.id}" data-a="crechaza">Rechazar</button>`;
+    else if(c.estado==='pendiente'&&c.de===me)ac=`<button class="btn-sec hz-sm" data-cc="${c.id}" data-a="crechaza">Cancelar</button>`;
+    if(!SOLO()){if(c.estado==='aceptado')ac=`<button class="btn btn-p hz-sm" data-cc="${c.id}" data-a="caprueba">Aprobar</button><button class="btn-sec hz-sm" data-cc="${c.id}" data-a="crechaza">Rechazar</button>`;else if(c.estado==='pendiente')ac+=`<button class="btn-sec hz-sm" data-cc="${c.id}" data-a="crechaza">Rechazar</button>`}
+    return`<div class="hz-fila" style="align-items:flex-start;flex-wrap:wrap"><span><b>${DIAS[(d.getDay()+6)%7]} ${d.getDate()} ${MES[d.getMonth()]}</b> · ${esc(c.de)} ⇄ ${esc(c.a)}<br><small>${esc(c.de)} pasa de ${esc((c.turno_de||'libre').replace('\n',' + '))} a ${esc((c.turno_a||'libre').replace('\n',' + '))}</small></span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="hz-pill ${cl}">${et}</span>${ac}</span></div>`}).join(''):'<div class="hz-vacio">No hay solicitudes.</div>'}</div>`;
+  return h}
+async function aprobarCambio(c){
+  const a=fila(c.semana,c.de),b=fila(c.semana,c.a);
+  if((a[c.dia]||'')!==(c.turno_de||'')||(b[c.dia]||'')!==(c.turno_a||'')){cmsg='El horario cambió desde que se pidió. Rechaza la solicitud y que la pidan de nuevo.';return}
+  a[c.dia]=c.turno_a;b[c.dia]=c.turno_de;guardar(c.semana);
+  await CH().estado(c.id,'aprobado');
+  const av=avisos(c.semana).filter(x=>x.includes(c.de)||x.includes(c.a));
+  cmsg=av.length?`Aplicado al horario. Ojo: ${av.join('; ')}`:'Aplicado al horario.'}
+
 /* ---- Mi semana ---- */
 function yo(){try{return localStorage.getItem('hz_yo')||''}catch(e){return''}}
 function vMi(){
@@ -355,12 +410,12 @@ function panelGenerar(){
   <p style="font-size:11px;color:var(--text-secondary);margin:8px 0 0">Solo rellena semanas vacías. Reglas: 2 días libres seguidos, 40 h, 12 h de descanso, cobertura mínima 3, máximo 1 libre en sábado y domingo, jefatura o cocinero a mediodía y de noche, desayuno cubierto. Si hay un evento, refuerza ese día según las raciones.</p></div>`}
 
 let tabIni=false;
-const tabsVisibles=()=>SOLO()?[['mi','Mi semana'],['plantilla','Cuadrante'],['ahora','Ahora']]:TABS;
+const tabsVisibles=()=>(SOLO()?[['mi','Mi semana'],['horas','Horas'],['cambios','Cambios'],['plantilla','Cuadrante'],['ahora','Ahora']]:TABS).filter(x=>x[0]!=='cambios'||window.HZ_CAMB);
 function pintar(){
   const r=root();if(!r)return;
   if(SOLO()&&!tabIni){tab='mi';tabIni=true}
   if(SOLO()&&!tabsVisibles().some(x=>x[0]===tab))tab='mi';
-  const f={plantilla:vPlantilla,mi:vMi,ahora:vAhora,eventos:vEventos,extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:vVac,equipo:vEquipo}[tab];
+  const f={plantilla:vPlantilla,mi:vMi,horas:vHoras,cambios:vCambios,ahora:vAhora,eventos:vEventos,extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:vVac,equipo:vEquipo}[tab];
   r.innerHTML=`<div class="hz-tabs" role="tablist">${tabsVisibles().map(([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`).join('')}</div>`+(window.HZ_APARTE?'':`<div style="text-align:right;margin:-6px 0 8px;font-size:12px"><a href="/horarios.html" target="_blank" rel="noopener" style="color:var(--text-secondary)">Abrir como app aparte ↗</a></div>`)+f();
 }
 window.initHorarios=function(){pintar()};
@@ -379,11 +434,19 @@ function aplicarVac(v,poner){
 /* ---- eventos de la interfaz ---- */
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
-  const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;edit=null;msg='';pintar();return}
+  const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}
   const c=e.target.closest('.hz-cel');if(c){if(SOLO())return;edit={k:iso(semana),e:c.dataset.e,i:+c.dataset.i};pintar();const x=document.getElementById('hz-turno');if(x)x.focus();return}
   const y=e.target.closest('[data-yo]');if(y){try{localStorage.setItem('hz_yo',y.dataset.yo)}catch(er){}pintar();return}
   const q=e.target.closest('[data-q]');if(q){document.getElementById('hz-turno').value=q.dataset.q;return}
   const a=e.target.closest('[data-a]')?.dataset.a;
+  if(a==='cpedir'){const[k,i]=cf.dia.split('|'),me=SOLO()?yo():(cf.de||yo());if(!k||!cf.con||!me)return;
+    const tm=fila(k,me)[+i]||'',tc=fila(k,cf.con)[+i]||'';
+    cmsg='Enviando…';pintar();
+    CH().crear({semana:k,dia:+i,de:me,a:cf.con,turno_de:tm,turno_a:tc}).then(ok=>{cmsg=ok?'Solicitud enviada. Avisa a '+esc(cf.con)+' para que la acepte.':'No se pudo enviar (¿sin conexión?).';if(ok)cf={dia:'',con:'',de:cf.de};pintar()});return}
+  if(a==='cacepta'||a==='crechaza'||a==='caprueba'){const id=e.target.closest('[data-cc]').dataset.cc,c=CH().lista().find(x=>x.id===id);if(!c)return;cmsg='';
+    (a==='caprueba'?aprobarCambio(c):CH().estado(id,a==='cacepta'?'aceptado':'rechazado').then(ok=>{cmsg=ok?'':'No se pudo guardar (¿sin conexión?).'})).then(()=>pintar());return}
+  if(a==='mesant'){mesH=new Date(mesH.getFullYear(),mesH.getMonth()-1,1);pintar();return}
+  if(a==='messig'){mesH=new Date(mesH.getFullYear(),mesH.getMonth()+1,1);pintar();return}
   if(a==='ant'){semana=sumar(semana,-7);edit=null;pintar()}else if(a==='sig'){semana=sumar(semana,7);edit=null;pintar()}
   else if(a==='hoy'){semana=lunes(new Date());edit=null;pintar()}
   else if(a==='aant'){anio--;pintar()}else if(a==='asig'){anio++;pintar()}
@@ -401,6 +464,7 @@ document.addEventListener('click',e=>{
   const v=e.target.closest('[data-vdel]');if(v){const p=H().vac.splice(+v.dataset.vdel,1)[0];aplicarVac(p,false);msg='';guardar(tocadas.slice());pintar()}
 });
 document.addEventListener('change',e=>{
+  const cfx=e.target.closest('[data-cf]');if(cfx){cf[cfx.dataset.cf]=cfx.value;if(cfx.dataset.cf!=='con')cf.con='';if(cfx.dataset.cf==='de')cf.dia='';cmsg='';pintar();return}
   const x=e.target.closest('[data-eq]');if(!x)return;
   const p=H().equipo[+x.dataset.eq],f=x.dataset.f;p[f]=f==='g'?+x.value:x.value.trim();guardar()});
 document.addEventListener('submit',e=>{

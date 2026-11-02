@@ -113,7 +113,7 @@ async function entrar(ev){
     $('login').style.display='none';await arrancar()}
   catch(e){er.textContent=/invalid|credentials/i.test(String(e&&e.message))?'Correo o contraseña incorrectos.':'No se pudo entrar. Revisa la conexión e inténtalo de nuevo.';er.style.display='block'}
   b.disabled=false;b.textContent='Entrar';return false}
-async function salir(){try{await supa.auth.signOut()}catch(e){}try{localStorage.removeItem('seda_cuenta');localStorage.removeItem('hz_rol');localStorage.removeItem('hz_yo')}catch(e){}location.reload()}
+async function salir(){try{await supa.auth.signOut()}catch(e){}try{localStorage.removeItem('seda_cuenta');localStorage.removeItem('hz_rol');localStorage.removeItem('hz_yo');localStorage.removeItem('hz_cambios');localStorage.removeItem('hz_hotel')}catch(e){}location.reload()}
 
 async function cargar(){
   const cache=LS('hz_cache');if(cache){eventos=cache.eventos||[];ajustes=cache.ajustes||{};tiposServicio=cache.tipos||[]}
@@ -134,17 +134,31 @@ async function cargar(){
     estado(true);
   }catch(err){console.warn('Carga',err);estado(false)}
 }
+let _hotel=null,cambios=LS('hz_cambios')||[];
+async function cargarCambios(){
+  if(!supa||!_uid||navigator.onLine===false)return;
+  try{const{data,error}=await supa.from('cambios').select('*').order('creado',{ascending:false}).limit(100);
+    if(!error){cambios=data||[];LS('hz_cambios',cambios)}}catch(e){}}
+window.HZ_CAMB={
+  lista:()=>cambios,
+  recargar:cargarCambios,
+  async crear(o){if(!supa||!_uid||navigator.onLine===false)return false;
+    try{const{error}=await supa.from('cambios').insert({...o,hotel_id:_hotel||_uid});if(error)throw error;await cargarCambios();return true}catch(e){console.warn(e);return false}},
+  async estado(id,est){if(!supa||!_uid||navigator.onLine===false)return false;
+    try{const{error}=await supa.from('cambios').update({estado:est}).eq('id',id);if(error)throw error;await cargarCambios();return true}catch(e){console.warn(e);return false}}
+};
 async function detectarRol(){
   let r=LS('hz_rol');
   if(supa&&_uid&&navigator.onLine!==false){
-    try{const{data,error}=await supa.from('miembros').select('rol').eq('user_id',_uid);
-      if(!error){r=(data&&data[0]&&data[0].rol)||'admin';LS('hz_rol',r)}}catch(e){}}
+    try{const{data,error}=await supa.from('miembros').select('rol,hotel_id').eq('user_id',_uid);
+      if(!error){r=(data&&data[0]&&data[0].rol)||'admin';LS('hz_rol',r);_hotel=(data&&data[0]&&data[0].hotel_id)||_uid;LS('hz_hotel',_hotel)}}catch(e){}}
+  if(!_hotel)_hotel=LS('hz_hotel')||_uid;
   window.HZ_SOLO_LEER=(r==='cocina');return r}
 async function arrancar(){
   $('salir').style.display='';
   await detectarRol();
   initHorarios();            // pinta ya con lo guardado en el dispositivo
-  await cargar();initHorarios();
+  await cargar();await cargarCambios();initHorarios();
 }
 window.addEventListener('online',()=>{if(_uid)arrancar()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&_uid&&navigator.onLine!==false&&!document.getElementById('hz-turno'))cargar().then(initHorarios)});
