@@ -37,4 +37,8 @@
 - [ ] Opcional: cuenta de revisor de solo lectura para ver eventos y recetas reales.
 
 ## Siguiente
-- [ ] Compras: historial de precios por ingrediente, stock mínimo y consumo teórico frente a inventario (mermas), en su propio archivo.
+- [x] Compras hecho (`compras.js`, sección «Albaranes y costes»).
+- [ ] Apuntar los albaranes que lleguen y enlazar en «Enlaces» los artículos que se usan en recetas (hay propuestas automáticas).
+- [ ] Poner mínimos a los artículos que no pueden faltar.
+- [ ] Las mermas salen a partir del segundo recuento de inventario (el primero es del 26/10/2026).
+- [ ] Opcional: app suelta de Albaranes con acceso directo.

@@ -17,8 +17,9 @@ App web (PWA) para la gestión de la cocina y los eventos de un hotel. HTML, CSS
 | `inventario.js` + `inventario.html` | Inventario mensual (`config.seda_inventario`). |
 | `alergenos.js` + `alergenos.html` | Los 14 alérgenos, `algDePlato`, cruce con invitados y ficha para el cliente. La revisión se guarda en `config.seda_alg_rev`. |
 | `appcc.js` + `appcc.html` | APPCC: temperaturas, limpieza, recepción, muestra testigo, etiquetas y registros (`config.seda_appcc`). Fusiona con la nube por id. Los registros solo se anulan con motivo; nunca se editan. |
+| `compras.js` | «Albaranes y costes» sobre los artículos del inventario: albaranes (actualizan precio e historial), subidas de precio, stock mínimo con stock estimado, mermas entre dos recuentos y enlaces artículo ↔ ingrediente de receta (`config.seda_compras`). Fusiona con la nube por id, como APPCC. |
 | `app-base.js` + `app-base.css` | Base común de las apps sueltas: sesión, carga de eventos, recetas y proveedores, `syncConfig`, `recetaDePlato` y estilos. |
-| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v16`) y añadir a `SHELL` cada archivo nuevo.** |
+| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v17`) y añadir a `SHELL` cada archivo nuevo.** |
 | `manifest-*.json` + `*-192/512/maskable/apple-180/favicon-32.png` | Una app instalable por módulo. Iconos dorados (#c9a84c) sobre fondo #1a1a1a. |
 | `supabase/seguridad-cambios.sql` | Referencia, ya aplicado. |
 | `PENDIENTES.md` | Lista de tareas pendientes. **Leerla al empezar.** |

@@ -22,6 +22,7 @@
 <script src="inventario.js"></script>
 <script src="alergenos.js"></script>
 <script src="appcc.js"></script>
+<script src="compras.js"></script>
 <script>
 // ══════════════════════════════════════
 // OÍDO COCINA · Configuración Supabase
@@ -961,6 +962,7 @@ textarea{resize:vertical;min-height:65px}
 <!-- INVENTARIO -->
 <div class="sec" id="tab-inventario"><div id="iv-root"></div></div>
 <div class="sec" id="tab-appcc"><div id="ap-root"></div></div>
+<div class="sec" id="tab-costes"><div id="co-root"></div></div>
 
 <!-- GESTIÓN DE PERSONAL -->
 <div class="sec" id="tab-personal">
@@ -1469,6 +1471,7 @@ const ACC_TABS = {
   horarios:   {icon:'ti-calendar-time',     label:'Horarios cocina'},
   inventario: {icon:'ti-clipboard-list',    label:'Inventario'},
   appcc:      {icon:'ti-temperature',       label:'APPCC'},
+  costes:     {icon:'ti-receipt',           label:'Albaranes y costes'},
   ajustes:    {icon:'ti-settings',          label:'Ajustes'},
   nuevo:      {icon:'ti-plus',              label:'Nuevo evento'},
 };
@@ -1532,6 +1535,7 @@ function callTabInit(name){
   if(name==='horarios')initHorarios();
   if(name==='inventario')initInventario();
   if(name==='appcc'&&typeof initAPPCC==='function')initAPPCC();
+  if(name==='costes'&&typeof initCostes==='function')initCostes();
   if(name==='ajustes')initAjustes();
 }
 
@@ -1565,11 +1569,11 @@ function showTab(name,btn){
 
 /* ===== SELECTOR DE ROL ===== */
 const ROLES = {
-  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina','horarios','inventario','appcc']},
+  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina','horarios','inventario','appcc','costes']},
   sala:      {icon:'<i class="ti ti-tools-kitchen-2"></i>',  nombre:'Sala / Maître',  tabs:['dashboard','bebidas','vajilla','eventos']},
   eventos:   {icon:'<i class="ti ti-calendar-event"></i>',   nombre:'Jefa de eventos',tabs:['dashboard','eventos','calendario','plantillas','escandallo','nuevo']},
-  direccion: {icon:'<i class="ti ti-chart-bar"></i>',        nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos','horarios','inventario','appcc']},
-  admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','horarios','inventario','appcc','ajustes','nuevo']}
+  direccion: {icon:'<i class="ti ti-chart-bar"></i>',        nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos','horarios','inventario','appcc','costes']},
+  admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','horarios','inventario','appcc','costes','ajustes','nuevo']}
 };
 
 let rolActual = localStorage.getItem('seda_rol') || null;
@@ -2029,7 +2033,7 @@ function importarDatos(input){
 function resetearTodo(){
   if(!confirm('⚠️ ¿Borrar TODOS los datos? Esta acción no se puede deshacer.'))return;
   if(!confirm('¿Estás seguro? Se borrarán todos los eventos, recetas, plantillas y configuración.'))return;
-  ['seda_ev','seda_rec','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev','seda_appcc'].forEach(k=>localStorage.removeItem(k));
+  ['seda_ev','seda_rec','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev','seda_appcc','seda_compras'].forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
 
@@ -4782,7 +4786,8 @@ async function cargarNube(){
       ['seda_inventario',()=>inventario,v=>{inventario=v;const t=document.getElementById('tab-inventario');if(t&&t.offsetParent!==null&&typeof initInventario==='function')initInventario()}],
       ['seda_pin',()=>getPinCfg(),v=>{}],
       ['seda_alg_rev',()=>algRevisiones,v=>{setAlgRevisiones(v)}],
-      ['seda_appcc',()=>appcc,v=>{appccDesdeNube(v)}]
+      ['seda_appcc',()=>appcc,v=>{appccDesdeNube(v)}],
+      ['seda_compras',()=>compras,v=>{comprasDesdeNube(v)}]
     ];
     const [cfg,...res]=await Promise.all([
       supa.from('config').select('key,value'),
@@ -4820,7 +4825,8 @@ async function reenviarTodo(){
       _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos), _subirConfig('seda_horarios',horarios), ...(inventario?[_subirConfig('seda_inventario',inventario)]:[]),
       ...(getPinCfg()?[_subirConfig('seda_pin',getPinCfg())]:[]),
       ...(Object.keys(algRevisiones).length?[_subirConfig('seda_alg_rev',algRevisiones)]:[]),
-      ...(appcc?[appccSubir()]:[])
+      ...(appcc?[appccSubir()]:[]),
+      ...(compras?[comprasSubir()]:[])
     ]);
   } finally { _reenviando=false; }
 }
