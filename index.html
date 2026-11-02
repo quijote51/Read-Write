@@ -51,7 +51,8 @@ async function _leerSesion(){
   }catch{}
   return _uid;
 }
-supa.auth.onAuthStateChange(ev=>{ if(ev==='SIGNED_OUT' && _uid){ _uid=null; location.reload(); } });
+let _saliendo=false;
+supa.auth.onAuthStateChange(ev=>{ if(ev==='SIGNED_OUT' && _uid && !_saliendo){ _uid=null; location.reload(); } });
 const _conocidos = {};
 const _timers = {};
 function _fallo(clave, err){ console.warn('Sync error:', clave, err); try{localStorage.setItem('seda_pendiente','1')}catch{} mostrarSync(false); }
@@ -1205,7 +1206,7 @@ function getTipoById(id){
 }
 
 function renderTipoSelects(){
-  const opts=tiposServicio.map(t=>`<option value="${t.id}">${t.nombre} ×${t.factor}</option>`).join('');
+  const opts=tiposServicio.map(t=>`<option value="${t.id}">${escH(t.nombre)} ×${t.factor}</option>`).join('');
   ['n-tipo','plt-factor'].forEach(id=>{
     const el=ge(id); if(!el)return;
     const val=el.value;
@@ -1247,7 +1248,7 @@ function renderTiposLista(){
   ge('tipos-lista').innerHTML=tiposServicio.map(t=>`
     <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:.5px solid var(--border)">
       <div style="width:12px;height:12px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
-      <div style="flex:1;font-size:13px;font-weight:500">${t.nombre}</div>
+      <div style="flex:1;font-size:13px;font-weight:500">${escH(t.nombre)}</div>
       <span style="font-size:11px;color:var(--text-secondary)">×</span>
       <input type="number" value="${t.factor}" min="0.5" max="5" step="0.1" style="width:65px;font-size:13px;text-align:center"
         onchange="actualizarFactorTipo('${t.id}',this.value)"/>
@@ -1746,7 +1747,7 @@ function renderHistorial(){
       <div style="font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Por tipo de servicio</div>
       ${Object.values(porTipo).sort((a,b)=>b.count-a.count).map(t=>`
         <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid var(--border);font-size:13px">
-          <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${t.color};display:inline-block"></span>${t.nombre}</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${t.color};display:inline-block"></span>${escH(t.nombre)}</span>
           <span><b>${t.count}</b> ev · ${t.pax} pax</span>
         </div>`).join('')}
     </div>
@@ -1774,7 +1775,7 @@ function renderHistorial(){
           const cos=calcCosteEvento(e).totalCoste;
           const mar=ing>0?((ing-cos)/ing*100):0;
           return`<tr>
-            <td style="font-weight:500">${e.nombre}</td>
+            <td style="font-weight:500">${escH(e.nombre)}</td>
             <td style="color:var(--text-secondary);font-size:12px">${fmtFecha(e.fecha)}</td>
             <td style="text-align:right">${e.pax}</td>
             <td style="text-align:right">${ing>0?ing.toLocaleString('es')+'€':'—'}</td>
@@ -1823,7 +1824,7 @@ const ROL_LABELS={chef:'Chef',cocinero:'Cocinero',maitre:'Maître',sala:'Sala',b
 function initPersonal(){
   ge('pers-ev-sel').innerHTML='<option value="">Selecciona un evento</option>'+
     [...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha))
-      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax)</option>`).join('');
+      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${escH(e.nombre)} (${e.pax} pax)</option>`).join('');
   renderPersonalLista();
 }
 
@@ -1841,7 +1842,7 @@ function renderPersonalLista(){
         return`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:5px;transition:border-color var(--t),box-shadow var(--t)">
           <div style="width:34px;height:34px;border-radius:50%;background:var(--bg-secondary);border:.5px solid var(--border-md);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-secondary);flex-shrink:0">${initials}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.nombre}</div>
+            <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(p.nombre)}</div>
             ${p.tel?`<div style="font-size:11px;color:var(--text-secondary)">${p.tel}</div>`:``}
           </div>
           ${p.tel?`<a href="https://wa.me/${p.tel.replace(/\D/g,'')}" target="_blank" class="btn-icon success" style="text-decoration:none;color:var(--success-text)"><i class="ti ti-brand-whatsapp"></i></a>`:''}
@@ -1884,13 +1885,13 @@ function renderPersonalEvento(){
 
   cont.innerHTML=`
   <div class="card">
-    <div style="font-size:13px;font-weight:500;margin-bottom:10px">Personal asignado a ${ev.nombre}</div>
+    <div style="font-size:13px;font-weight:500;margin-bottom:10px">Personal asignado a ${escH(ev.nombre)}</div>
     ${personal.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
       ${personal.map(p=>`
         <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--radius);border:.5px solid var(--border);cursor:pointer;background:${ev.personal_ids.includes(p.id)?'var(--success-bg)':'var(--bg-primary)'};color:${ev.personal_ids.includes(p.id)?'var(--success-text)':'var(--text-primary)'}"
           onclick="togglePersonalEvento(${evId},'${p.id}')">
           <span style="font-size:14px">${ROL_ICONS[p.rol]||'<i class="ti ti-user"></i>'}</span>
-          <span style="font-size:12px;font-weight:500">${p.nombre}</span>
+          <span style="font-size:12px;font-weight:500">${escH(p.nombre)}</span>
           ${ev.personal_ids.includes(p.id)?'<i class="ti ti-check" style="font-size:11px"></i>':''}
         </div>`).join('')}
     </div>`:'<div style="font-size:13px;color:var(--text-secondary)">No hay personal registrado. Añade personas en la parte superior.</div>'}
@@ -1900,7 +1901,7 @@ function renderPersonalEvento(){
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${ev.personal_ids.map(pid=>{
           const p=personal.find(x=>x.id===pid); if(!p||!p.tel)return'';
-          return`<a href="https://wa.me/${p.tel}?text=${encodeURIComponent(msgBase)}" target="_blank" style="font-size:11px;padding:4px 10px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none"><i class="ti ti-brand-whatsapp"></i> ${p.nombre}</a>`;
+          return`<a href="https://wa.me/${p.tel}?text=${encodeURIComponent(msgBase)}" target="_blank" style="font-size:11px;padding:4px 10px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none"><i class="ti ti-brand-whatsapp"></i> ${escH(p.nombre)}</a>`;
         }).join('')}
       </div>
     </div>`:''}
@@ -1992,7 +1993,7 @@ function renderAjustesTipos(){
   ge('aj-tipos-lista').innerHTML=tiposServicio.map(t=>`
     <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:.5px solid var(--border)">
       <div style="width:10px;height:10px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
-      <span style="flex:1;font-size:13px">${t.nombre}</span>
+      <span style="flex:1;font-size:13px">${escH(t.nombre)}</span>
       <span style="font-size:12px;color:var(--text-secondary)">×${t.factor}</span>
       ${!['coctel','menu','desayuno'].includes(t.id)?`<button class="btn-d" style="font-size:11px;padding:2px 7px" onclick="eliminarTipoAjustes('${t.id}')"><i class="ti ti-trash"></i></button>`:''}
     </div>`).join('');
@@ -2130,7 +2131,7 @@ function renderCompras(){
 function initPantallaCocina(){
   ge('cocina-ev-sel').innerHTML='<option value="">Selecciona un evento</option>'+
     [...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha))
-      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax)</option>`)
+      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${escH(e.nombre)} (${e.pax} pax)</option>`)
       .join('');
   // Auto-seleccionar evento de hoy si existe
   const hoy=new Date(); hoy.setHours(0,0,0,0);
@@ -2159,15 +2160,15 @@ function renderPantallaCocina(){
   <!-- Kitchen display header -->
   <div style="background:var(--negro);color:var(--blanco);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem;position:relative;overflow:hidden">
     <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold) 70%,transparent)"></div>
-    <div style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.3rem;font-weight:700;letter-spacing:.02em;margin-bottom:5px">${ev.nombre}</div>
+    <div style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.3rem;font-weight:700;letter-spacing:.02em;margin-bottom:5px">${escH(ev.nombre)}</div>
     <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.6)">
       <span><i class="ti ti-calendar" style="color:var(--gold)"></i> ${fmtFecha(ev.fecha)}</span>
       <span><i class="ti ti-clock" style="color:var(--gold)"></i> ${ev.hora}</span>
-      <span><i class="ti ti-map-pin" style="color:var(--gold)"></i> ${ev.lugar}</span>
+      <span><i class="ti ti-map-pin" style="color:var(--gold)"></i> ${escH(ev.lugar)}</span>
       <span style="color:rgba(255,255,255,.9);font-weight:600"><i class="ti ti-users" style="color:var(--gold)"></i> ${ev.pax} pax</span>
       <span style="color:rgba(255,255,255,.9);font-weight:600"><i class="ti ti-stack" style="color:var(--gold)"></i> ${raciones} uds/plato</span>
     </div>
-    ${ev.alergias_txt?`<div style="margin-top:8px;font-size:13px;color:#fbbf24;font-weight:600;background:rgba(251,191,36,.1);border-radius:var(--radius);padding:4px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
+    ${ev.alergias_txt?`<div style="margin-top:8px;font-size:13px;color:#fbbf24;font-weight:600;background:rgba(251,191,36,.1);border-radius:var(--radius);padding:4px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:''}
     ${htmlAlertaAlergenos(ev,true)}${htmlHorarioEvento(ev)}
   </div>
 
@@ -2181,7 +2182,7 @@ function renderPantallaCocina(){
       </div>
       ${items.map(p=>`
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:4px;border-left:3px solid ${cat.color}">
-          <div style="font-size:15px;font-weight:500">${p.nombre}</div>
+          <div style="font-size:15px;font-weight:500">${escH(p.nombre)}</div>
           <div style="background:${cat.color};color:#fff;border-radius:var(--radius);padding:4px 14px;font-size:26px;font-weight:800;min-width:64px;text-align:center;letter-spacing:-.02em">${raciones}</div>
         </div>`).join('')}
     </div>`;
@@ -2195,7 +2196,7 @@ function renderPantallaCocina(){
     ${(ev.infantil.platos||[]).map(pid=>{
       const p=PLATOS_INFANTIL.find(x=>x.id===pid); if(!p)return'';
       return`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);margin-bottom:4px;border-left:3px solid #1D9E75">
-        <div style="font-size:15px;font-weight:500">${p.nombre}</div>
+        <div style="font-size:15px;font-weight:500">${escH(p.nombre)}</div>
         <div style="background:#1D9E75;color:#fff;border-radius:var(--radius);padding:4px 14px;font-size:26px;font-weight:800;min-width:64px;text-align:center">${ev.infantil.ninos}</div>
       </div>`;
     }).join('')}
@@ -2273,7 +2274,7 @@ function switchVaj(tab, btn){
 function initVajilla(){
   ge('vaj-ev-sel').innerHTML='<option value="">Selecciona un evento</option>'+
     [...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha))
-      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax)</option>`)
+      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${escH(e.nombre)} (${e.pax} pax)</option>`)
       .join('');
   renderVajEvento();
 }
@@ -2309,8 +2310,8 @@ function renderVajEvento(){
   <div class="card" style="margin-bottom:12px;background:var(--info-bg);border-color:var(--info-text)">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <div>
-        <div style="font-size:14px;font-weight:500;color:var(--info-text)"><i class="ti ti-tools-kitchen"></i> Ficha vajilla · ${ev.nombre}</div>
-        <div style="font-size:12px;color:var(--info-text);opacity:.8">${fmtFecha(ev.fecha)} · ${ev.hora} · ${ev.pax} pax · ${ev.lugar} · ${tipoServicio}</div>
+        <div style="font-size:14px;font-weight:500;color:var(--info-text)"><i class="ti ti-tools-kitchen"></i> Ficha vajilla · ${escH(ev.nombre)}</div>
+        <div style="font-size:12px;color:var(--info-text);opacity:.8">${fmtFecha(ev.fecha)} · ${ev.hora} · ${ev.pax} pax · ${escH(ev.lugar)} · ${tipoServicio}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:20px;font-weight:500;color:var(--info-text)">${totalPiezas}</div>
@@ -2327,7 +2328,7 @@ function renderVajEvento(){
       </div>
       ${alertas.map(v=>`
         <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid var(--border);font-size:13px">
-          <span>${VAJ_CATS[v.cat]?.icon||'<i class="ti ti-package"></i>'} ${v.nombre}</span>
+          <span>${VAJ_CATS[v.cat]?.icon||'<i class="ti ti-package"></i>'} ${escH(v.nombre)}</span>
           <span style="color:var(--danger-text);font-weight:500">
             Necesario: ${v.necesario} · Stock: ${v.stock} · <span style="color:var(--danger-text)">Faltan ${v.falta}</span>
           </span>
@@ -2355,7 +2356,7 @@ function renderVajEvento(){
         </tr></thead>
         <tbody>
           ${catItems.map(v=>`<tr>
-            <td style="font-weight:500">${v.nombre}</td>
+            <td style="font-weight:500">${escH(v.nombre)}</td>
             <td style="text-align:right;font-size:17px;font-weight:500">${v.necesario}</td>
             <td style="text-align:right;color:var(--text-secondary)">${v.stock}</td>
             <td style="text-align:center">
@@ -2390,11 +2391,11 @@ function renderVajStock(){
           <div class="vaj-card" onclick="verDetallePieza('${v.id}')">
             <div class="vaj-img">
               ${v.img
-                ?`<img src="${v.img}" style="width:100%;height:100%;object-fit:cover" alt="${v.nombre}"/>`
+                ?`<img src="${v.img}" style="width:100%;height:100%;object-fit:cover" alt="${escH(v.nombre)}"/>`
                 :`<span style="font-size:30px">${catInfo.icon}</span>`}
             </div>
             <div class="vaj-body">
-              <div class="vaj-nombre">${v.nombre}</div>
+              <div class="vaj-nombre">${escH(v.nombre)}</div>
               <div class="${v.stock>20?'vaj-stock-ok':'vaj-stock-warn'}">
                 ${v.stock>0?`Stock: ${v.stock} uds`:'Sin stock'}
               </div>
@@ -2422,9 +2423,9 @@ function verDetallePieza(id){
           ${v.img?`<img src="${v.img}" style="width:100%;height:100%;object-fit:cover"/>`:`<span>${catInfo.icon}</span>`}
         </div>
         <div style="flex:1">
-          <div style="font-size:17px;font-weight:500;margin-bottom:4px">${v.nombre}</div>
+          <div style="font-size:17px;font-weight:500;margin-bottom:4px">${escH(v.nombre)}</div>
           <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">${catInfo.icon} ${catInfo.label}</div>
-          ${v.notas?`<div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px"><i class="ti ti-note"></i> ${v.notas}</div>`:''}
+          ${v.notas?`<div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px"><i class="ti ti-note"></i> ${escH(v.notas)}</div>`:''}
           <div style="margin-top:8px">
             <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">📷 Añadir / cambiar foto</label>
             <input type="file" accept="image/*" onchange="subirFotoVajilla('${v.id}',this)" style="font-size:12px"/>
@@ -2532,7 +2533,7 @@ function renderVajConfig(){
       </tr></thead>
       <tbody>
         ${vajilla.map(v=>`<tr>
-          <td style="font-weight:500">${VAJ_CATS[v.cat]?.icon||'<i class="ti ti-package"></i>'} ${v.nombre}</td>
+          <td style="font-weight:500">${VAJ_CATS[v.cat]?.icon||'<i class="ti ti-package"></i>'} ${escH(v.nombre)}</td>
           <td style="text-align:center;font-size:12px;color:var(--text-secondary)">${VAJ_CATS[v.cat]?.label||v.cat}</td>
           <td style="text-align:center">
             <input type="number" value="${v.factor_coctel}" min="0" step="0.5" style="width:60px;font-size:13px;text-align:center"
@@ -2566,7 +2567,7 @@ function imprimirVajilla(){
   const fechaStr=`${pad(hoy.getDate())}/${pad(hoy.getMonth()+1)}/${hoy.getFullYear()}`;
   const el=ge('print-fecha-gen');
   const el2=ge('print-date-foot');
-  if(el)el.innerHTML=`<div style="font-size:14px;font-weight:bold">VAJILLA · ${ev.nombre}</div><div>${fmtFecha(ev.fecha)} · ${ev.hora} · ${ev.lugar}</div><div>${ev.pax} pax · ${ev.tipo==='menu'?'Menú':'Cóctel'}</div>`;
+  if(el)el.innerHTML=`<div style="font-size:14px;font-weight:bold">VAJILLA · ${escH(ev.nombre)}</div><div>${fmtFecha(ev.fecha)} · ${ev.hora} · ${escH(ev.lugar)}</div><div>${ev.pax} pax · ${ev.tipo==='menu'?'Menú':'Cóctel'}</div>`;
   if(el2)el2.textContent=fechaStr;
   window.print();
 }
@@ -2701,14 +2702,14 @@ function renderPltGrid(){
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
             <div style="width:12px;height:12px;border-radius:50%;background:${p.color}"></div>
-            <div style="font-size:15px;font-weight:500">${p.nombre}</div>
+            <div style="font-size:15px;font-weight:500">${escH(p.nombre)}</div>
             <span style="font-size:11px;padding:2px 8px;border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary)">${TIPO_LABEL[p.factor]||p.factor}</span>
             ${p.precio?`<span style="font-size:12px;font-weight:500;color:var(--success-text)">${p.precio}€/pax</span>`:''}
           </div>
-          ${p.desc?`<div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">${p.desc}</div>`:''}
+          ${p.desc?`<div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">${escH(p.desc)}</div>`:''}
           ${p.bodega?`<div style="font-size:12px;color:var(--text-tertiary)"><i class="ti ti-bottle"></i> ${p.bodega}</div>`:''}
           <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:3px">
-            ${p.platos.map(pl=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:3px;padding:2px 7px;border-left:2px solid ${CATS.find(c=>c.key===pl.cat)?.color||'#888'}">${pl.nombre}</span>`).join('')}
+            ${p.platos.map(pl=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:3px;padding:2px 7px;border-left:2px solid ${CATS.find(c=>c.key===pl.cat)?.color||'#888'}">${escH(pl.nombre)}</span>`).join('')}
           </div>
         </div>
         <div style="display:flex;gap:6px">
@@ -2723,7 +2724,7 @@ function renderPltSelector(){
   const sel=ge('n-plantilla'); if(!sel) return;
   const current=sel.value;
   sel.innerHTML='<option value="">Sin plantilla — rellenar manualmente</option>'+
-    plantillas.map(p=>`<option value="${p.id}">${p.nombre}${p.precio?' · '+p.precio+'€/pax':''}</option>`).join('');
+    plantillas.map(p=>`<option value="${p.id}">${escH(p.nombre)}${p.precio?' · '+p.precio+'€/pax':''}</option>`).join('');
   if(current) sel.value=current;
 }
 
@@ -2750,7 +2751,7 @@ function cargarPlantilla(){
 
   // Preview
   prev.style.display='block';
-  prev.innerHTML=`<span style="color:${p.color};font-weight:500">${p.nombre}</span> cargado · ${p.platos.length} platos · ${p.precio||'?'}€/pax${p.bodega?' · '+p.bodega:''}`;
+  prev.innerHTML=`<span style="color:${p.color};font-weight:500">${escH(p.nombre)}</span> cargado · ${p.platos.length} platos · ${p.precio||'?'}€/pax${p.bodega?' · '+p.bodega:''}`;
 }
 
 function showNuevaPlt(){
@@ -2933,8 +2934,8 @@ function verDiaCalendario(dia){
   det.innerHTML=`<div class="sec-label" style="margin-bottom:10px"><i class="ti ti-calendar-event"></i> ${fecha} <span style="font-size:12px;color:var(--text-secondary);font-weight:400;text-transform:none;letter-spacing:0">${evs.length} evento${evs.length>1?'s':''} · ${evs.reduce((s,e)=>s+e.pax,0)} pax total</span></div>`+
   evs.sort((a,b)=>a.hora.localeCompare(b.hora)).map(ev=>{
     const color=getTipoColor(ev.tipo);
-    const alerg=ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:'';
-    const platos=ev.platos?.slice(0,4).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:4px;padding:1px 7px;display:inline-block;margin:2px;border-left:2px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${p.nombre}</span>`).join('')||'';
+    const alerg=ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:'';
+    const platos=ev.platos?.slice(0,4).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:4px;padding:1px 7px;display:inline-block;margin:2px;border-left:2px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${escH(p.nombre)}</span>`).join('')||'';
     const masPlatos=ev.platos?.length>4?`<span style="font-size:11px;color:var(--text-tertiary)"> +${ev.platos.length-4} más</span>`:'';
     const [,dm,dd]=ev.fecha.split('-');
     return `<div class="ev-card" style="border-left:4px solid ${color}">
@@ -2944,13 +2945,13 @@ function verDiaCalendario(dia){
           <div class="ev-card-date-mon">${mesC[Number(dm)]}</div>
         </div>
         <div class="ev-card-body">
-          <div class="ev-card-name">${ev.nombre}</div>
+          <div class="ev-card-name">${escH(ev.nombre)}</div>
           <div class="ev-card-meta">
             <i class="ti ti-clock"></i> ${ev.hora}
             <span style="opacity:.3">·</span>
             <i class="ti ti-users"></i> ${ev.pax} pax
             <span style="opacity:.3">·</span>
-            ${ev.lugar}
+            ${escH(ev.lugar)}
             <span style="opacity:.3">·</span>
             <span style="color:${color};font-weight:500">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
           </div>
@@ -2997,7 +2998,7 @@ function renderPlatosInfantil(selIds=[]){
       style="user-select:none;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 8px">
       <div style="display:flex;align-items:center;gap:6px">
         <span style="font-size:18px">${p.emoji}</span>
-        <span style="font-size:12px;font-weight:500">${p.nombre}</span>
+        <span style="font-size:12px;font-weight:500">${escH(p.nombre)}</span>
       </div>
       <span style="font-size:10px;color:var(--text-tertiary)">${p.alg.map(a=>algIcon(a)).join('')} ${p.precio}€</span>
     </div>`).join('');
@@ -3016,11 +3017,11 @@ function renderEventos(){
   if(!evs.length){cont.innerHTML='<div class="empty">No hay eventos.</div>';return;}
   const mesCorto=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   cont.innerHTML=evs.map(ev=>{
-    const alerg=ev.alergias_txt?`<div style="margin-top:5px;font-size:12px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:'';
+    const alerg=ev.alergias_txt?`<div style="margin-top:5px;font-size:12px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:'';
     const algHTML=(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
-    const chips=(ev.platos||[]).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:var(--radius);padding:2px 8px;color:var(--text-secondary);display:inline-block;margin:2px;border-left:3px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${p.nombre}</span>`).join('');
+    const chips=(ev.platos||[]).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:var(--radius);padding:2px 8px;color:var(--text-secondary);display:inline-block;margin:2px;border-left:3px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${escH(p.nombre)}</span>`).join('');
     const infHTML=ev.infantil?.ninos?`<div style="margin-top:5px;font-size:12px;background:var(--success-bg);color:var(--success-text);padding:3px 8px;border-radius:var(--radius);display:inline-block"><i class="ti ti-heart"></i> ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''} · Menú infantil${ev.infantil.precio_nino?' · '+ev.infantil.precio_nino+'€/niño':''}</div>`:'';
-    const notaHTML=ev.notas?`<div style="margin-top:5px;font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);padding:4px 8px;border-radius:var(--radius);border-left:2px solid var(--border-md)"><i class="ti ti-note"></i> ${ev.notas}</div>`:'';
+    const notaHTML=ev.notas?`<div style="margin-top:5px;font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);padding:4px 8px;border-radius:var(--radius);border-left:2px solid var(--border-md)"><i class="ti ti-note"></i> ${escH(ev.notas)}</div>`:'';
     const evColor=getTipoColor(ev.tipo);
     const [,fm,fd]=ev.fecha.split('-');
     return`<div class="ev-card" style="border-left:4px solid ${evColor}">
@@ -3031,7 +3032,7 @@ function renderEventos(){
         </div>
         <div class="ev-card-body">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:3px">
-            <div class="ev-card-name">${ev.nombre}</div>
+            <div class="ev-card-name">${escH(ev.nombre)}</div>
             ${getBadge(ev.fecha)}
           </div>
           ${alertaMargenEvento(ev)?`<div style="margin-bottom:4px">${alertaMargenEvento(ev)}</div>`:''}
@@ -3040,7 +3041,7 @@ function renderEventos(){
             <span style="opacity:.3">·</span>
             <i class="ti ti-users"></i> ${ev.pax} pax
             <span style="opacity:.3">·</span>
-            ${ev.lugar}
+            ${escH(ev.lugar)}
             <span style="opacity:.3">·</span>
             <span style="color:${evColor};font-weight:500">${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
             ${ev.precio_venta?`<span style="opacity:.3">·</span><b>${ev.precio_venta}€/pax</b>`:''}
@@ -3183,7 +3184,7 @@ function guardarEvento(){
 
 /* ---- PRODUCCIÓN ---- */
 function fillProdSel(){
-  ge('prod-sel').innerHTML='<option value="">Selecciona un evento</option>'+[...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax)</option>`).join('');
+  ge('prod-sel').innerHTML='<option value="">Selecciona un evento</option>'+[...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${escH(e.nombre)} (${e.pax} pax)</option>`).join('');
 }
 function renderProd(){
   const id=parseInt(ge('prod-sel').value),cont=ge('prod-cont');
@@ -3193,7 +3194,7 @@ function renderProd(){
   const f=getFactorEvento(ev),pax=ev.pax,total=ev.platos.length*Math.round(pax*f);
   btnImp.style.display='inline-flex';
 
-  const alergC=ev.alergias_txt?`<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px"><div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:3px"><i class="ti ti-alert-triangle"></i> Alergias de clientes</div><div style="font-size:13px">${ev.alergias_txt}</div></div>`:'';
+  const alergC=ev.alergias_txt?`<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px"><div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:3px"><i class="ti ti-alert-triangle"></i> Alergias de clientes</div><div style="font-size:13px">${escH(ev.alergias_txt)}</div></div>`:'';
   const alergMenu=(ev.alergenos_menu||[]).length?`<div class="card" style="margin-bottom:10px"><div style="font-size:13px;font-weight:500;margin-bottom:5px"><i class="ti ti-shield-check"></i> Alérgenos en este menú</div><div>${(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div></div>`:'';
 
   let t=`<div class="card" style="padding:0;overflow:hidden"><table class="ptable"><thead><tr><th>Plato</th><th>Alérgenos</th><th style="text-align:right">Uds.</th><th style="text-align:center" class="no-print">Receta</th></tr></thead><tbody>`;
@@ -3205,7 +3206,7 @@ function renderProd(){
       const aH=algDePlato(p).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
       const rec=recetaDePlato(p);
       const rb=rec?`<button class="no-print" onclick="showTab('recetario',document.querySelectorAll('.tab')[3]);verReceta('${rec.id}')" style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--info-bg);color:var(--info-text);border:none;cursor:pointer"><i class="ti ti-book"></i> Ver</button>`:'';
-      t+=`<tr><td style="font-weight:500">${p.nombre}</td><td>${aH||'—'}</td><td style="text-align:right;font-size:17px;font-weight:500">${qty}</td><td style="text-align:center" class="no-print">${rb}</td></tr>`;
+      t+=`<tr><td style="font-weight:500">${escH(p.nombre)}</td><td>${aH||'—'}</td><td style="text-align:right;font-size:17px;font-weight:500">${qty}</td><td style="text-align:center" class="no-print">${rb}</td></tr>`;
     });
   });
   t+='</tbody></table></div>';
@@ -3223,7 +3224,7 @@ function renderProd(){
         ${(ev.infantil.platos||[]).map(pid=>{
           const p=PLATOS_INFANTIL.find(x=>x.id===pid); if(!p)return'';
           const aH=p.alg.map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
-          return`<tr><td style="font-weight:500">${p.emoji} ${p.nombre}</td><td>${aH}</td><td style="text-align:right;font-size:17px;font-weight:500">${ev.infantil.ninos}</td></tr>`;
+          return`<tr><td style="font-weight:500">${p.emoji} ${escH(p.nombre)}</td><td>${aH}</td><td style="text-align:right;font-size:17px;font-weight:500">${ev.infantil.ninos}</td></tr>`;
         }).join('')}
         ${ev.infantil.precio_nino?`<tr style="background:var(--bg-secondary)"><td colspan="2" style="font-weight:500">Total menús infantiles</td><td style="text-align:right;font-weight:500">${(ev.infantil.precio_nino*ev.infantil.ninos).toFixed(0)}€</td></tr>`:''}
       </tbody>
@@ -3232,11 +3233,11 @@ function renderProd(){
 
   cont.innerHTML=`
   <div class="ficha-print" style="margin-bottom:12px;padding:10px;background:#f9f9f9;border:1px solid #ddd;border-radius:6px;border-left:4px solid #1a1a1a">
-    <div style="font-size:16px;font-weight:bold;margin-bottom:4px">${ev.nombre}</div>
+    <div style="font-size:16px;font-weight:bold;margin-bottom:4px">${escH(ev.nombre)}</div>
     <div style="font-size:12px;color:var(--text-secondary);display:flex;gap:16px;flex-wrap:wrap">
       <span><i class="ti ti-calendar"></i> ${fmtFecha(ev.fecha)} · ${ev.hora}</span>
       <span><i class="ti ti-users"></i> ${pax} personas${ev.infantil?.ninos?' + '+ev.infantil.ninos+' niños':''}</span>
-      <span><i class="ti ti-map-pin"></i> ${ev.lugar}</span>
+      <span><i class="ti ti-map-pin"></i> ${escH(ev.lugar)}</span>
       <span><i class="ti ti-tools-kitchen-2"></i> ${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
     </div>
   </div>
@@ -3257,7 +3258,7 @@ function imprimirFicha(){
   const fechaStr=`${pad(ahora.getDate())}/${pad(ahora.getMonth()+1)}/${ahora.getFullYear()} ${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`;
   const el=ge('print-fecha-gen');
   const el2=ge('print-date-foot');
-  if(el)el.innerHTML=`<div style="font-size:14px;font-weight:bold">${ev.nombre}</div><div>${fmtFecha(ev.fecha)} · ${ev.hora} · ${ev.lugar}</div><div>${ev.pax} pax · ${TIPO_LABEL[ev.tipo]||ev.tipo}</div>`;
+  if(el)el.innerHTML=`<div style="font-size:14px;font-weight:bold">${escH(ev.nombre)}</div><div>${fmtFecha(ev.fecha)} · ${ev.hora} · ${escH(ev.lugar)}</div><div>${ev.pax} pax · ${TIPO_LABEL[ev.tipo]||ev.tipo}</div>`;
   if(el2)el2.textContent=fechaStr;
   window.print();
 }
@@ -3273,7 +3274,7 @@ function renderConjunta(){
   let evs=[];
   if(modo==='dia'){const f=ge('conj-fecha').value;if(!f)return;evs=eventos.filter(e=>e.fecha===f)}
   else if(modo==='semana'){const f=ge('conj-semana').value;if(!f)return;const{lunes,domingo}=getWeekRange(f);evs=eventos.filter(e=>{const d=new Date(e.fecha+'T00:00:00');return d>=lunes&&d<=domingo})}
-  else{ge('conj-selector').innerHTML=`<p style="font-size:12px;color:var(--text-secondary);margin-bottom:5px">Selecciona eventos:</p>`+[...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(e=>`<div class="ev-check" id="chk-${e.id}" onclick="this.classList.toggle('sel');buildConjunta(eventos.filter(ev=>document.getElementById('chk-'+ev.id)?.classList.contains('sel')))"><span style="color:var(--text-primary)">${fmtFecha(e.fecha)} · <b>${e.nombre}</b> (${e.pax} pax)</span></div>`).join('');
+  else{ge('conj-selector').innerHTML=`<p style="font-size:12px;color:var(--text-secondary);margin-bottom:5px">Selecciona eventos:</p>`+[...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(e=>`<div class="ev-check" id="chk-${e.id}" onclick="this.classList.toggle('sel');buildConjunta(eventos.filter(ev=>document.getElementById('chk-'+ev.id)?.classList.contains('sel')))"><span style="color:var(--text-primary)">${fmtFecha(e.fecha)} · <b>${escH(e.nombre)}</b> (${e.pax} pax)</span></div>`).join('');
     evs=eventos.filter(e=>ge('chk-'+e.id)?.classList.contains('sel'))}
   buildConjunta(evs);
 }
@@ -3285,7 +3286,7 @@ function buildConjunta(evs){
   const merged=Object.values(map);
   const totalPax=evs.reduce((s,e)=>s+e.pax,0);
   const todosAlerg=[...new Set(evs.flatMap(e=>e.alergenos_menu||[]))];
-  const alergC=evs.filter(e=>e.alergias_txt).map(e=>`<b>${e.nombre}:</b> ${e.alergias_txt}`).join('<br>');
+  const alergC=evs.filter(e=>e.alergias_txt).map(e=>`<b>${escH(e.nombre)}:</b> ${escH(e.alergias_txt)}`).join('<br>');
   let html=`<div class="stat-g"><div class="stat"><div class="stat-l">Eventos</div><div class="stat-v">${evs.length}</div></div><div class="stat"><div class="stat-l">Pax total</div><div class="stat-v">${totalPax}</div></div></div>`;
   if(alergC)html+=`<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px"><div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:4px"><i class="ti ti-alert-triangle"></i> Alergias (todos los eventos)</div><div style="font-size:13px;line-height:1.7">${alergC}</div></div>`;
   if(todosAlerg.length)html+=`<div class="card" style="margin-bottom:10px"><div style="font-size:13px;font-weight:500;margin-bottom:5px"><i class="ti ti-shield-check"></i> Alérgenos presentes</div><div>${todosAlerg.map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div></div>`;
@@ -3296,7 +3297,7 @@ function buildConjunta(evs){
     items.forEach(p=>{
       const aH=(p.alg||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
       const det=p.det.map(d=>`${d.ev}: ${d.qty}`).join(' · ');
-      html+=`<tr><td style="font-weight:500">${p.nombre}</td><td>${aH||'—'}</td><td style="text-align:right;font-size:18px;font-weight:500">${p.total}</td><td style="text-align:right;font-size:11px;color:var(--text-secondary)">${det}</td></tr>`;
+      html+=`<tr><td style="font-weight:500">${escH(p.nombre)}</td><td>${aH||'—'}</td><td style="text-align:right;font-size:18px;font-weight:500">${p.total}</td><td style="text-align:right;font-size:11px;color:var(--text-secondary)">${det}</td></tr>`;
     });
   });
   html+='</tbody></table></div>';
@@ -3314,7 +3315,7 @@ function renderRecetario(){
     return`<div class="receta-card" onclick="verReceta('${r.id}')">
       <div class="receta-emoji">${r.img?`<img src="${r.img}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:48px">${r.emoji}</span>`}</div>
       <div class="receta-body">
-        <div class="receta-nombre">${r.nombre}</div>
+        <div class="receta-nombre">${escH(r.nombre)}</div>
         <span class="cat-${r.cat}" style="font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block">${CAT_NAMES[r.cat]}</span>
         <div style="margin-top:4px">${algHTML}</div>
       </div>
@@ -3337,7 +3338,7 @@ function verReceta(id){
           ${r.img?`<img src="${r.img}" style="width:100%;height:100%;object-fit:cover">`:`<span>${r.emoji}</span>`}
         </div>
         <div style="flex:1">
-          <div style="font-size:17px;font-weight:500;margin-bottom:6px">${r.nombre}</div>
+          <div style="font-size:17px;font-weight:500;margin-bottom:6px">${escH(r.nombre)}</div>
           <span class="cat-${r.cat}" style="font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block">${CAT_NAMES[r.cat]}</span>
           <div style="margin-top:8px">${r.alg.map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div>
           <div style="margin-top:10px" class="no-print">
@@ -3358,7 +3359,7 @@ function verReceta(id){
       <table class="ing-table">
         <thead><tr><th>Ingrediente</th><th>Alérgenos</th><th style="text-align:right">Cantidad</th><th>Ud.</th></tr></thead>
         <tbody>${r.ingredientes.map(i=>`<tr>
-          <td>${i.nombre}</td>
+          <td>${escH(i.nombre)}</td>
           <td>${i.alg.map(a=>`<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:var(--danger-bg);color:var(--danger-text);margin-right:2px">${algIcon(a)} ${algLabel(a)}</span>`).join('')||'—'}</td>
           <td style="text-align:right;font-weight:500" id="iq-${r.id}-${i.nombre.replace(/[^a-zA-Z0-9]/g,'_')}">${i.cant}</td>
           <td style="color:var(--text-secondary)">${i.ud}</td>
@@ -3566,7 +3567,7 @@ function switchEsc(tab, btn){
 function initEscandallo(){
   ge('esc-ev-sel').innerHTML = '<option value="">Selecciona un evento</option>' +
     [...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha))
-      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax · ${e.precio_venta||'?'}€/pax)</option>`)
+      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${escH(e.nombre)} (${e.pax} pax · ${e.precio_venta||'?'}€/pax)</option>`)
       .join('');
   renderEscEvento();
 }
@@ -3628,7 +3629,7 @@ function renderEscEvento(){
     items.forEach(p => {
       const noReceta = !p.tieneReceta ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:4px">(sin receta)</span>` : '';
       tablaHTML += `<tr>
-        <td style="font-weight:500">${p.nombre}${noReceta}</td>
+        <td style="font-weight:500">${escH(p.nombre)}${noReceta}</td>
         <td style="text-align:right;color:var(--text-secondary)">${p.raciones}</td>
         <td style="text-align:right">${p.costeRacion>0?p.costeRacion.toFixed(3)+'€':'—'}</td>
         <td style="text-align:right;font-weight:500">${p.costePlato>0?p.costePlato.toFixed(2)+'€':'—'}</td>
@@ -3670,7 +3671,7 @@ function renderEscPlatos(){
     return `<div class="card" style="margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
         <div>
-          <div style="font-size:14px;font-weight:500">${r.emoji} ${r.nombre}</div>
+          <div style="font-size:14px;font-weight:500">${r.emoji} ${escH(r.nombre)}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
             ${r.ingredientes.length} ingredientes · ${ingsConPrecio.length} con precio (${pct}%)
           </div>
@@ -3691,7 +3692,7 @@ function renderEscPlatos(){
           const p = getPrecioIng(ing.nombre);
           const sub = p * ing.cant;
           return `<tr>
-            <td style="padding:4px 6px;border-bottom:.5px solid var(--border)">${ing.nombre}</td>
+            <td style="padding:4px 6px;border-bottom:.5px solid var(--border)">${escH(ing.nombre)}</td>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;color:var(--text-secondary)">${ing.cant} ${ing.ud}</td>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;color:var(--text-secondary)">${p>0?p.toFixed(4)+'€':'—'}</td>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;font-weight:500">${sub>0?sub.toFixed(4)+'€':'—'}</td>
@@ -3726,7 +3727,7 @@ function renderEscPrecios(){
       </tr></thead>
       <tbody>${lista.map(ing=>`
         <tr>
-          <td style="font-weight:400">${ing.nombre}</td>
+          <td style="font-weight:400">${escH(ing.nombre)}</td>
           <td style="text-align:center;color:var(--text-secondary);font-size:12px">${ing.ud}</td>
           <td style="text-align:right">
             <input type="number" value="${ing.precio||''}" placeholder="0.00" min="0" step="0.001"
@@ -3956,7 +3957,7 @@ Confirma disponibilidad y hora de entrega. Muchas gracias 🙏
 _Seda Club Hotel · Granada_`;
 }
 
-function escH(str){return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function escH(str){return String(str??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
 function copiarMensaje(id){
   const el=ge(id);if(!el)return;
@@ -3989,7 +3990,7 @@ function renderProvEdit(){
     return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">
       <div>
         <span style="font-size:14px">${ci.icon}</span>
-        <span style="font-size:13px;font-weight:500;margin-left:6px">${p.nombre}</span>
+        <span style="font-size:13px;font-weight:500;margin-left:6px">${escH(p.nombre)}</span>
         <span style="font-size:12px;color:var(--text-secondary);margin-left:8px">${ci.label} · ${p.tel||'sin tel'}</span>
       </div>
       <button class="btn-d" onclick="eliminarProv('${p.id}')"><i class="ti ti-trash"></i></button>
@@ -4072,7 +4073,7 @@ function switchBeb(tab, btn){
 function initBebidas(){
   ge('beb-ev-sel').innerHTML = '<option value="">Selecciona un evento</option>' +
     [...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha))
-      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax)</option>`)
+      .map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${escH(e.nombre)} (${e.pax} pax)</option>`)
       .join('');
   renderBebEvento();
 }
@@ -4095,8 +4096,8 @@ function renderBebEvento(){
   <div class="card" style="margin-bottom:12px;background:var(--info-bg);border-color:var(--info-text)">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <div>
-        <div style="font-size:14px;font-weight:500;color:var(--info-text)">${ev.nombre}</div>
-        <div style="font-size:12px;color:var(--info-text);opacity:.8">${fmtFecha(ev.fecha)} · ${ev.hora} · ${ev.pax} pax · ${ev.lugar}</div>
+        <div style="font-size:14px;font-weight:500;color:var(--info-text)">${escH(ev.nombre)}</div>
+        <div style="font-size:12px;color:var(--info-text);opacity:.8">${fmtFecha(ev.fecha)} · ${ev.hora} · ${ev.pax} pax · ${escH(ev.lugar)}</div>
       </div>
       <button class="btn-sec" style="font-size:12px" onclick="resetBebEvento(${ev.id})">
         <i class="ti ti-refresh"></i> Bodega base
@@ -4152,7 +4153,7 @@ function renderBebEvento(){
   // Resumen de sala
   if(totalLineas.length || tieneBarraLibre) {
     html += `<div class="card">
-      <div style="font-size:13px;font-weight:500;margin-bottom:10px"><i class="ti ti-clipboard-list"></i> Resumen para sala · ${ev.nombre}</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px"><i class="ti ti-clipboard-list"></i> Resumen para sala · ${escH(ev.nombre)}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:10px">
         ${totalLineas.map(b=>`
           <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:.75rem;text-align:center">
@@ -4261,7 +4262,7 @@ function initPedidos(){
   const t=`${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`;
   ge('ped-fecha').value=t;
   ge('ped-ev-sel').innerHTML='<option value="">Selecciona evento</option>'+
-    [...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax)</option>`).join('');
+    [...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(e=>`<option value="${e.id}">${fmtFecha(e.fecha)} · ${escH(e.nombre)} (${e.pax} pax)</option>`).join('');
   renderPedidos();
 }
 
@@ -4296,7 +4297,7 @@ function initDashboard(){
   const evProximos=eventos.filter(e=>{const d=new Date(e.fecha+'T00:00:00');return d>=hoy&&d<=new Date(hoy.getTime()+14*86400000);});
   evProximos.forEach(ev=>{
     const items=calcVajEvento(ev).filter(v=>!v.ok);
-    if(items.length) alertas.push({tipo:'danger',msg:`Vajilla insuficiente · ${ev.nombre} (${fmtFecha(ev.fecha)})`});
+    if(items.length) alertas.push({tipo:'danger',msg:`Vajilla insuficiente · ${escH(ev.nombre)} (${fmtFecha(ev.fecha)})`});
   });
   // Eventos sin precio
   const evSinPrecio=eventos.filter(e=>!e.precio_venta&&new Date(e.fecha+'T00:00:00')>=hoy);
@@ -4359,18 +4360,18 @@ function initDashboard(){
           <div class="ev-card-date-mon">${mesC[Number(fm)]}</div>
         </div>
         <div class="ev-card-body">
-          <div class="ev-card-name">${ev.nombre}</div>
+          <div class="ev-card-name">${escH(ev.nombre)}</div>
           <div class="ev-card-meta">
             <i class="ti ti-clock"></i> ${ev.hora}
             <span style="opacity:.3">·</span>
             <i class="ti ti-users"></i> ${ev.pax} pax
             <span style="opacity:.3">·</span>
-            ${ev.lugar}
+            ${escH(ev.lugar)}
             <span style="opacity:.3">·</span>
             <span style="color:${color};font-weight:500">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
             ${ev.precio_venta?`<span style="opacity:.3">·</span>${ev.precio_venta}€/pax`:''}
           </div>
-          ${ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${ev.alergias_txt}</div>`:''}
+          ${ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:''}
           ${vajAlerta?`<div style="font-size:12px;color:var(--danger-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> Vajilla insuficiente</div>`:''}
         </div>
       </div>
@@ -4400,8 +4401,8 @@ function initDashboard(){
           <div class="ev-card-date-mon">${mesC2[Number(sm)]}</div>
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev.nombre}</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${ev.hora} · ${ev.pax} pax · ${ev.lugar}</div>
+          <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(ev.nombre)}</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${ev.hora} · ${ev.pax} pax · ${escH(ev.lugar)}</div>
         </div>
         <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
           ${getBadge(ev.fecha)}
@@ -4546,7 +4547,7 @@ _Seda Club · Sistema de gestión_`;
   // ── RENDER MODAL ──
   cont.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <div style="font-size:16px;font-weight:500"><i class="ti ti-send"></i> Confirmación · ${ev.nombre}</div>
+      <div style="font-size:16px;font-weight:500"><i class="ti ti-send"></i> Confirmación · ${escH(ev.nombre)}</div>
       <button onclick="ge('conf-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--text-secondary)">×</button>
     </div>
 
@@ -4580,7 +4581,7 @@ _Seda Club · Sistema de gestión_`;
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('maitre')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
         ${c.maitre.tel?`<a href="https://wa.me/${c.maitre.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgMaitre)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Maître</a>`:''}
-        ${c.maitre.email?`<a href="mailto:${c.maitre.email}?subject=Ficha servicio ${ev.nombre}&body=${encodeURIComponent(msgMaitre.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Maître</a>`:''}
+        ${c.maitre.email?`<a href="mailto:${c.maitre.email}?subject=Ficha servicio ${escH(ev.nombre)}&body=${encodeURIComponent(msgMaitre.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Maître</a>`:''}
       </div>
     </div>
 
@@ -4595,7 +4596,7 @@ _Seda Club · Sistema de gestión_`;
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('jefa')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
         ${c.jefa_eventos.tel?`<a href="https://wa.me/${c.jefa_eventos.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgJefa)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Jefa</a>`:''}
-        ${c.jefa_eventos.email?`<a href="mailto:${c.jefa_eventos.email}?subject=Confirmación interna ${ev.nombre}&body=${encodeURIComponent(msgJefa.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Jefa</a>`:''}
+        ${c.jefa_eventos.email?`<a href="mailto:${c.jefa_eventos.email}?subject=Confirmación interna ${escH(ev.nombre)}&body=${encodeURIComponent(msgJefa.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Jefa</a>`:''}
       </div>
     </div>
 
@@ -4630,7 +4631,7 @@ _Seda Club · Sistema de gestión_`;
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('cocina')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
         ${c.jefe_cocina.tel?`<a href="https://wa.me/${c.jefe_cocina.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msgCocina)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WA Cocina</a>`:''}
-        ${c.jefe_cocina.email?`<a href="mailto:${c.jefe_cocina.email}?subject=Orden producción ${ev.nombre}&body=${encodeURIComponent(msgCocina.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Cocina</a>`:''}
+        ${c.jefe_cocina.email?`<a href="mailto:${c.jefe_cocina.email}?subject=Orden producción ${escH(ev.nombre)}&body=${encodeURIComponent(msgCocina.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email Cocina</a>`:''}
       </div>
     </div>`;
 
@@ -4760,7 +4761,19 @@ async function entrar(ev){
   return false;
 }
 function seguirSinCuenta(){ sessionStorage.setItem('seda_sin_cuenta','1'); if(window._loginListo) window._loginListo(); }
-async function cerrarSesion(){ try{await supa.auth.signOut()}catch{} sessionStorage.removeItem('seda_sin_cuenta'); location.reload(); }
+// Al cerrar sesión se borra la copia local: en un aparato compartido, quien entre después no ve los datos de esta cuenta.
+function borrarDatosLocales(){
+  try{ Object.keys(localStorage).filter(k=>/^(seda_|oido_|hz_)/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch{}
+  try{ sessionStorage.clear(); }catch{}
+}
+async function cerrarSesion(){
+  let pendiente=false; try{ pendiente=localStorage.getItem('seda_pendiente')==='1'; }catch{}
+  if(pendiente && !confirm('Hay cambios que todavía no se han subido a la nube. Si cierras sesión ahora se borrarán de este dispositivo. ¿Cerrar sesión igualmente?')) return;
+  _saliendo=true;
+  try{await supa.auth.signOut()}catch{}
+  borrarDatosLocales();
+  location.reload();
+}
 function cuentaAccion(){ if(_uid) cerrarSesion(); else { sessionStorage.removeItem('seda_sin_cuenta'); location.reload(); } }
 function renderCuenta(){
   const est=ge('cuenta-estado'), btn=ge('cuenta-btn'); if(!est||!btn) return;
