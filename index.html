@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Oído Cocina · Seda Club Hotel</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.50.0/tabler-icons.min.css">
 <!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script>
 // ══════════════════════════════════════
 // OÍDO COCINA · Configuración Supabase
@@ -21,40 +21,43 @@ const SUPA_KEY  = 'sb_publishable_xAUprOgWQi0HhYms69zUhA_yiTwDYPK';
 
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-// ── Capa de datos: Supabase con fallback a localStorage ──
+// ── Capa de sincronización: localStorage primero, Supabase en segundo plano ──
+// Filas (eventos, plantillas...): upsert por id; solo se borran en la nube las filas
+// que este cliente ya conocía y ya no existen aquí (no pisa lo que crearon otros).
+// Configuración (recetas, precios, ajustes...): una fila JSON por clave en `config`.
+const _conocidos = {};
+const _timers = {};
+function _fallo(clave, err){ console.warn('Sync error:', clave, err); mostrarSync(false); }
 
-async function dbGet(tabla, localKey, defaultVal){
+async function _subirTabla(tabla, arr){
   try {
-    const {data, error} = await supa.from(tabla).select('*');
-    if(!error && data && data.length > 0){
-      if(tabla==='config'){
-        const row = data.find(r=>r.key===localKey);
-        return row ? row.value : defaultVal;
-      }
-      return data;
+    const rows = arr.map(r=>({...r, id:String(r.id)}));
+    if(rows.length){
+      const {error} = await supa.from(tabla).upsert(rows, {onConflict:'id'});
+      if(error) throw error;
     }
-  } catch(e){}
-  // Fallback localStorage
-  try { return JSON.parse(localStorage.getItem(localKey)||'null') ?? defaultVal; }
-  catch { return defaultVal; }
+    const vivos = new Set(rows.map(r=>r.id));
+    const borrar = [...(_conocidos[tabla]||[])].filter(id=>!vivos.has(id));
+    if(borrar.length){
+      const {error} = await supa.from(tabla).delete().in('id', borrar);
+      if(error) throw error;
+    }
+    _conocidos[tabla] = vivos;
+    mostrarSync(true);
+  } catch(err){ _fallo(tabla, err); }
 }
 
-async function dbSave(tabla, localKey, valor){
-  // Guardar siempre en localStorage primero (instantáneo)
-  try { localStorage.setItem(localKey, JSON.stringify(valor)); } catch {}
-  // Sincronizar con Supabase en segundo plano
+async function _subirConfig(key, valor){
   try {
-    if(tabla==='config'){
-      await supa.from('config').upsert({key:localKey, value:valor, updated_at:new Date().toISOString()});
-    } else if(Array.isArray(valor)){
-      // Borrar y reinsertar
-      await supa.from(tabla).delete().neq('id', 0);
-      if(valor.length > 0){
-        await supa.from(tabla).insert(valor.map(item=>({...item, id: String(item.id)})));
-      }
-    }
-  } catch(e){ console.warn('Sync error:', e); }
+    const {error} = await supa.from('config').upsert({key, value:valor, updated_at:new Date().toISOString()});
+    if(error) throw error;
+    mostrarSync(true);
+  } catch(err){ _fallo(key, err); }
 }
+
+function _programar(clave, fn){ clearTimeout(_timers[clave]); _timers[clave] = setTimeout(fn, 700); }
+function syncTabla(tabla, arr){ _programar(tabla, ()=>_subirTabla(tabla, arr)); }
+function syncConfig(key, valor){ _programar(key, ()=>_subirConfig(key, valor)); }
 
 // Indicador de estado de sincronización
 function mostrarSync(ok){
@@ -1099,7 +1102,7 @@ const TIPOS_DEFAULT=[
 ];
 
 function getTipos(){try{return JSON.parse(localStorage.getItem('seda_tipos')||'null')}catch{return null}}
-function saveTipos(t){try{localStorage.setItem('seda_tipos',JSON.stringify(t))}catch{}}
+function saveTipos(t){try{localStorage.setItem('seda_tipos',JSON.stringify(t))}catch{} syncConfig('seda_tipos',t);}
 
 let tiposServicio=getTipos()||JSON.parse(JSON.stringify(TIPOS_DEFAULT));
 if(!getTipos())saveTipos(tiposServicio);
@@ -1230,16 +1233,27 @@ function getBadge(fecha){const hoy=new Date();hoy.setHours(0,0,0,0);const d=new 
 function getEv(){try{return JSON.parse(localStorage.getItem('seda_ev')||'[]')}catch{return[]}}
 function saveEv(e){
   try{localStorage.setItem('seda_ev',JSON.stringify(e))}catch{}
-  // Sync Supabase en background
-  try{
-    supa.from('eventos').delete().neq('id',0).then(()=>{
-      if(e.length) supa.from('eventos').insert(e.map(ev=>({...ev,id:String(ev.id)}))).then(()=>mostrarSync(true)).catch(()=>mostrarSync(false));
-      else mostrarSync(true);
-    });
-  }catch{}
+  syncTabla('eventos',e);
 }
+/* ===== EMPAREJAR PLATO ↔ RECETA ===== */
+function _norm(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim()}
+function _prefijoComun(a,b){let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;return i}
+function buscarReceta(nombrePlato){
+  const p=_norm(nombrePlato); if(!p) return null;
+  let mejor=null,mejorScore=0;
+  for(const r of recetas){
+    const n=_norm(r.nombre); if(!n) continue;
+    if(n===p) return r;
+    let sc=0;
+    if(p.includes(n)||n.includes(p)) sc=1000+Math.min(n.length,p.length);
+    else{const c=_prefijoComun(p,n); if(c>=12) sc=c;}
+    if(sc>mejorScore){mejor=r;mejorScore=sc}
+  }
+  return mejor;
+}
+
 function getRec(){try{return JSON.parse(localStorage.getItem('seda_rec')||'null')}catch{return null}}
-function saveRec(r){try{localStorage.setItem('seda_rec',JSON.stringify(r))}catch{}}
+function saveRec(r){try{localStorage.setItem('seda_rec',JSON.stringify(r))}catch{} syncConfig('seda_rec',r);}
 
 let eventos=getEv();
 let recetas=getRec()||JSON.parse(JSON.stringify(RECETAS_BASE));
@@ -1588,7 +1602,7 @@ function exportarHistorialExcel(){
 
 /* ===== PERSONAL ===== */
 function getPersonal(){try{return JSON.parse(localStorage.getItem('seda_personal')||'[]')}catch{return[]}}
-function savePersonal(p){try{localStorage.setItem('seda_personal',JSON.stringify(p))}catch{}}
+function savePersonal(p){try{localStorage.setItem('seda_personal',JSON.stringify(p))}catch{} syncTabla('personal',p);}
 let personal=getPersonal();
 
 const ROL_ICONS={chef:'<i class="ti ti-chef-hat"></i>',cocinero:'<i class="ti ti-flame"></i>',maitre:'<i class="ti ti-star"></i>',sala:'<i class="ti ti-users"></i>',barra:'<i class="ti ti-bottle"></i>',extra:'<i class="ti ti-user-plus"></i>'};
@@ -1693,7 +1707,7 @@ function togglePersonalEvento(evId, perId){
 
 /* ===== AJUSTES ===== */
 function getAjustes(){try{return JSON.parse(localStorage.getItem('seda_ajustes')||'null')}catch{return null}}
-function saveAjustes(a){try{localStorage.setItem('seda_ajustes',JSON.stringify(a))}catch{}}
+function saveAjustes(a){try{localStorage.setItem('seda_ajustes',JSON.stringify(a))}catch{} syncConfig('seda_ajustes',a);}
 
 let ajustes=getAjustes()||{
   hotel_nombre:'Seda Club Hotel',
@@ -1858,7 +1872,7 @@ function renderCompras(){
     const f=getFactorEvento(ev);
     const raciones=Math.round(ev.pax*f);
     ev.platos.forEach(plato=>{
-      const rec=recetas.find(r=>plato.nombre.toLowerCase().includes(r.nombre.toLowerCase().slice(0,12))||r.nombre.toLowerCase().includes(plato.nombre.toLowerCase().slice(0,12)));
+      const rec=buscarReceta(plato.nombre);
       if(!rec)return;
       rec.ingredientes.forEach(ing=>{
         const key=ing.nombre.toLowerCase().trim();
@@ -2041,7 +2055,7 @@ const VAJ_STOCK_DEFAULT = [
 ];
 
 function getVaj(){try{return JSON.parse(localStorage.getItem('seda_vaj')||'null')}catch{return null}}
-function saveVaj(v){try{localStorage.setItem('seda_vaj',JSON.stringify(v))}catch{}}
+function saveVaj(v){try{localStorage.setItem('seda_vaj',JSON.stringify(v))}catch{} syncTabla('vajilla',v);}
 
 let vajilla = getVaj() || JSON.parse(JSON.stringify(VAJ_STOCK_DEFAULT));
 if(!getVaj()) saveVaj(vajilla);
@@ -2360,7 +2374,7 @@ function imprimirVajilla(){
 
 /* ===== PLANTILLAS ===== */
 function getPlt(){try{return JSON.parse(localStorage.getItem('seda_plt')||'[]')}catch{return[]}}
-function savePlt(p){try{localStorage.setItem('seda_plt',JSON.stringify(p))}catch{}}
+function savePlt(p){try{localStorage.setItem('seda_plt',JSON.stringify(p))}catch{} syncTabla('plantillas',p);}
 
 let plantillas = getPlt();
 
@@ -2986,7 +3000,7 @@ function renderProd(){
     items.forEach(p=>{
       const qty=Math.round(pax*f);
       const aH=(p.alg||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
-      const rec=recetas.find(r=>p.nombre.toLowerCase().includes(r.nombre.toLowerCase().slice(0,12))||r.nombre.toLowerCase().includes(p.nombre.toLowerCase().slice(0,12)));
+      const rec=buscarReceta(p.nombre);
       const rb=rec?`<button class="no-print" onclick="showTab('recetario',document.querySelectorAll('.tab')[3]);verReceta('${rec.id}')" style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--info-bg);color:var(--info-text);border:none;cursor:pointer"><i class="ti ti-book"></i> Ver</button>`:'';
       t+=`<tr><td style="font-weight:500">${p.nombre}</td><td>${aH||'—'}</td><td style="text-align:right;font-size:17px;font-weight:500">${qty}</td><td style="text-align:center" class="no-print">${rb}</td></tr>`;
     });
@@ -3278,7 +3292,7 @@ const PRECIOS_BASE = {
 };
 
 function getPrecios(){try{return JSON.parse(localStorage.getItem('seda_precios')||'null')}catch{return null}}
-function savePrecios(p){try{localStorage.setItem('seda_precios',JSON.stringify(p))}catch{}}
+function savePrecios(p){try{localStorage.setItem('seda_precios',JSON.stringify(p))}catch{} syncConfig('seda_precios',p);}
 
 let preciosIng = getPrecios() || JSON.parse(JSON.stringify(PRECIOS_BASE));
 if(!getPrecios()) savePrecios(preciosIng);
@@ -3302,10 +3316,7 @@ function calcCosteEvento(ev){
   let totalCoste = 0;
   let platosConCoste = [];
   ev.platos.forEach(plato => {
-    const rec = recetas.find(r =>
-      plato.nombre.toLowerCase().includes(r.nombre.toLowerCase().slice(0,12)) ||
-      r.nombre.toLowerCase().includes(plato.nombre.toLowerCase().slice(0,12))
-    );
+    const rec = buscarReceta(plato.nombre);
     const costeRacion = rec ? calcCosteReceta(rec, 1) : 0;
     const costePlato = costeRacion * raciones;
     totalCoste += costePlato;
@@ -3541,7 +3552,7 @@ const PROV_CATS={
 };
 
 function getProv(){try{return JSON.parse(localStorage.getItem('seda_prov')||'null')}catch{return null}}
-function saveProv(p){try{localStorage.setItem('seda_prov',JSON.stringify(p))}catch{}}
+function saveProv(p){try{localStorage.setItem('seda_prov',JSON.stringify(p))}catch{} syncTabla('proveedores',p);}
 
 let proveedores=getProv();
 if(!proveedores){
@@ -3587,7 +3598,7 @@ function calcIngredientesPedido(evs){
     const f=getFactorEvento(ev);
     const raciones=Math.round(ev.pax*f);
     ev.platos.forEach(plato=>{
-      const rec=recetas.find(r=>plato.nombre.toLowerCase().includes(r.nombre.toLowerCase().slice(0,12))||r.nombre.toLowerCase().includes(plato.nombre.toLowerCase().slice(0,12)));
+      const rec=buscarReceta(plato.nombre);
       if(!rec)return;
       rec.ingredientes.forEach(ing=>{
         const key=ing.nombre.toLowerCase().trim();
@@ -3799,7 +3810,7 @@ const BODEGA_BASE_DEFAULT = {
 };
 
 function getBodega(){try{return JSON.parse(localStorage.getItem('seda_bodega')||'null')}catch{return null}}
-function saveBodega(b){try{localStorage.setItem('seda_bodega',JSON.stringify(b))}catch{}}
+function saveBodega(b){try{localStorage.setItem('seda_bodega',JSON.stringify(b))}catch{} syncConfig('seda_bodega',b);}
 
 let bodegaBase = getBodega() || JSON.parse(JSON.stringify(BODEGA_BASE_DEFAULT));
 if(!getBodega()) saveBodega(bodegaBase);
@@ -4167,7 +4178,7 @@ function initDashboard(){
 
 /* ===== CONTACTOS INTERNOS ===== */
 function getContactos(){try{return JSON.parse(localStorage.getItem('seda_contactos')||'null')}catch{return null}}
-function saveContactos(c){try{localStorage.setItem('seda_contactos',JSON.stringify(c))}catch{}}
+function saveContactos(c){try{localStorage.setItem('seda_contactos',JSON.stringify(c))}catch{} syncConfig('seda_contactos',c);}
 
 let contactosInternos = getContactos() || {
   maitre:      {nombre:'Maître',          tel:'', email:''},
@@ -4484,28 +4495,52 @@ function mostrarInfoCopia(){
 }
 try{mostrarInfoCopia()}catch{}
 
+/* ===== CARGA DESDE LA NUBE ===== */
+async function cargarNube(){
+  let ok=true;
+  const setLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+  try {
+    const tablas=[
+      ['eventos','seda_ev',()=>eventos,v=>{eventos=v.map(e=>({...e,id:/^\d+$/.test(e.id)?Number(e.id):e.id}));return eventos}],
+      ['plantillas','seda_plt',()=>plantillas,v=>{plantillas=v}],
+      ['vajilla','seda_vaj',()=>vajilla,v=>{vajilla=v}],
+      ['proveedores','seda_prov',()=>proveedores,v=>{proveedores=v}],
+      ['personal','seda_personal',()=>personal,v=>{personal=v}]
+    ];
+    const cfgs=[
+      ['seda_rec',()=>recetas,v=>{recetas=v}],
+      ['seda_precios',()=>preciosIng,v=>{preciosIng=v}],
+      ['seda_tipos',()=>tiposServicio,v=>{tiposServicio=v}],
+      ['seda_ajustes',()=>ajustes,v=>{ajustes=v}],
+      ['seda_bodega',()=>bodegaBase,v=>{bodegaBase=v}],
+      ['seda_contactos',()=>contactosInternos,v=>{contactosInternos=v}]
+    ];
+    const [cfg,...res]=await Promise.all([
+      supa.from('config').select('key,value'),
+      ...tablas.map(([t])=>{let q=supa.from(t).select('*');if(t==='eventos')q=q.order('fecha');return q;})
+    ]);
+    tablas.forEach(([t,ls,get,set],i)=>{
+      const r=res[i];
+      if(r.error){ok=false;console.warn('Carga',t,r.error);return;}
+      _conocidos[t]=new Set(r.data.map(x=>String(x.id)));
+      if(r.data.length){ const v=set(r.data); setLS(ls,v||get()); }
+      else if(get()&&get().length) syncTabla(t,get()); // primera vez: sube lo local
+    });
+    if(cfg.error){ok=false;console.warn('Carga config',cfg.error);}
+    else{
+      const m={}; cfg.data.forEach(r=>m[r.key]=r.value);
+      cfgs.forEach(([k,get,set])=>{
+        if(m[k]!==undefined&&m[k]!==null){set(m[k]);setLS(k,m[k]);}
+        else if(get()!=null) syncConfig(k,get()); // primera vez: sube lo local
+      });
+    }
+  } catch(e){ ok=false; console.warn('Carga nube',e); }
+  mostrarSync(ok);
+}
+
 // ── ARRANQUE ──
 window.addEventListener('DOMContentLoaded', async function(){
-  // Verificar conexión Supabase
-  checkSupabase();
-  // Cargar datos desde Supabase (con fallback a localStorage)
-  try {
-    const [evCloud, recCloud, pltCloud, vajCloud, provCloud, persCloud] = await Promise.all([
-      supa.from('eventos').select('*').order('fecha'),
-      supa.from('recetas').select('*'),
-      supa.from('plantillas').select('*'),
-      supa.from('vajilla').select('*'),
-      supa.from('proveedores').select('*'),
-      supa.from('personal').select('*')
-    ]);
-    if(evCloud.data?.length)  { eventos=evCloud.data; saveEv(eventos); }
-    if(recCloud.data?.length) { recetas=recCloud.data; saveRec(recetas); }
-    if(pltCloud.data?.length) { plantillas=pltCloud.data; savePlt(plantillas); }
-    if(vajCloud.data?.length) { vajilla=vajCloud.data; saveVaj(vajilla); }
-    if(provCloud.data?.length){ proveedores=provCloud.data; saveProv(proveedores); }
-    if(persCloud.data?.length){ personal=persCloud.data; savePersonal(personal); }
-    mostrarSync(true);
-  } catch(e){ mostrarSync(false); }
+  await cargarNube();
 
   renderAlgSel('alg-selector');
   renderPlatosInfantil();
