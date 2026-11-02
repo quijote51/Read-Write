@@ -1,0 +1,45 @@
+/* Estilos comunes de las apps sueltas (APPCC, Alérgenos). Mismo aspecto que Inventario. */
+:root{
+  --bg-primary:#ffffff;--bg-secondary:#f5f4f0;--bg-tertiary:#eeede9;
+  --text-primary:#1a1a1a;--text-secondary:#6b6a66;--text-tertiary:#9b9a96;
+  --border:#e0dfd9;--border-md:#c8c7c1;
+  --info-bg:#e6f1fb;--info-text:#185fa5;--warn-bg:#faeeda;--warn-text:#854f0b;
+  --danger-bg:#fcebeb;--danger-text:#a32d2d;--success-bg:#eaf3de;--success-text:#3b6d11;
+  --radius:8px;--radius-lg:12px;--gold:#c9a84c;--shadow-xs:0 1px 2px rgba(0,0,0,.05)}
+@media(prefers-color-scheme:dark){:root{
+  --bg-primary:#1e1e1c;--bg-secondary:#141412;--bg-tertiary:#2a2a27;
+  --text-primary:#f0efe9;--text-secondary:#a8a79f;--text-tertiary:#6b6a62;
+  --border:#3a3a36;--border-md:#4a4a46;
+  --info-bg:#0c3a5c;--info-text:#7fc3f5;--warn-bg:#4a2e08;--warn-text:#f5c070;
+  --danger-bg:#4a1515;--danger-text:#f08080;--success-bg:#1a3a0a;--success-text:#90c860}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-secondary);color:var(--text-primary);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.45}
+header{background:#1a1a1a;color:#f0efe9;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));padding-top:max(12px,env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.01em}
+header h1 span{color:var(--gold)}
+header small{color:rgba(255,255,255,.55);font-size:11px}
+#sync{font-size:12px;color:rgba(255,255,255,.6)}
+#sync.mal{color:#ffa500}
+.sp{flex:1}
+main{max-width:1100px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.card{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--shadow-xs)}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--radius);font-weight:500}
+.b-warn{background:var(--warn-bg);color:var(--warn-text)}.b-danger{background:var(--danger-bg);color:var(--danger-text)}
+.b-success{background:var(--success-bg);color:var(--success-text)}.b-info{background:var(--info-bg);color:var(--info-text)}
+input,select,textarea{font-size:13px;background:var(--bg-primary);color:var(--text-primary);border:.5px solid var(--border-md);border-radius:var(--radius);padding:8px 10px;width:100%;font-family:inherit}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.btn{padding:8px 18px;font-size:13px;cursor:pointer;border-radius:var(--radius);font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-p{background:var(--text-primary);color:var(--bg-primary);border:none}
+.btn-sec{background:none;border:.5px solid var(--border-md);color:var(--text-primary);cursor:pointer;padding:7px 14px;font-size:13px;border-radius:var(--radius);font-family:inherit}
+.btn-sec:hover{background:var(--bg-tertiary)}
+header .btn-sec{color:#f0efe9;border-color:rgba(255,255,255,.25);padding:5px 10px;font-size:12px}
+#login{position:fixed;inset:0;background:#1a1a1a;display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+#login form{width:100%;max-width:340px;color:#f0efe9}
+#login h2{margin:0 0 4px;font-size:22px;text-align:center}#login h2 span{color:var(--gold)}
+#login p{margin:0 0 16px;text-align:center;color:rgba(255,255,255,.6);font-size:13px}
+#login label{display:block;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px}
+#login input{min-height:44px;font-size:15px;margin-bottom:12px;background:#2a2a27;color:#f0efe9;border-color:#4a4a46}
+#login .btn{width:100%;justify-content:center;min-height:44px;font-size:14px;font-weight:600;background:var(--gold);color:#1a1a1a;border:none}
+#login-error{display:none;margin-bottom:10px;padding:8px 12px;border-radius:var(--radius);background:var(--danger-bg);color:var(--danger-text);font-size:13px}
+
+.hz-aviso{padding:8px 12px;border-radius:var(--radius);font-size:13px;margin-bottom:10px}.hz-aviso.warn{background:var(--warn-bg);color:var(--warn-text)}.hz-aviso.ok{background:var(--success-bg);color:var(--success-text)}.hz-vacio{color:var(--text-secondary);text-align:center}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Registros de autocontrol APPCC de cocina · Seda Club Hotel Granada">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="APPCC">
+<title>APPCC · Seda Club Hotel</title>
+<link rel="manifest" href="/manifest-appcc.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/appcc-favicon-32.png">
+<link rel="apple-touch-icon" href="/appcc-apple-180.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.50.0/tabler-icons.min.css">
+<link rel="stylesheet" href="/app-base.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="/app-base.js"></script>
+<script src="/alergenos.js"></script>
+<script src="/appcc.js"></script>
+</head>
+<body>
+<header>
+  <h1>APPCC <span>Seda</span><br><small>Seda Club Hotel · Granada</small></h1>
+  <span class="sp"></span>
+  <span id="sync">…</span>
+  <button class="btn-sec" id="salir" style="display:none" onclick="salir()">Salir</button>
+</header>
+<main><div id="ap-root"></div></main>
+<script>
+// APPCC: temperaturas, limpieza, recepción, muestras testigo y etiquetas. Lógica en appcc.js.
+window.APP={nombre:'APPCC',
+  async arrancar(){ initAPPCC(); await this.recargar(); },
+  async recargar(){ await cargarNube({seda_appcc:v=>appccDesdeNube(v)}); initAPPCC(); }
+};
+</script>
+</body>
+</html>
