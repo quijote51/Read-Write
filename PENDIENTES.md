@@ -24,6 +24,12 @@
 - [ ] Confirmar con el inspector o el consultor APPCC: rangos de temperatura, días de vida útil y si los banquetes necesitan muestra testigo (por defecto 7 días).
 - [ ] Más adelante: mover los registros a una tabla propia en Supabase cuando haya muchos (ahora van en config 'seda_appcc').
 
+## Apps con acceso directo
+- Horarios (`/horarios.html`), Inventario (`/inventario.html`), APPCC (`/appcc.html`) y Alérgenos (`/alergenos.html`), con enlaces en Ajustes.
+- APPCC y Alérgenos comparten `app-base.js` y `app-base.css` (sesión, nube y estilos).
+- [ ] Opcional: pasar Inventario a `app-base.js` para quitar código repetido.
+- [ ] Los miembros con rol «cocina» no pueden usar APPCC con su propia cuenta (solo ven horarios). Para eso hace falta una tabla con permisos en Supabase.
+
 ## Otros
 - Ficha de alérgenos para revisar: https://claude.ai/artifact/UgZsEDQXMzQQ33YPzSHJqR (privada; se comparte desde su botón Compartir).
 - App para el amigo: https://oidococina-xu7i.vercel.app («Seguir sin cuenta»).

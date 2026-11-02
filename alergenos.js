@@ -165,7 +165,7 @@ function abrirFichaAlergenos(id){
   document.addEventListener('keydown',_escFicha);
 }
 function _escFicha(e){ if(e.key==='Escape') cerrarFichaAlergenos(); }
-function cerrarFichaAlergenos(){ const m=document.getElementById('alg-ficha-modal'); if(m) m.style.display='none'; document.removeEventListener('keydown',_escFicha); }
+function cerrarFichaAlergenos(){ const m=document.getElementById('alg-ficha-modal'); if(m) m.style.display='none'; document.removeEventListener('keydown',_escFicha); if(typeof initAlergenosLista==='function'&&document.getElementById('al-root')) initAlergenosLista(); }
 function _pintarFicha(msg){
   const m=document.getElementById('alg-ficha-modal'); const ev=(typeof eventos!=='undefined'?eventos:[]).find(e=>e.id===_algFichaId); if(!m||!ev) return;
   const av=avisosFichaAlergenos(ev), cruce=htmlAlertaAlergenos(ev), rev=revisionAlergenos(ev);
@@ -212,3 +212,33 @@ function imprimirFichaAlergenos(ev){
   const d=f.contentWindow.document; d.open(); d.write(doc); d.close();
   setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch{ const w=window.open('','_blank'); if(w){w.document.write(doc);w.document.close();w.print();} } setTimeout(()=>f.remove(),60000); },250);
 }
+
+/* ── Lista de eventos para la app suelta de Alérgenos (alergenos.html) ── */
+let _algPasados=false;
+function estadoAlergenos(ev){
+  const rev=revisionAlergenos(ev), av=avisosFichaAlergenos(ev), cruce=analisisAlergenos(ev);
+  const n=av.sinReceta.length+av.huevo.length+cruce.invitados.length+(cruce.faltan.length?1:0);
+  return {rev,n,av,cruce};
+}
+function htmlListaAlergenos(){
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const k=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const hoyK=k(hoy);
+  const todos=(typeof eventos!=='undefined'?eventos:[]).filter(e=>e&&e.fecha);
+  const lista=todos.filter(e=>_algPasados?e.fecha<hoyK:e.fecha>=hoyK).sort((a,b)=>_algPasados?b.fecha.localeCompare(a.fecha):a.fecha.localeCompare(b.fecha));
+  const pend=todos.filter(e=>e.fecha>=hoyK&&!(revisionAlergenos(e)||{}).vigente).length;
+  const tarjeta=ev=>{
+    const s=estadoAlergenos(ev);
+    const chip=s.rev&&s.rev.vigente?`<span class="badge b-success">Revisado por ${_algEsc(s.rev.por)}</span>`:s.rev?'<span class="badge b-warn">El menú cambió: revisar</span>':'<span class="badge b-warn">Sin revisar</span>';
+    const detalle=[s.av.sinReceta.length?`${s.av.sinReceta.length} plato${s.av.sinReceta.length===1?'':'s'} sin datos`:'',s.av.huevo.length?'posible huevo crudo':'',s.cruce.invitados.length?`alergias de invitados: ${s.cruce.invitados.map(g=>g.label).join(', ')}`:''].filter(Boolean).join(' · ');
+    return `<div class="card al-ev"><div class="al-ev-t"><b>${_algEsc(ev.nombre)}</b><small>${_algEsc(typeof fmtFecha==='function'?fmtFecha(ev.fecha):ev.fecha)}${ev.hora?' · '+_algEsc(ev.hora):''}${ev.pax?' · '+_algEsc(ev.pax)+' pax':''}${ev.lugar?' · '+_algEsc(ev.lugar):''}</small>
+      <div class="al-ev-c">${chip}${s.n?` <span class="badge b-danger">${s.n} aviso${s.n===1?'':'s'}</span>`:''}</div>${detalle?`<small class="al-ev-d">${_algEsc(detalle)}</small>`:''}</div>
+      <button class="btn btn-p" onclick="abrirFichaAlergenos('${_algEsc(String(ev.id))}')"><i class="ti ti-shield-check"></i> Ver ficha</button></div>`;
+  };
+  return `<style>.al-ev{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.al-ev-t{flex:1;min-width:200px;display:flex;flex-direction:column;gap:3px}.al-ev-t small{color:var(--text-secondary)}.al-ev-c{display:flex;flex-wrap:wrap;gap:4px}.al-ev-d{font-size:12px}
+  .al-cab{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}.al-cab p{margin:0;flex:1;min-width:200px;color:var(--text-secondary);font-size:13px}</style>
+  <div class="al-cab"><p>${_algPasados?'Eventos pasados':(pend?`${pend} evento${pend===1?'':'s'} próximo${pend===1?'':'s'} sin revisar`:'Todos los próximos eventos están revisados')}</p>
+  <button class="btn-sec" onclick="_algPasados=!_algPasados;initAlergenosLista()">${_algPasados?'Ver próximos':'Ver pasados'}</button></div>
+  ${lista.length?lista.map(tarjeta).join(''):`<div class="card hz-vacio">${_algPasados?'No hay eventos pasados.':'No hay eventos próximos. Créalos en Oído Cocina.'}</div>`}`;
+}
+function initAlergenosLista(){ const r=document.getElementById('al-root'); if(r) r.innerHTML=htmlListaAlergenos(); }
