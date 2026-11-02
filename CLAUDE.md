@@ -1,0 +1,44 @@
+# Oído Cocina · Seda Club Hotel (Granada)
+
+App web (PWA) para la gestión de la cocina y los eventos de un hotel. HTML, CSS y JS sin compilar, sin framework y sin npm. Responder **en español**, claro y sin tecnicismos: el usuario es de cocina, no programador.
+
+## Despliegue y datos
+- Vercel: proyecto `oidococina-xu7i` → https://oidococina-xu7i.vercel.app. Se publica solo al fusionar en `main`. Hay otra copia, `read-write-tau.vercel.app`; usar la primera. Las versiones de prueba de las ramas piden cuenta de Vercel.
+- Supabase: proyecto `gxkxslkdqgwovgxcuzkr` (plan gratuito). Las tablas `eventos`, `plantillas`, `vajilla`, `proveedores`, `personal` y `recetas` tienen una fila por elemento. La tabla `config` guarda (`hotel_id`, `key`, `value` en JSON), con una fila por clave. La tabla `miembros` lleva (`user_id`, `hotel_id`, `rol`, `nombre`) y `cambios` guarda los cambios de turno.
+- Seguridad (RLS): cada cuenta solo ve sus filas (`hotel_id = auth.uid()`). Los miembros con rol `cocina` solo leen `config.seda_horarios` y gestionan `cambios`. Hay una sola cuenta de cocina, compartida: cocina@oidococina.com.
+- `apply_migration` de Supabase pide una confirmación que caduca a los 60 s. Para cambiar reglas, usar `execute_sql` con `ALTER POLICY`, que no la pide.
+- La clave de Supabase que hay en el código es la publicable: es normal que esté ahí.
+
+## Archivos
+| Archivo | Qué es |
+|---|---|
+| `index.html` | App principal (unos 288 KB). Tiene un acordeón por sección (`ACC_TABS`), roles (`ROLES`, solo cambian lo que se ve), la sincronización (`syncConfig`, `syncTabla`, `cargarNube`, `reenviarTodo`) y casi todo el resto. **No hacerlo crecer:** cada función nueva va en su propio `.js`. |
+| `horarios.js` + `horarios.html/.css` | Horarios de cocina (`config.seda_horarios`). |
+| `inventario.js` + `inventario.html` | Inventario mensual (`config.seda_inventario`). |
+| `alergenos.js` + `alergenos.html` | Los 14 alérgenos, `algDePlato`, cruce con invitados y ficha para el cliente. La revisión se guarda en `config.seda_alg_rev`. |
+| `appcc.js` + `appcc.html` | APPCC: temperaturas, limpieza, recepción, muestra testigo, etiquetas y registros (`config.seda_appcc`). Fusiona con la nube por id. Los registros solo se anulan con motivo; nunca se editan. |
+| `app-base.js` + `app-base.css` | Base común de las apps sueltas: sesión, carga de eventos, recetas y proveedores, `syncConfig`, `recetaDePlato` y estilos. |
+| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v16`) y añadir a `SHELL` cada archivo nuevo.** |
+| `manifest-*.json` + `*-192/512/maskable/apple-180/favicon-32.png` | Una app instalable por módulo. Iconos dorados (#c9a84c) sobre fondo #1a1a1a. |
+| `supabase/seguridad-cambios.sql` | Referencia, ya aplicado. |
+| `PENDIENTES.md` | Lista de tareas pendientes. **Leerla al empezar.** |
+
+## Cómo añadir un módulo
+1. Crear `modulo.js` con estado en `config.seda_x`, `window.initX()` y CSS propio inyectado.
+2. En `index.html`: añadir `<script src>` en el `<head>`, `<div class="sec" id="tab-x">`, la entrada en `ACC_TABS`, `init` en la función que abre cada pestaña, los roles en `ROLES`, la clave en `cfgs` de `cargarNube`, en `reenviarTodo` y en `resetearTodo`.
+3. Si va como app suelta: `x.html` (copiar `appcc.html`), su manifest e iconos, el enlace en Ajustes → «Apps con acceso directo» y la entrada en `sw.js`.
+
+## Reglas del código
+- Escapar todo texto del usuario con `escH()` (principal) o `esc()` / `_algEsc()` (módulos). Los mensajes de WhatsApp, el CSV y `textContent` van sin escapar.
+- Los eventos de demostración (`id < 1e6`) nunca se suben a la nube.
+- Al cerrar sesión se borran las claves `seda_*`, `oido_*`, `hz_*`, `iv_*` y `ap_*` del aparato.
+
+## Probar
+- Servir con `python3 -m http.server 8765` y usar Playwright con un ancho de 390 px, entrando con «Seguir sin cuenta».
+- Desde la sesión no se llega a la CDN ni a Supabase. Para probar las apps sueltas, simular `supabase-js` con `page.route`.
+- Comprobar siempre: sin `pageerror`, `scrollWidth` de 390 y que nada se sale de la pantalla.
+
+## Git
+- Trabajar en la rama asignada. Si su PR ya está fusionada, reiniciarla desde `origin/main` antes de seguir.
+- **No subir nada a una PR después de que el usuario diga que va a fusionarla**: el cambio se quedaría fuera.
+- El usuario fusiona; Claude no puede.
