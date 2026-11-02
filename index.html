@@ -256,6 +256,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 .ing-table th{text-align:left;padding:6px 8px;font-size:12px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border)}
 .ing-table td{padding:6px 8px;border-bottom:.5px solid var(--border);color:var(--text-primary)}
 .ptable-outer{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media(max-width:600px){
+  #tab-escandallo .ptable,#tab-compras .ptable{min-width:0}
+  #tab-escandallo .ptable th,#tab-compras .ptable th{white-space:normal;padding:6px 5px;font-size:11px}
+  #tab-escandallo .ptable td,#tab-compras .ptable td{padding:6px 5px;font-size:12px}
+}
 .ptable{width:100%;border-collapse:collapse;font-size:13px;min-width:480px}
 .ptable th{text-align:left;padding:7px 10px;font-weight:500;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-size:12px;white-space:nowrap}
 .ptable td{padding:7px 10px;border-bottom:.5px solid var(--border);color:var(--text-primary);vertical-align:top}
