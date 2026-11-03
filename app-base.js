@@ -23,8 +23,15 @@ async function subirConfig(key,val){
   if(!_uid||!supa){estado(false);return}
   // Nunca se sube un inventario vacío: si este aparato no ha podido cargarlo, no puede borrar el de la nube
   if(key==='seda_inventario'&&!(val&&Array.isArray(val.articulos)&&val.articulos.length)){console.warn('Inventario vacío: no se sube');return}
-  try{const{error}=await supa.from('config').upsert({hotel_id:_uid,key,value:val,updated_at:new Date().toISOString()},{onConflict:'hotel_id,key'});
-    if(error)throw error;estado(true)}
+  try{
+    // Se junta dato a dato con lo que haya en la nube (config-nube.js); si cambia lo de aquí, se aplica
+    await cfgSubir(key,val,v=>{
+      if(key==='seda_inventario'&&typeof inventario!=='undefined'){inventario=v;LS(key,v)}
+      else if(key==='seda_precios'&&typeof preciosIng!=='undefined'){preciosIng=v;LS(key,v)}
+      else if(key==='seda_alg_rev'&&typeof setAlgRevisiones==='function')setAlgRevisiones(v);
+      if(window.APP&&APP.alCambiar)APP.alCambiar(key);
+    });
+    estado(true)}
   catch(e){console.warn('Sync',e);try{localStorage.setItem('seda_pendiente','1')}catch(_){}estado(false)}
 }
 
@@ -58,7 +65,7 @@ async function cargarNube(claves){
     const m={}; cf.data.forEach(r=>m[r.key]=r.value);
     if(!rc.error&&rc.data&&rc.data.length&&typeof recDeFila==='function'){recetas=rc.data.filter(f=>!f.borrado).map(recDeFila);LS('seda_rec',recetas)}
     else if(Array.isArray(m.seda_rec)){recetas=m.seda_rec;LS('seda_rec',recetas)}
-    Object.entries(claves||{}).forEach(([k,fn])=>{if(m[k]!==undefined&&m[k]!==null)fn(m[k])});
+    Object.entries(claves||{}).forEach(([k,fn])=>{if(m[k]!==undefined&&m[k]!==null){if(typeof cfgFijarBase==='function')cfgFijarBase(k,m[k]);fn(m[k])}});
     estado(true); return true;
   }catch(e){console.warn('Carga',e);estado(false);return false}
 }
