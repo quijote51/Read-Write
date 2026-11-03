@@ -52,6 +52,9 @@
 
 - [x] Plantillas: nunca llegaban a la nube (campo `desc` frente a columna `descripcion`). Arreglado el 3/11/2026; al abrir la app se suben solas.
 
+- [x] Inventario en blanco tras publicar (3/11/2026): el móvil mezclaba la página nueva con un archivo viejo guardado y la carga se cortaba. Arreglado: archivos propios siempre de la red, cada parte de la carga por separado y nunca se sube un inventario vacío. Copia nº 3 con los 312 artículos.
+- [ ] Pegar `supabase/proteger-inventario.sql` en el SQL Editor (protección en la base de datos).
+
 ## Siguiente
 - [x] Compras hecho (`compras.js`, sección «Albaranes y costes»).
 - [ ] Apuntar los albaranes que lleguen y enlazar en «Enlaces» los artículos que se usan en recetas (hay propuestas automáticas).

@@ -68,6 +68,8 @@ function _okSync(){ mostrarSync(true); }
 
 async function _subirConfig(key, valor){
   if(!_uid){ mostrarSync(false); return; }
+  // Nunca se sube un inventario vacío: si este aparato no ha podido cargarlo, no puede borrar el de la nube
+  if(key==='seda_inventario' && !(valor && Array.isArray(valor.articulos) && valor.articulos.length)){ console.warn('Inventario vacío: no se sube'); return; }
   try {
     const {error} = await supa.from('config').upsert({hotel_id:_uid, key, value:valor, updated_at:new Date().toISOString()}, {onConflict:'hotel_id,key'});
     if(error) throw error;
@@ -4703,7 +4705,7 @@ async function cargarNube(){
       supa.from('config').select('key,value'),
       ...tablas.map(([t])=>{let q=supa.from(t).select('*');if(t==='eventos')q=q.order('fecha');return q;})
     ]);
-    tablas.forEach(([t,ls,get,set],i)=>{
+    tablas.forEach(([t,ls,get,set],i)=>{ try{
       const r=res[i];
       if(r.error){ok=false;console.warn('Carga',t,r.error);return;}
       if(subidas[i]===false) return; // no se ha podido subir lo pendiente: se deja lo local para no perderlo
@@ -4714,14 +4716,14 @@ async function cargarNube(){
         const v=set(filas); setLS(ls,v||get()); tabFijarDesdeNube(t,r.data);
       }
       else if(get()&&get().length) tabSubir(t); // primera vez y nube vacía: sube lo local (sin demos)
-    });
+    }catch(e){ ok=false; console.warn('Carga',t,e); } }); // un fallo en una tabla no corta el resto (inventario, recetas…)
     if(cfg.error){ok=false;console.warn('Carga config',cfg.error);}
     else{
       const m={}; cfg.data.forEach(r=>m[r.key]=r.value);
-      cfgs.forEach(([k,get,set])=>{
+      cfgs.forEach(([k,get,set])=>{ try{
         if(m[k]!==undefined&&m[k]!==null){ const antes=get(); if(antes!=null&&JSON.stringify(antes)!==JSON.stringify(m[k])) setLS('seda_prenube_'+k,antes); set(m[k]);if(k!=='seda_horarios')setLS(k,m[k]); }
         else if(get()!=null) syncConfig(k,get()); // primera vez: sube lo local
-      });
+      }catch(e){ ok=false; console.warn('Carga',k,e); } }); // un fallo en un dato no corta los demás
     }
     if(!(await recCargar())) ok=false; // recetas: tabla propia (recetas-nube.js)
   } catch(e){ ok=false; console.warn('Carga nube',e); }

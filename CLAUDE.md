@@ -26,7 +26,7 @@ App web (PWA) para la gestión de la cocina y los eventos de un hotel. HTML, CSS
 | `fotos.js` | Reduce las fotos (900 px, JPEG) antes de guardarlas: `subirFoto` (recetas), `reducirFoto` (vajilla) y `reducirFotosGuardadas` una vez tras `cargarNube`. |
 | `instalar.js` | Aviso «Instalar» en todas las apps: botón dorado cuando Android lo permite (`beforeinstallprompt`) y, si no, instrucciones (iPhone: Compartir; Android: abrir en Chrome → ⋮). No sale si ya está instalada o se cerró. |
 | `app-base.js` + `app-base.css` | Base común de las apps sueltas: sesión, carga de eventos, recetas y proveedores, `syncConfig`, `recetaDePlato` y estilos. |
-| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v23`) y añadir a `SHELL` cada archivo nuevo. Cada app suelta nueva va también en la lista `clave` de navegación.** |
+| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v24`) y añadir a `SHELL` cada archivo nuevo. Cada app suelta nueva va también en la lista `clave` de navegación.** Archivos propios: red primero (si no, la página nueva se mezcla con un .js viejo guardado); CDN: caché primero. |
 | `manifest-*.json` + `*-192/512/maskable/apple-180/favicon-32.png` | Una app instalable por módulo. Iconos dorados (#c9a84c) sobre fondo #1a1a1a. |
 | `supabase/seguridad-cambios.sql`, `supabase/recetas-tabla.sql` | Referencia, ya aplicados. |
 | `PENDIENTES.md` | Lista de tareas pendientes. **Leerla al empezar.** |
@@ -37,6 +37,8 @@ App web (PWA) para la gestión de la cocina y los eventos de un hotel. HTML, CSS
 3. Si va como app suelta: `x.html` (copiar `appcc.html`), su manifest e iconos, el enlace en Ajustes → «Apps con acceso directo» y la entrada en `sw.js`.
 
 ## Reglas del código
+- Nunca se sube un inventario vacío (`_subirConfig`, `subirConfig` de `app-base.js` y `subir` de `inventario.html`); en la base de datos lo impide además el trigger de `supabase/proteger-inventario.sql`.
+- En `cargarNube`, cada tabla y cada clave de config van en su propio `try`: un fallo en una no corta las demás.
 - Escapar todo texto del usuario con `escH()` (principal) o `esc()` / `_algEsc()` (módulos). Los mensajes de WhatsApp, el CSV y `textContent` van sin escapar.
 - Los eventos de demostración (`id < 1e6`) nunca se suben a la nube.
 - Al cerrar sesión se borran las claves `seda_*`, `oido_*`, `hz_*`, `iv_*` y `ap_*` del aparato.
