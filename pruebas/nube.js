@@ -31,6 +31,9 @@ function rpc(n,a,yo){
   if(n==='guardar_hotel'){const p=PERFILES[yo];if(p&&p.rol==='admin'){p.hotel_nombre=a.p_nombre;p.hotel_ciudad=a.p_ciudad}return {data:null,error:null}}
   if(n==='unirse'){const i=INVIT[String(a.p_codigo).toUpperCase()];if(!i||i.usado_por)return {data:null,error:{message:'Código no válido o caducado'}};
     i.usado_por=yo;const h=PERFILES[i.hotel_id]||{};PERFILES[yo]={hotel:i.hotel_id,rol:i.rol,nombre:i.nombre||a.p_nombre,hotel_nombre:h.hotel_nombre,hotel_ciudad:h.hotel_ciudad,modulos:h.modulos};log.push('unirse '+yo+' '+i.rol);return {data:PERFILES[yo],error:null}}
+  if(n==='avisos_clave_publica')return {data:FUNCIONES.__clave||null,error:null};
+  if(n==='avisos_suscribir'){DB.avisos_push=(DB.avisos_push||[]).filter(x=>x.endpoint!==a.p_sub.endpoint);DB.avisos_push.push({endpoint:a.p_sub.endpoint,yo,tipos:a.p_tipos});log.push('avisos alta '+a.p_tipos.join('+'));return {data:null,error:null}}
+  if(n==='avisos_baja'){DB.avisos_push=(DB.avisos_push||[]).filter(x=>x.endpoint!==a.p_endpoint);log.push('avisos baja');return {data:null,error:null}}
   if(n==='mi_equipo')return {data:Object.entries(PERFILES).filter(([u,p])=>u!==HOTEL&&p.rol).map(([u,p])=>({user_id:u,email:u+'@x',rol:p.rol,nombre:p.nombre,creado:'2026-11-03'})),error:null};
   return {data:null,error:{message:'rpc '+n}};
 }
