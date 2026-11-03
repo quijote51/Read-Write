@@ -40,7 +40,7 @@ const miRol = () => (_perfil && _perfil.rol) || 'admin';
 const MODULOS = {base: 'Base', costes: 'Costes', seguridad: 'Seguridad alimentaria', equipo: 'Equipo'};
 function moduloActivo(m){ return m === 'base' || !_perfil || !Array.isArray(_perfil.modulos) || _perfil.modulos.includes(m); }
 // Secciones de la app principal de cada módulo (lo que no está aquí es de la base)
-const MODULO_DE = {escandallo: 'costes', inventario: 'costes', costes: 'costes', appcc: 'seguridad', horarios: 'equipo'};
+const MODULO_DE = {escandallo: 'costes', inventario: 'costes', costes: 'costes', appcc: 'seguridad', desperdicio: 'seguridad', horarios: 'equipo'};
 const seccionActiva = tab => moduloActivo(MODULO_DE[tab] || 'base');
 const rolEn = roles => roles.includes(miRol());
 
@@ -51,10 +51,10 @@ const PERM_TABLA = {recetas: ['admin', 'chef'], eventos: ['admin', 'direccion', 
 function puedeTabla(t){ return !PERM_TABLA[t] || rolEn(PERM_TABLA[t]); }
 function puedeConfig(k){
   if((k === 'seda_precios' || k === 'seda_inventario' || k === 'seda_compras') && !moduloActivo('costes')) return false;
-  if((k === 'seda_appcc' || k === 'seda_alg_rev') && !moduloActivo('seguridad')) return false;
+  if((k === 'seda_appcc' || k === 'seda_alg_rev' || k === 'seda_desperdicio') && !moduloActivo('seguridad')) return false;
   if(k === 'seda_horarios' && !moduloActivo('equipo')) return false;
   if(k === 'seda_precios' || k === 'seda_inventario' || k === 'seda_compras' || k === 'seda_horarios') return rolEn(['admin', 'direccion', 'chef']);
-  if(k === 'seda_appcc') return rolEn(['admin', 'direccion', 'chef', 'cocina']);
+  if(k === 'seda_appcc' || k === 'seda_desperdicio') return rolEn(['admin', 'direccion', 'chef', 'cocina']);
   if(k === 'seda_alg_rev') return rolEn(['admin', 'direccion', 'chef', 'eventos']);
   if(k === 'seda_pin' || k === 'seda_rec') return rolEn(['admin']);
   return rolEn(['admin', 'direccion']);

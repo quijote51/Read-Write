@@ -35,6 +35,8 @@ const _esObj = x => x && typeof x === 'object' && !Array.isArray(x);
 // Junta tres versiones: base (como estaba), mia (este aparato) y nube. Devuelve el resultado.
 // «choques» recoge dónde los dos cambiaron lo mismo de forma distinta (ahí gana lo de este aparato).
 function cfgMezcla(base, mia, nube, ruta, choques){
+  // La nube no tenía nada al leerla: se parte de vacío (así se juntan las altas de dos aparatos que empiezan a la vez)
+  if(base === null || base === undefined){ if(_esObj(mia) && _esObj(nube)) base = {}; else if(Array.isArray(mia) && Array.isArray(nube)) base = []; }
   const cb = canonJSON(base), cm = canonJSON(mia), cn = canonJSON(nube);
   if(cm === cn) return mia;
   if(cm === cb) return nube;   // aquí no se ha tocado: lo de la nube
