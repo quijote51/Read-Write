@@ -27,10 +27,10 @@ for(const url of ['index.html','albaranes.html']){
 N.FUNCIONES['leer-albaran']=()=>({error:'La lectura con foto no está activada todavía.'});
 const q=await N.pagina(b,'http://localhost:8765/albaranes.html');await q.waitForTimeout(800);
 await q.setInputFiles('#co-foto',{name:'a.png',mimeType:'image/png',buffer:big});await q.waitForTimeout(1200);
-ok(/no está activada todavía/.test(await q.textContent('#co-root')),'si la lectura no está activada, lo dice');
+await q.route(/cdn\.jsdelivr/,r=>r.abort());ok(/no se ha podido descargar|internet/i.test(await q.textContent('#co-root')),'IA sin activar y sin poder descargar el lector gratis: lo explica');
 // Sin cuenta: no sale el botón
 const s=await N.pagina(b,'about:blank');await s.route(/supabase-js/,r=>r.abort());await s.goto('http://localhost:8765/index.html');
 const sin=s.locator('text=Seguir sin cuenta');if(await sin.isVisible().catch(()=>false))await sin.click();await s.waitForTimeout(600);
 await s.evaluate(()=>{const m=document.getElementById('rol-modal');if(m)m.style.display='none';aplicarRol('admin');showTab('costes')});
-ok(!(await s.isVisible('label.co-foto')),'sin cuenta no sale el botón');
+ok(await s.isVisible('label.co-foto'),'sin cuenta también sale el botón (lectura gratis en el móvil)');
 console.log(f?f+' FALLOS':'TODO BIEN');await b.close()})();
