@@ -61,6 +61,7 @@ function recPendientes(){
 let _recSubiendo = null, _recOtraVez = false;
 async function recSubir(){
   if(!_recPuede() || !_recNube) return true;
+  if(typeof puedeTabla === 'function' && !puedeTabla('recetas')) return true; // este rol no cambia recetas
   if(_recSubiendo){ _recOtraVez = true; return _recSubiendo; }
   _recSubiendo = (async () => {
     let ok = true;

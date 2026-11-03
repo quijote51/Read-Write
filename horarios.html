@@ -15,6 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <link rel="stylesheet" href="/horarios.css">
 <script src="/config-nube.js"></script>
+<script src="/equipo.js"></script>
 <script src="/horarios.js"></script>
 <script src="/instalar.js"></script>
 <style>
@@ -151,13 +152,12 @@ window.HZ_CAMB={
   async estado(id,est){if(!supa||!_uid||navigator.onLine===false)return false;
     try{const{error}=await supa.from('cambios').update({estado:est}).eq('id',id);if(error)throw error;await cargarCambios();return true}catch(e){console.warn(e);return false}}
 };
+// Hotel y rol de esta cuenta (equipo.js; _uid pasa a ser el hotel). Solo admin, dirección y chef cambian horarios.
 async function detectarRol(){
-  let r=LS('hz_rol');
-  if(supa&&_uid&&navigator.onLine!==false){
-    try{const{data,error}=await supa.from('miembros').select('rol,hotel_id').eq('user_id',_uid);
-      if(!error){r=(data&&data[0]&&data[0].rol)||'admin';LS('hz_rol',r);_hotel=(data&&data[0]&&data[0].hotel_id)||_uid;LS('hz_hotel',_hotel)}}catch(e){}}
-  if(!_hotel)_hotel=LS('hz_hotel')||_uid;
-  window.HZ_SOLO_LEER=(r==='cocina');return r}
+  const p=await perfilAlEntrar();
+  const r=(p&&p.rol)||LS('hz_rol')||'admin';LS('hz_rol',r);
+  _hotel=_uid;LS('hz_hotel',_hotel);
+  window.HZ_SOLO_LEER=!['admin','direccion','chef'].includes(r);return r}
 async function arrancar(){
   $('salir').style.display='';
   await detectarRol();

@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="/app-base.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="/app-base.js"></script>
+<script src="/equipo.js"></script>
 <script src="/config-nube.js"></script>
 <script src="/recetas-nube.js"></script>
 <script src="/instalar.js"></script>
@@ -42,6 +43,7 @@ function savePrecios(p){LS('seda_precios',p);if(_preciosNube)syncConfig('seda_pr
 <script>
 // Albaranes, gasto y precios. Lógica en compras.js (la misma sección «Albaranes y costes» de la app principal).
 window.APP={nombre:'Albaranes',
+  roles:['admin','direccion','chef'],
   alCambiar(){ initCostes(); }, // tras juntar con otro aparato, se repinta
   async arrancar(){ initCostes(); await this.recargar(); },
   async recargar(){

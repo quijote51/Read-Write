@@ -15,6 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <link rel="stylesheet" href="/horarios.css">
 <script src="/config-nube.js"></script>
+<script src="/equipo.js"></script>
 <script src="/inventario.js"></script>
 <script src="/instalar.js"></script>
 <style>
@@ -118,11 +119,10 @@ async function entrar(ev){
   b.disabled=false;b.textContent='Entrar';return false}
 async function salir(){try{await supa.auth.signOut()}catch(e){}try{localStorage.removeItem('seda_cuenta');localStorage.removeItem('iv_rol');localStorage.removeItem('seda_inventario');localStorage.removeItem('seda_cfgbase_seda_inventario');localStorage.removeItem('iv_prov')}catch(e){}location.reload()}
 
+// Hotel y rol de esta cuenta (equipo.js; _uid pasa a ser el hotel). Inventario: admin, dirección y chef.
 async function esCocina(){
-  let r=LS('iv_rol');
-  if(supa&&_uid&&navigator.onLine!==false){
-    try{const{data,error}=await supa.from('miembros').select('rol').eq('user_id',_uid);if(!error){r=(data&&data[0]&&data[0].rol)||'admin';LS('iv_rol',r)}}catch(e){}}
-  return r==='cocina'}
+  await perfilAlEntrar();
+  return !rolEn(['admin','direccion','chef'])}
 let _prov=LS('iv_prov')||[],_provIds=new Set();
 window.IV_PROV={lista:()=>_prov,guardar:async arr=>{_prov=arr;LS('iv_prov',arr);if(!_uid||!supa||navigator.onLine===false){estado(false);return}
   const rows=arr.map(r=>({id:String(r.id),nombre:r.nombre,tel:r.tel||'',cat:r.cat,hotel_id:_uid}));
