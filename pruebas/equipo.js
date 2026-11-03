@@ -42,7 +42,7 @@ ok(await C.evaluate(()=>document.getElementById('equipo-card').style.display)===
 // 5) Cocina: ve horarios, producción, recetario y APPCC
 N.PERFILES['u-coc']={hotel:'h1',rol:'cocina',nombre:'Rubén',hotel_nombre:'Seda Club Hotel'};
 const K=await N.pagina(b,U+'index.html',{yo:'u-coc'});await K.waitForTimeout(1000);
-ok(await visibles(K)==='produccion,recetario,horarios,appcc,desperdicio','cocina: ve '+await visibles(K));
+ok(await visibles(K)==='produccion,recetario,horarios,appcc,desperdicio,fichaje','cocina: ve '+await visibles(K));
 // 6) Cuenta sin equipo: pide el código; con el código entra
 const S=await N.pagina(b,U+'index.html',{yo:'u-sin'});await S.waitForTimeout(800);
 ok(await S.isVisible('#eq-unirse'),'cuenta sin equipo: pide el código');

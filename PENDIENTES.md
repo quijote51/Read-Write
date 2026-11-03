@@ -55,7 +55,8 @@
 - [x] 5. Rendimiento de ingredientes (`rendimiento.js`): % aprovechable en Escandallo → Precios.
 - [ ] Pesar y poner el aprovechable real de pescados, carnes y verduras.
 - [x] Apps con acceso directo de Desperdicio (`desperdicio.html`) y Carta QR (`cartas.html`).
-- [ ] 6. Fichaje · 7. Hoja por departamento · 8. Previsión de producción.
+- [x] 6. Fichaje de jornada (`fichaje.js`, app `fichaje.html`). Falta pegar `supabase/fichaje.sql`. Cada persona necesita su cuenta con su nombre igual que en Horarios (o fichar desde la cuenta compartida).
+- [ ] 7. Hoja por departamento · 8. Previsión de producción.
 - Estudio: https://claude.ai/artifact/1r653St1bewnFA4Z395pcV
 
 ## Fase 3: varios clientes (3/11/2026)
