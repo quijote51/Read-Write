@@ -4709,8 +4709,9 @@ async function cargarNube(){
       if(subidas[i]===false) return; // no se ha podido subir lo pendiente: se deja lo local para no perderlo
       if(r.data.length||tabSnap(t)){
         // La nube manda (lo pendiente ya se ha subido). Copia de lo local por si acaso.
-        const antes=get(); if(antes&&antes.length&&JSON.stringify(antes)!==JSON.stringify(r.data)) setLS('seda_prenube_'+t,antes);
-        const v=set(r.data); setLS(ls,v||get()); tabFijarDesdeNube(t,r.data);
+        const antes=get(); if(antes&&antes.length&&JSON.stringify(antes)!==JSON.stringify(r.data.map(x=>tabDeNube(t,x)))) setLS('seda_prenube_'+t,antes);
+        const filas=r.data.map(x=>tabDeNube(t,x)); // p. ej. plantillas: «descripcion» en la nube es «desc» en la app
+        const v=set(filas); setLS(ls,v||get()); tabFijarDesdeNube(t,r.data);
       }
       else if(get()&&get().length) tabSubir(t); // primera vez y nube vacía: sube lo local (sin demos)
     });
@@ -4753,8 +4754,9 @@ if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.se
 window.addEventListener('DOMContentLoaded', async function(){
   await asegurarSesion();
   renderCuenta();
+  // Si quedó algo sin subir, primero se sube; después, siempre, se bajan los datos de la nube
   if(_uid && navigator.onLine!==false && localStorage.getItem('seda_pendiente')==='1') await reenviarTodo();
-  else await cargarNube();
+  await cargarNube();
 
   // Enlaza (receta_id) los platos que ya coinciden exactamente con una receta
   try{ if(eventos.reduce((n,e)=>n+vincularPlatos(e.platos),0)>0) saveEv(eventos); }catch(e){ console.warn('vincular',e); }

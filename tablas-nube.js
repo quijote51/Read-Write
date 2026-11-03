@@ -19,6 +19,16 @@ const TAB_LISTA = {
   proveedores: () => (typeof proveedores !== 'undefined' ? proveedores : []),
   personal: () => (typeof personal !== 'undefined' ? personal : [])
 };
+// Campos que en la app y en la nube se llaman distinto: {nombre en la app: nombre de la columna}
+const TAB_RENOMBRA = {plantillas: {desc: 'descripcion'}};
+function tabANube(t, o){
+  const m = TAB_RENOMBRA[t]; if(!m || !o) return o;
+  const r = {...o}; Object.entries(m).forEach(([a, n]) => { if(a in r){ r[n] = r[a]; delete r[a]; } }); return r;
+}
+function tabDeNube(t, o){
+  const m = TAB_RENOMBRA[t]; if(!m || !o) return o;
+  const r = {...o}; Object.entries(m).forEach(([a, n]) => { if(n in r){ r[a] = r[n]; delete r[n]; } }); return r;
+}
 // Lo que se sube de cada tabla (los eventos de demostración nunca)
 const tabSubibles = t => (TAB_LISTA[t]() || []).filter(x => x && x.id != null && !(t === 'eventos' && typeof _esDemo === 'function' && _esDemo(x)));
 
@@ -38,7 +48,7 @@ function tabSnap(t){
 }
 function tabGuardarSnap(t, s){ _tabSnap[t] = s; try{ localStorage.setItem('seda_sync_' + t, JSON.stringify(s)); }catch(e){} }
 // Tras leer la nube: esto es lo que hay allí
-function tabFijarDesdeNube(t, filas){ const s = {}; (filas || []).forEach(f => { s[String(f.id)] = tabFirma(f); }); tabGuardarSnap(t, s); }
+function tabFijarDesdeNube(t, filas){ const s = {}; (filas || []).forEach(f => { s[String(f.id)] = tabFirma(tabDeNube(t, f)); }); tabGuardarSnap(t, s); }
 function tabPendientes(t){
   const s = tabSnap(t); if(!s) return {cambiadas: [], borradas: []};
   const local = tabSubibles(t), ids = new Set(local.map(r => String(r.id)));
@@ -58,7 +68,7 @@ async function _tabSubir(t){
     let s = tabSnap(t);
     if(!s){
       // Primera vez en este aparato: se sube lo que hay (sin borrar nada en la nube)
-      const filas = tabSubibles(t).map(r => ({...tabFila(r), hotel_id: _uid}));
+      const filas = tabSubibles(t).map(r => ({...tabANube(t, tabFila(r)), hotel_id: _uid}));
       if(filas.length){ const {error} = await supa.from(t).upsert(filas, {onConflict: 'id'}); if(error) throw error; }
       s = {}; tabSubibles(t).forEach(r => { s[String(r.id)] = tabFirma(r); }); tabGuardarSnap(t, s);
       if(typeof mostrarSync === 'function') mostrarSync(true);
@@ -71,7 +81,7 @@ async function _tabSubir(t){
       const ids = cambiadas.map(r => String(r.id));
       const {data: actuales, error: e0} = await supa.from(t).select('*').in('id', ids);
       if(e0) throw e0;
-      const enNube = {}; (actuales || []).forEach(f => { enNube[String(f.id)] = f; });
+      const enNube = {}; (actuales || []).forEach(f => { enNube[String(f.id)] = tabDeNube(t, f); });
       const choques = [];
       for(const r of cambiadas){
         const id = String(r.id), mia = tabFila(r), base = s[id] ? JSON.parse(s[id]) : null, nube = enNube[id];
@@ -86,15 +96,15 @@ async function _tabSubir(t){
             if(canonJSON(deNube[k]) !== canonJSON(base[k]) && canonJSON(deNube[k]) !== canonJSON(mia[k])) choques.push(r.nombre || id);
           });
           if(!Object.keys(cambio).length){ s[id] = tabFirma(r); continue; }
-          const {data, error} = await supa.from(t).update(cambio).eq('id', id).select();
+          const {data, error} = await supa.from(t).update(tabANube(t, cambio)).eq('id', id).select();
           if(error) throw error;
-          fila = data && data[0];
+          fila = data && data[0] && tabDeNube(t, data[0]);
         }
         if(!fila){
           // Fila nueva (o borrada en otro aparato mientras se editaba aquí): se sube entera
-          const {data, error} = await supa.from(t).upsert({...mia, hotel_id: _uid}, {onConflict: 'id'}).select();
+          const {data, error} = await supa.from(t).upsert({...tabANube(t, mia), hotel_id: _uid}, {onConflict: 'id'}).select();
           if(error) throw error;
-          fila = data && data[0];
+          fila = data && data[0] && tabDeNube(t, data[0]);
         }
         if(fila){
           // Lo de este aparato pasa a ser lo que ha quedado en la nube (mismo objeto: no se rompen las referencias)

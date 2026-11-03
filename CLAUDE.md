@@ -22,11 +22,11 @@ App web (PWA) para la gestión de la cocina y los eventos de un hotel. HTML, CSS
 | `albaranes.html` | App suelta de Albaranes (usa `compras.js` con `window.CO_SUELTA`: solo Albaranes, Gasto y Precios). Lee `seda_inventario`, `seda_precios` y `seda_compras`; los precios del escandallo solo se suben si se han leído de la nube. |
 | `recetario.js` | Recetario: ficha, alta, edición y borrado de recetas, y **elaboraciones base** (sub-recetas: `base:true`, `rinde:{cant,ud}`; ingredientes de una tanda). Su coste (`precioSubreceta`, usado por `getPrecioIng`), alérgenos (`algDeRecetaCompleta`) e ingredientes (`ingredientesBrutos`, usado en pedidos) pasan al plato. `htmlElaboracionesBase` en Producción y Pedidos. También se carga en `alergenos.html`. |
 | `recetas-nube.js` | Recetas en la tabla `recetas`, una fila por receta: `saveRec` → `recProgramar` sube solo las cambiadas (diferencia con `seda_rec_sync`) y de cada una solo los campos cambiados; las borradas se marcan `borrado`. Avisa (`recAviso`) si otro aparato cambió el mismo campo. `recCargar` en `cargarNube` (primero sube lo pendiente); la primera vez pasa `config.seda_rec` a la tabla. Las apps sueltas leen con `recDeFila` desde `app-base.js`. |
-| `tablas-nube.js` | Eventos, plantillas, vajilla, proveedores y personal: `syncTabla` → `tabSubir`, que sube solo las filas cambiadas en el aparato (memoria en `seda_sync_<tabla>`) y de cada una **solo los campos cambiados** (`update` con `.select()`); borra solo lo borrado aquí. `cargarNube` sube primero lo pendiente y luego toma la nube. Sin memoria (primera vez) no borra nada. `canonJSON` (en `recetas-nube.js`) compara sin depender del orden de los campos. |
+| `tablas-nube.js` | Eventos, plantillas, vajilla, proveedores y personal: `syncTabla` → `tabSubir`, que sube solo las filas cambiadas en el aparato (memoria en `seda_sync_<tabla>`) y de cada una **solo los campos cambiados** (`update` con `.select()`); borra solo lo borrado aquí. `cargarNube` sube primero lo pendiente y luego toma la nube. Sin memoria (primera vez) no borra nada. `TAB_RENOMBRA` traduce campos con otro nombre en la nube (plantillas: `desc` ↔ `descripcion`). `canonJSON` (en `recetas-nube.js`) compara sin depender del orden de los campos. |
 | `fotos.js` | Reduce las fotos (900 px, JPEG) antes de guardarlas: `subirFoto` (recetas), `reducirFoto` (vajilla) y `reducirFotosGuardadas` una vez tras `cargarNube`. |
 | `instalar.js` | Aviso «Instalar» en todas las apps: botón dorado cuando Android lo permite (`beforeinstallprompt`) y, si no, instrucciones (iPhone: Compartir; Android: abrir en Chrome → ⋮). No sale si ya está instalada o se cerró. |
 | `app-base.js` + `app-base.css` | Base común de las apps sueltas: sesión, carga de eventos, recetas y proveedores, `syncConfig`, `recetaDePlato` y estilos. |
-| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v22`) y añadir a `SHELL` cada archivo nuevo. Cada app suelta nueva va también en la lista `clave` de navegación.** |
+| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v23`) y añadir a `SHELL` cada archivo nuevo. Cada app suelta nueva va también en la lista `clave` de navegación.** |
 | `manifest-*.json` + `*-192/512/maskable/apple-180/favicon-32.png` | Una app instalable por módulo. Iconos dorados (#c9a84c) sobre fondo #1a1a1a. |
 | `supabase/seguridad-cambios.sql`, `supabase/recetas-tabla.sql` | Referencia, ya aplicados. |
 | `PENDIENTES.md` | Lista de tareas pendientes. **Leerla al empezar.** |
@@ -43,7 +43,7 @@ App web (PWA) para la gestión de la cocina y los eventos de un hotel. HTML, CSS
 
 ## Probar
 - Servir con `python3 -m http.server 8765` y usar Playwright con un ancho de 390 px, entrando con «Seguir sin cuenta».
-- Desde la sesión no se llega a la CDN ni a Supabase. Para probar con nube, simular `supabase-js` con `page.route` (registrar antes el bloqueo de la CDN: gana la última ruta) y crear el contexto con `serviceWorkers:'block'`, o el service worker se salta la simulación al recargar. La simulación debe desordenar las claves de los jsonb como Postgres.
+- Desde la sesión no se llega a la CDN ni a Supabase. Para probar con nube, simular `supabase-js` con `page.route` (registrar antes el bloqueo de la CDN: gana la última ruta) y crear el contexto con `serviceWorkers:'block'`, o el service worker se salta la simulación al recargar. La simulación debe desordenar las claves de los jsonb como Postgres y rechazar columnas que no existen.
 - Comprobar siempre: sin `pageerror`, `scrollWidth` de 390 y que nada se sale de la pantalla.
 
 ## Git
