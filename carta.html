@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1a1a1a">
+<title>Alérgenos de la carta</title>
+<link rel="icon" href="favicon-32x32.png">
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--txt:#1a1a1a;--sec:#666;--borde:#e3ded3;--oro:#a8872e;--ok:#e6f4ea;--okt:#1e6b34;--no:#fbe9e7;--not:#a3321f}
+@media (prefers-color-scheme:dark){:root{--bg:#141414;--card:#1f1f1f;--txt:#f0ede6;--sec:#a9a49a;--borde:#333;--oro:#c9a84c;--ok:#16301f;--okt:#8fd6a3;--no:#3a1d18;--not:#f0a090}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:680px;margin:0 auto;padding:16px}
+header{text-align:center;padding:10px 0 6px}
+.hotel{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--oro);font-weight:700}
+h1{font-size:22px;margin:4px 0 2px}
+.fecha{font-size:12px;color:var(--sec)}
+.nota,.filtro,.cat,.aviso{background:var(--card);border:1px solid var(--borde);border-radius:12px;padding:12px;margin-top:12px}
+.nota{font-size:14px}
+.filtro b{display:block;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--borde);background:transparent;color:var(--txt);border-radius:999px;padding:6px 10px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--oro);border-color:var(--oro);color:#111;font-weight:600}
+.resumen{font-size:13px;color:var(--sec);margin-top:8px}
+.cat h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--oro);margin:0 0 6px}
+.plato{padding:9px 0;border-top:1px solid var(--borde)}
+.cat h2+.plato{border-top:0}
+.pn{font-weight:600;display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.est{font-size:11px;font-weight:700;border-radius:6px;padding:2px 6px;white-space:nowrap}
+.est.si{background:var(--ok);color:var(--okt)}.est.no{background:var(--no);color:var(--not)}
+.plato.oculto{opacity:.45}
+.algs{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;font-size:13px;color:var(--sec)}
+.alg.marca{color:var(--not);font-weight:700}
+.sin{font-size:13px;color:var(--sec);margin-top:4px}
+.aviso{font-size:13px;color:var(--sec)}
+.estado{text-align:center;padding:40px 10px;color:var(--sec)}
+footer{text-align:center;font-size:11px;color:var(--sec);padding:18px 0 8px}
+</style>
+</head>
+<body>
+<main id="app"><div class="estado">Cargando la carta…</div></main>
+<script>
+/* Carta pública de alérgenos (la que abre el comensal con el QR). Sin cuenta: pide UNA carta publicada a
+   carta_publica(id) (supabase/cartas-publicas.sql). Solo trae nombres de platos y sus alérgenos. */
+const SUPA_URL='https://gxkxslkdqgwovgxcuzkr.supabase.co', SUPA_KEY='sb_publishable_xAUprOgWQi0HhYms69zUhA_yiTwDYPK';
+const ALERGENOS=[
+  {id:'gluten',icon:'🌾',label:'Gluten'},{id:'crustaceos',icon:'🦐',label:'Crustáceos'},
+  {id:'huevo',icon:'🥚',label:'Huevo'},{id:'pescado',icon:'🐟',label:'Pescado'},
+  {id:'cacahuetes',icon:'🥜',label:'Cacahuetes'},{id:'soja',icon:'🫘',label:'Soja'},
+  {id:'lacteo',icon:'🥛',label:'Lácteos'},{id:'frutos_secos',icon:'🌰',label:'Frutos secos'},
+  {id:'apio',icon:'🌿',label:'Apio'},{id:'mostaza',icon:'🟡',label:'Mostaza'},
+  {id:'sesamo',icon:'🌱',label:'Sésamo'},{id:'sulfitos',icon:'🍷',label:'Sulfitos'},
+  {id:'altramuces',icon:'🫛',label:'Altramuces'},{id:'moluscos',icon:'🦪',label:'Moluscos'}
+];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const alg=id=>ALERGENOS.find(a=>a.id===id)||{id,icon:'⚠️',label:id};
+const app=document.getElementById('app');
+let carta=null; const elegidos=new Set();
+
+function estado(t){ app.innerHTML=`<div class="estado">${t}</div>`; }
+async function cargar(){
+  const id=new URLSearchParams(location.search).get('c');
+  if(!id) return estado('Falta el código de la carta. Escanee de nuevo el QR.');
+  try{
+    const r=await fetch(SUPA_URL+'/rest/v1/rpc/carta_publica',{method:'POST',headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_id:id})});
+    if(!r.ok) throw new Error(r.status);
+    carta=await r.json();
+  }catch(e){ return estado('No se ha podido cargar la carta. Compruebe la conexión e inténtelo de nuevo.'); }
+  if(!carta) return estado('Esta carta ya no está disponible. Pregunte al personal por los alérgenos.');
+  pintar();
+}
+function pintar(){
+  const c=carta.contenido||{}, platos=c.platos||[];
+  document.title='Alérgenos · '+(carta.titulo||'Carta');
+  const usados=ALERGENOS.filter(a=>platos.some(p=>(p.alg||[]).includes(a.id)));
+  const apto=p=>!(p.alg||[]).some(x=>elegidos.has(x));
+  const cats=[]; platos.forEach(p=>{ const k=p.cat||''; let g=cats.find(x=>x.k===k); if(!g){ g={k,ps:[]}; cats.push(g); } g.ps.push(p); });
+  const nAptos=platos.filter(apto).length;
+  app.innerHTML=`<header>${c.hotel?`<div class="hotel">${esc(c.hotel)}${c.ciudad?' · '+esc(c.ciudad):''}</div>`:''}
+    <h1>${esc(carta.titulo||'Carta')}</h1><div class="fecha">Alérgenos actualizados el ${new Date(carta.actualizado).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</div></header>
+    ${c.nota?`<div class="nota">${esc(c.nota)}</div>`:''}
+    ${usados.length?`<div class="filtro"><b>Tengo alergia o intolerancia a…</b><div class="chips">${usados.map(a=>`<button class="chip" data-a="${a.id}" aria-pressed="${elegidos.has(a.id)}">${a.icon} ${esc(a.label)}</button>`).join('')}</div>
+      ${elegidos.size?`<div class="resumen">${nAptos} de ${platos.length} platos no llevan lo que ha marcado.</div>`:''}</div>`:''}
+    ${cats.map(g=>`<section class="cat">${g.k?`<h2>${esc(g.k)}</h2>`:''}${g.ps.map(p=>{
+      const a=p.alg||[], ok=apto(p);
+      return `<div class="plato${elegidos.size&&!ok?' oculto':''}"><div class="pn"><span>${esc(p.nombre)}</span>${elegidos.size?`<span class="est ${ok?'si':'no'}">${ok?'Sin lo marcado':'Contiene'}</span>`:''}</div>
+        ${a.length?`<div class="algs">${a.map(x=>{ const d=alg(x); return `<span class="alg${elegidos.has(x)?' marca':''}">${d.icon} ${esc(d.label)}</span>`; }).join('')}</div>`:'<div class="sin">Sin alérgenos de declaración obligatoria.</div>'}</div>`;
+    }).join('')}</section>`).join('')}
+    <div class="aviso">Información según el Reglamento (UE) 1169/2011. Las elaboraciones se preparan en una cocina donde se usan los 14 alérgenos y puede haber trazas. Si tiene una alergia, <b>avise siempre al personal</b> antes de pedir.${c.tel?` Teléfono: ${esc(c.tel)}.`:''}</div>
+    <footer>Oído Cocina</footer>`;
+}
+app.addEventListener('click',e=>{ const b=e.target.closest('[data-a]'); if(!b) return; const a=b.dataset.a; elegidos.has(a)?elegidos.delete(a):elegidos.add(a); pintar(); });
+cargar();
+</script>
+</body>
+</html>

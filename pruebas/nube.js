@@ -5,7 +5,7 @@ let DB=nuevaDB(); let fallar=null; const log=[]; const ALMACEN={}; let almacenLi
 // Como Postgres (jsonb): dentro de objetos y listas, las claves salen ordenadas por longitud y luego alfabéticamente
 function jsonb(v){if(Array.isArray(v))return v.map(jsonb);if(v&&typeof v==='object'){const o={};Object.keys(v).sort((a,b)=>a.length-b.length||(a<b?-1:a>b?1:0)).forEach(k=>o[k]=jsonb(v[k]));return o}return v}
 // Columnas reales de Supabase (3/11/2026): la nube rechaza cualquier otra, como PostgREST
-const COLS={invitaciones:'codigo,hotel_id,rol,nombre',eventos:'id,nombre,fecha,hora,pax,tipo,lugar,alergias_txt,alergenos_menu,platos,infantil,factor_custom,precio_venta,notas,personal_ids,bebidas,notas_bebidas,hotel_id',
+const COLS={invitaciones:'codigo,hotel_id,rol,nombre',cartas_publicas:'id,hotel_id,titulo,contenido,publicada,actualizado',eventos:'id,nombre,fecha,hora,pax,tipo,lugar,alergias_txt,alergenos_menu,platos,infantil,factor_custom,precio_venta,notas,personal_ids,bebidas,notas_bebidas,hotel_id',
  recetas:'id,nombre,cat,emoji,alg,ingredientes,img,hotel_id,base,rinde,extra,borrado,updated_at',
  plantillas:'id,nombre,color,factor,precio,descripcion,bodega,platos,hotel_id',vajilla:'id,nombre,cat,stock,factor_coctel,factor_menu,notas,img,hotel_id',
  proveedores:'id,nombre,tel,cat,hotel_id',personal:'id,nombre,rol,tel,hotel_id',config:'key,value,updated_at,hotel_id',miembros:'user_id,hotel_id,rol,creado,nombre'};

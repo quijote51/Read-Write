@@ -17,7 +17,7 @@
 ## Hecho: ficha de alérgenos por evento (alergenos.js)
 - Botón «Alérgenos» en cada evento y en Producción: ficha para el cliente, imprimible y en texto para WhatsApp.
 - Avisa de platos sin receta y de posible huevo crudo; «revisado por» que caduca si cambia el menú.
-- [ ] Más adelante: QR público de la ficha (necesita una página pública y un cambio en Supabase).
+- [x] QR público de alérgenos: sección «Carta QR» (`cartas.js`) y página del comensal (`carta.html`).
 
 ## Hecho: APPCC básico (appcc.js)
 - Sección «APPCC» (roles Chef, Dirección y Administración): Hoy (temperaturas mañana/tarde, limpieza, muestras testigo), Recepción, Etiquetas, Registros (CSV e impresión) y Ajustes.
@@ -50,7 +50,7 @@
 ## Mejoras del estudio de mercado (3/11/2026)
 - [x] 1. Desperdicio alimentario (Ley 1/2025): `desperdicio.js`. Activado (PR #14 y SQL, 3/11/2026).
 - [x] 2. Foto del albarán: lectura GRATIS en el móvil (`albaran-ocr.js`). La versión con IA está hecha y desplegada, pero sin clave (el usuario no quiere pagar); se activaría poniendo `ANTHROPIC_API_KEY` en Supabase y pegando `supabase/albaran-ia.sql`.
-- [ ] 3. QR público de alérgenos.
+- [x] 3. Carta QR de alérgenos: `cartas.js` + `carta.html`. Falta pegar `supabase/cartas-publicas.sql` en Supabase.
 - [ ] 4. Avisos en el móvil.
 - [ ] 5. Rendimiento de ingredientes · 6. Fichaje · 7. Hoja por departamento · 8. Previsión de producción.
 - Estudio: https://claude.ai/artifact/1r653St1bewnFA4Z395pcV

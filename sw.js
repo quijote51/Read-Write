@@ -4,8 +4,8 @@
 // - Librerías de CDN (iconos, SDK, fuentes): caché primero y se refresca en segundo plano.
 // - Fotos del almacén de Supabase: caché primero (cada foto nueva tiene otro nombre).
 // - Datos de Supabase y cualquier otra cosa: directo a la red (los datos viven en localStorage y se sincronizan aparte).
-const CACHE = 'oido-cocina-v31';
-const SHELL = ['/', '/index.html', '/horarios.js', '/inventario.js', '/alergenos.js', '/appcc.js', '/desperdicio.js', '/compras.js', '/albaran-ocr.js', '/fotos.js', '/recetario.js', '/config-nube.js', '/recetas-nube.js', '/tablas-nube.js', '/equipo.js', '/marca.js', '/instalar.js', '/horarios.css', '/horarios.html', '/manifest-horarios.json', '/horarios-192.png', '/inventario.html', '/manifest-inventario.json', '/inventario-192.png', '/app-base.js', '/app-base.css', '/appcc.html', '/manifest-appcc.json', '/appcc-192.png', '/alergenos.html', '/manifest-alergenos.json', '/alergenos-192.png', '/albaranes.html', '/manifest-albaranes.json', '/albaranes-192.png', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32x32.png'];
+const CACHE = 'oido-cocina-v32';
+const SHELL = ['/', '/index.html', '/horarios.js', '/inventario.js', '/alergenos.js', '/appcc.js', '/desperdicio.js', '/cartas.js', '/carta.html', '/compras.js', '/albaran-ocr.js', '/fotos.js', '/recetario.js', '/config-nube.js', '/recetas-nube.js', '/tablas-nube.js', '/equipo.js', '/marca.js', '/instalar.js', '/horarios.css', '/horarios.html', '/manifest-horarios.json', '/horarios-192.png', '/inventario.html', '/manifest-inventario.json', '/inventario-192.png', '/app-base.js', '/app-base.css', '/appcc.html', '/manifest-appcc.json', '/appcc-192.png', '/alergenos.html', '/manifest-alergenos.json', '/alergenos-192.png', '/albaranes.html', '/manifest-albaranes.json', '/albaranes-192.png', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32x32.png'];
 const CDN = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (e) => {
@@ -26,7 +26,7 @@ self.addEventListener('fetch', (e) => {
 
   if (req.mode === 'navigate') {
     // Cada app suelta se guarda con su nombre; el resto de direcciones es la app principal.
-    const clave = ['/horarios.html','/inventario.html','/appcc.html','/alergenos.html','/albaranes.html'].includes(url.pathname) ? url.pathname : '/index.html';
+    const clave = ['/horarios.html','/inventario.html','/appcc.html','/alergenos.html','/albaranes.html','/carta.html'].includes(url.pathname) ? url.pathname : '/index.html';
     e.respondWith(
       fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(ca => ca.put(clave, c)); return r; })
         .catch(() => caches.match(clave).then(r => r || caches.match('/index.html')).then(r => r || caches.match('/')))
