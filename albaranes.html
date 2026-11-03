@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Albaranes, precios y gasto de cocina · Seda Club Hotel Granada">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Albaranes">
+<title>Albaranes · Seda Club Hotel</title>
+<link rel="manifest" href="/manifest-albaranes.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/albaranes-favicon-32.png">
+<link rel="apple-touch-icon" href="/albaranes-apple-180.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.50.0/tabler-icons.min.css">
+<link rel="stylesheet" href="/app-base.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="/app-base.js"></script>
+<script>
+// Datos que compras.js usa de la app principal. Son los mismos de la nube (config seda_inventario y seda_precios).
+window.CO_SUELTA=true;
+let inventario=LS('seda_inventario');
+let preciosIng=LS('seda_precios');
+window.CO_INV_OK=!!inventario;
+// Los precios del escandallo solo se suben si se han leído antes de la nube (para no pisar los que hay allí).
+let _preciosNube=false;
+function savePrecios(p){LS('seda_precios',p);if(_preciosNube)syncConfig('seda_precios',p)}
+</script>
+<script src="/compras.js"></script>
+</head>
+<body>
+<header>
+  <h1>Albaranes <span>Seda</span><br><small>Seda Club Hotel · Granada</small></h1>
+  <span class="sp"></span>
+  <span id="sync">…</span>
+  <button class="btn-sec" id="salir" style="display:none" onclick="salir()">Salir</button>
+</header>
+<main><div id="co-root"></div></main>
+<script>
+// Albaranes, gasto y precios. Lógica en compras.js (la misma sección «Albaranes y costes» de la app principal).
+window.APP={nombre:'Albaranes',
+  async arrancar(){ initCostes(); await this.recargar(); },
+  async recargar(){
+    // Si quedó algo sin subir (sin conexión), primero se sube y luego se lee la nube.
+    let pend=false; try{pend=localStorage.getItem('seda_pendiente')==='1'}catch(e){}
+    if(pend&&_uid&&navigator.onLine!==false){
+      try{localStorage.removeItem('seda_pendiente')}catch(e){}
+      if(inventario&&window.CO_INV_OK)await subirConfig('seda_inventario',inventario);
+      await comprasSubir();
+    }
+    const ok=await cargarNube({
+      seda_inventario:v=>{inventario=v;window.CO_INV_OK=true;LS('seda_inventario',v)},
+      seda_precios:v=>{preciosIng=v;_preciosNube=true;LS('seda_precios',v)},
+      seda_compras:v=>comprasDesdeNube(v)
+    });
+    if(ok)window.CO_INV_OK=true; // leída la nube: aunque aún no haya inventario, ya se puede empezar uno
+    initCostes();
+  }
+};
+</script>
+</body>
+</html>

@@ -6,6 +6,9 @@
    - Stock: mínimo por artículo y stock estimado = último recuento + entradas − consumo teórico de los eventos.
    - Mermas: entre dos recuentos, consumo real (inicial + entradas − final) frente al teórico de las recetas.
    - Enlaces: artículo del inventario ↔ ingrediente de las recetas (para el consumo teórico y el precio del escandallo).
+   - Gasto: sumas por mes, proveedor, familia (sección del inventario) y artículo.
+   - Si un producto del albarán no está en el inventario, se puede dar de alta desde la misma línea.
+   App suelta: albaranes.html (window.CO_SUELTA=true: solo Albaranes, Gasto y Precios, porque allí no hay eventos para el stock y las mermas).
    Datos en config 'seda_compras':
      { alb:[{id,f,fecha,prov,num,por,lineas:[{a,cant,u,imp}],anulado?}], hist:[{id,f,a,p,u,prov,origen}],
        min:{articulo:cantidad}, enl:{articulo:ingrediente}, cts }
@@ -133,8 +136,13 @@ function stockEstimado(n){
 }
 
 /* ── Interfaz ── */
-let vista='alb',msg='',lineas=[],buscaP='',buscaS='',buscaE='',rk1='',rk2='',abierto=null;
-const VISTAS=[['alb','Albaranes'],['precios','Precios'],['stock','Stock mínimo'],['mermas','Mermas'],['enl','Enlaces']];
+let vista='alb',msg='',lineas=[],cab={prov:'',num:'',fecha:''},buscaP='',buscaS='',buscaE='',rk1='',rk2='',abierto=null;
+const VISTAS_TODAS=[['alb','Albaranes'],['gasto','Gasto'],['precios','Precios'],['stock','Stock mínimo'],['mermas','Mermas'],['enl','Enlaces']];
+const VISTAS_SUELTA=['alb','gasto','precios'];
+const vistas=()=>window.CO_SUELTA?VISTAS_TODAS.filter(v=>VISTAS_SUELTA.includes(v[0])):VISTAS_TODAS;
+let mesG='';
+const UMS=['KG','LITRO','UNID','PQT'];
+const secciones=()=>{const o=[];arts().forEach(a=>{if(a.s&&!o.includes(a.s))o.push(a.s)});return o};
 function yo(){try{return localStorage.getItem('seda_appcc_yo')||''}catch(e){return''}}
 function datalists(){
   const provs=(typeof proveedores!=='undefined'&&Array.isArray(proveedores)?proveedores:[]).map(p=>p.nombre).filter(Boolean);
@@ -148,24 +156,74 @@ function vAlb(){
     return `<div class="co-lin"><input list="co-arts" data-l="${i}" data-k="a" value="${esc(l.a)}" placeholder="Artículo" aria-label="Artículo">
       <input inputmode="decimal" data-l="${i}" data-k="cant" value="${esc(l.cant)}" placeholder="Cantidad${a?' ('+esc(unidad(a.u))+')':''}" aria-label="Cantidad">
       <input inputmode="decimal" data-l="${i}" data-k="imp" value="${esc(l.imp)}" placeholder="Importe €" aria-label="Importe de la línea">
-      <button class="btn-sec co-sm" data-co="quitalin" data-i="${i}" aria-label="Quitar línea">✕</button><div class="co-lin-i" id="co-li-${i}">${infoLinea(l)}</div></div>`}).join('');
+      <button class="btn-sec co-sm" data-co="quitalin" data-i="${i}" aria-label="Quitar línea">✕</button><div class="co-lin-i" id="co-li-${i}">${infoLinea(l,i)}</div></div>`}).join('');
   const lista=C().alb.slice().reverse().slice(0,30);
-  return `${datalists()}<div class="card"><b>Nuevo albarán</b><p class="co-ayuda">Una línea por producto: cantidad en la unidad del inventario e importe total de la línea (sin IVA, como en el albarán). El precio del artículo se actualiza solo.</p>
-  <div class="co-form"><label>Proveedor<input id="co-prov" list="co-provs" type="text"></label><label>Nº de albarán<input id="co-num" type="text"></label><label>Fecha<input id="co-fecha" type="date" value="${hoyK()}"></label></div>
+  return `${datalists()}<datalist id="co-secs">${secciones().map(x=>`<option value="${esc(x)}">`).join('')}</datalist><div class="card"><b>Nuevo albarán</b><p class="co-ayuda">Una línea por producto: cantidad en la unidad del inventario e importe total de la línea (sin IVA, como en el albarán). El precio del artículo se actualiza solo.</p>
+  <div class="co-form"><label>Proveedor<input id="co-prov" list="co-provs" type="text" value="${esc(cab.prov)}"></label><label>Nº de albarán<input id="co-num" type="text" value="${esc(cab.num)}"></label><label>Fecha<input id="co-fecha" type="date" value="${esc(cab.fecha||hoyK())}"></label></div>
   <div id="co-lineas">${filas}</div>
   <div class="co-acc"><button class="btn-sec" data-co="addlin">Añadir línea</button><span class="co-tot" id="co-tot"></span><button class="btn btn-p" data-co="guardaralb">Guardar albarán</button></div></div>
   <div class="card"><b>Últimos albaranes</b>${lista.length?lista.map(al=>{const tot=(al.lineas||[]).reduce((s,l)=>s+(l.imp||0),0);return `<div class="co-fila ${al.anulado?'co-anul':''}"><div class="co-n"><b>${esc(al.prov||'Sin proveedor')}${al.num?' · nº '+esc(al.num):''}</b><small>${dmy(al.fecha)} · ${(al.lineas||[]).length} línea${(al.lineas||[]).length===1?'':'s'} · ${eur(tot)}${al.por?' · '+esc(al.por):''}${al.anulado?' · anulado: '+esc(al.anulado.motivo):''}</small>
     ${abierto===al.id?`<div class="co-det">${(al.lineas||[]).map(l=>`<div>${esc(l.a)}: ${fmt(l.cant)} ${esc(unidad(l.u))} · ${eur(l.imp)} (${eur(l.cant?l.imp/l.cant:0)}/${esc(unidad(l.u))})</div>`).join('')}</div>`:''}</div>
     <button class="btn-sec co-sm" data-co="ver" data-id="${esc(al.id)}">${abierto===al.id?'Ocultar':'Ver'}</button>${al.anulado?'':`<button class="btn-sec co-sm" data-co="anular" data-id="${esc(al.id)}">Anular</button>`}</div>`}).join(''):'<p class="co-vacio">Todavía no hay albaranes.</p>'}</div>`;
 }
-function infoLinea(l){
+function infoLinea(l,i){
   const a=artPorNombre(l.a), c=num(l.cant), imp=num(l.imp), pu=c&&imp?imp/c:null;
-  if(l.a&&!a)return '<small class="co-sube">No está en el inventario: elige uno de la lista.</small>';
+  if(l.a&&!a){
+    if(!l.alta)return `<small class="co-sube">«${esc(l.a.trim())}» no está en el inventario.</small> <button class="btn-sec co-sm" data-co="altaart" data-i="${i}"><i class="ti ti-plus"></i> Añadirlo al inventario</button>`;
+    return `<div class="co-alta"><b>Nuevo artículo: ${esc(l.a.trim())}</b>
+      <label>Familia<input list="co-secs" data-l="${i}" data-k="s" value="${esc(l.s||'')}" placeholder="Ej: Carnes"></label>
+      <label>Unidad<select data-l="${i}" data-k="u">${UMS.map(u=>`<option ${(l.u||'KG')===u?'selected':''}>${u}</option>`).join('')}</select></label>
+      <button class="btn btn-p co-sm" data-co="creaart" data-i="${i}">Crear</button><button class="btn-sec co-sm" data-co="noalta" data-i="${i}">Cancelar</button></div>`;
+  }
   if(!a)return '';
   if(!pu)return `<small>${esc(unidad(a.u))} · precio actual ${eur(a.p)}/${esc(unidad(a.u))}</small>`;
   return `<small class="${a.p&&pu>a.p*1.005?'co-sube':a.p&&pu<a.p*0.995?'co-baja':''}">${eur(pu)}/${esc(unidad(a.u))}${a.p?` · antes ${eur(a.p)} (${pct((pu-a.p)/a.p)})`:''}</small>`;
 }
 function totalLineas(){return lineas.reduce((s,l)=>s+(num(l.imp)||0),0)}
+
+/* ── Gasto: sumas por mes ── */
+const mesDe=k=>String(k||'').slice(0,7);
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const nomMes=m=>{const[y,mm]=m.split('-');return MESES[+mm-1]+' '+y};
+const totAlb=al=>(al.lineas||[]).reduce((s,l)=>s+(l.imp||0),0);
+function mesAnterior(m){const[y,mm]=m.split('-').map(Number);const d=new Date(y,mm-2,1);return d.getFullYear()+'-'+pad(d.getMonth()+1)}
+function sumar(lista,clave){const m={};lista.forEach(x=>{const k=clave(x);if(!m[k])m[k]={k,eur:0,n:0,cant:0,u:x.u};m[k].eur+=x.eur;m[k].n++;m[k].cant+=x.cant||0});return Object.values(m).sort((a,b)=>b.eur-a.eur)}
+function barras(lista,total,extra){
+  const max=Math.max(...lista.map(x=>x.eur),0)||1;
+  return lista.map(x=>`<div class="co-bar"><div class="co-bar-t"><span>${esc(x.k)}</span><b>${eur(x.eur)}</b></div><div class="co-bar-f"><i style="width:${Math.max(2,x.eur/max*100)}%"></i></div><small>${total?Math.round(x.eur/total*100)+' % · ':''}${extra(x)}</small></div>`).join('');
+}
+function vGasto(){
+  const vivos=albVivos();
+  const meses=[...new Set(vivos.map(a=>mesDe(a.fecha)).concat([mesDe(hoyK())]))].filter(Boolean).sort().reverse();
+  if(!meses.includes(mesG))mesG=meses[0];
+  const delMes=vivos.filter(a=>mesDe(a.fecha)===mesG).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+  const total=delMes.reduce((s,a)=>s+totAlb(a),0);
+  const ant=vivos.filter(a=>mesDe(a.fecha)===mesAnterior(mesG)).reduce((s,a)=>s+totAlb(a),0);
+  const anio=vivos.filter(a=>String(a.fecha).slice(0,4)===mesG.slice(0,4)&&mesDe(a.fecha)<=mesG).reduce((s,a)=>s+totAlb(a),0);
+  const lineas_=delMes.flatMap(al=>(al.lineas||[]).map(l=>({prov:al.prov||'Sin proveedor',a:l.a,sec:(artPorNombre(l.a)||{}).s||'Sin familia',eur:l.imp||0,cant:l.cant,u:unidad(l.u)})));
+  const porProv=sumar(lineas_.map(x=>({...x,cant:0})),x=>x.prov);
+  porProv.forEach(p=>{p.alb=delMes.filter(a=>(a.prov||'Sin proveedor')===p.k).length});
+  const porSec=sumar(lineas_,x=>x.sec);
+  const porArt=sumar(lineas_,x=>x.a).slice(0,15);
+  const dif=ant?(total-ant)/ant:null;
+  return `<div class="card"><div class="co-form"><label>Mes<select id="co-mes">${meses.map(m=>`<option value="${m}" ${m===mesG?'selected':''}>${nomMes(m)}</option>`).join('')}</select></label></div>
+    <div class="co-tiles"><div><small>Total del mes</small><b>${eur(total)}</b><small>${delMes.length} ${delMes.length===1?'albarán':'albaranes'}${dif!=null?` · <span class="${dif>0?'co-sube':'co-baja'}">${pct(dif)} vs ${MESES[+mesAnterior(mesG).slice(5)-1]}</span>`:''}</small></div>
+    <div><small>Acumulado ${mesG.slice(0,4)}</small><b>${eur(anio)}</b><small>hasta ${MESES[+mesG.slice(5)-1]}</small></div></div>
+    <p class="co-ayuda">Importes sin IVA, tal como se apuntan en los albaranes. Los anulados no cuentan.</p>
+    ${delMes.length?`<button class="btn-sec" data-co="copiagasto"><i class="ti ti-copy"></i> Copiar resumen</button>`:''}</div>
+  ${delMes.length?`<div class="card"><b>Por proveedor</b>${barras(porProv,total,x=>`${x.alb} ${x.alb===1?'albarán':'albaranes'}`)}</div>
+  <div class="card"><b>Por familia</b>${barras(porSec,total,x=>`${x.n} línea${x.n===1?'':'s'}`)}</div>
+  <div class="card"><b>Artículos con más gasto</b>${barras(porArt,0,x=>`${fmt(x.cant)} ${esc(x.u)} · ${eur(x.cant?x.eur/x.cant:0)}/${esc(x.u)} de media`)}</div>
+  <div class="card"><b>Albaranes de ${nomMes(mesG)}</b>${delMes.map(al=>`<div class="co-fila"><div class="co-n"><b>${esc(al.prov||'Sin proveedor')}${al.num?' · nº '+esc(al.num):''}</b><small>${dmy(al.fecha)} · ${(al.lineas||[]).length} línea${(al.lineas||[]).length===1?'':'s'}</small>
+    ${abierto===al.id?`<div class="co-det">${(al.lineas||[]).map(l=>`<div>${esc(l.a)}: ${fmt(l.cant)} ${esc(unidad(l.u))} · ${eur(l.imp)}</div>`).join('')}</div>`:''}</div><b class="co-imp">${eur(totAlb(al))}</b><button class="btn-sec co-sm" data-co="ver" data-id="${esc(al.id)}">${abierto===al.id?'Ocultar':'Ver'}</button></div>`).join('')}
+    <div class="co-fila co-suma"><div class="co-n"><b>Total</b></div><b class="co-imp">${eur(total)}</b></div></div>`
+  :'<div class="card"><p class="co-vacio">No hay albaranes en este mes.</p></div>'}`;
+}
+function textoGasto(){
+  const vivos=albVivos().filter(a=>mesDe(a.fecha)===mesG), total=vivos.reduce((s,a)=>s+totAlb(a),0);
+  const porProv={}; vivos.forEach(a=>{const k=a.prov||'Sin proveedor';porProv[k]=(porProv[k]||0)+totAlb(a)});
+  return `*Gasto en albaranes · ${nomMes(mesG)}*\n`+Object.entries(porProv).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`— ${k}: ${eur(v)}`).join('\n')+`\n*Total: ${eur(total)}* (sin IVA)`;
+}
 
 function vPrecios(){
   const c=cambios(60);
@@ -236,9 +294,10 @@ function vEnl(){
 
 function pintar(){
   const root=ge('co-root'); if(!root)return;
-  const f={alb:vAlb,precios:vPrecios,stock:vStock,mermas:vMermas,enl:vEnl}[vista];
-  root.innerHTML=`${!arts().length?'<div class="hz-aviso warn">No hay artículos en el inventario. Cárgalos primero en Inventario.</div>':''}
-  <div class="co-tabs" role="tablist">${VISTAS.map(([k,t])=>`<button role="tab" aria-selected="${k===vista}" class="${k===vista?'on':''}" data-v="${k}">${t}</button>`).join('')}</div>
+  if(!vistas().some(v=>v[0]===vista))vista='alb';
+  const f={alb:vAlb,gasto:vGasto,precios:vPrecios,stock:vStock,mermas:vMermas,enl:vEnl}[vista];
+  root.innerHTML=`${!arts().length?`<div class="hz-aviso warn">${window.CO_SUELTA&&!window.CO_INV_OK?'No se ha podido cargar el inventario. Conéctate a internet y vuelve a abrir la app.':'No hay artículos en el inventario. Puedes darlos de alta desde las líneas del albarán o cargarlos en Inventario.'}</div>`:''}
+  <div class="co-tabs" role="tablist">${vistas().map(([k,t])=>`<button role="tab" aria-selected="${k===vista}" class="${k===vista?'on':''}" data-v="${k}">${t}</button>`).join('')}</div>
   ${msg?`<div class="hz-aviso ${msg.startsWith('!')?'warn':'ok'}">${esc(msg.replace(/^!/,''))}</div>`:''}${f()}`;
   msg=''; const t=ge('co-tot'); if(t)t.textContent=totalLineas()?'Total '+eur(totalLineas()):'';
 }
@@ -264,9 +323,27 @@ function accion(a,b){
     if(!ok.length)return aviso('!Añade al menos una línea.');
     C().alb.push({id:uid(),f:new Date().toISOString(),fecha,prov,num:num_,por:yo(),lineas:ok});
     let subidas=0; ok.forEach(l=>{const ar=artPorNombre(l.a);const pu=l.imp/l.cant;if(ar.p&&pu>ar.p*1.1)subidas++;if(pu>0)ponerPrecio(ar,pu,'albarán',prov)});
-    lineas=[]; subir();
+    lineas=[]; cab={prov:'',num:'',fecha:''}; subir();
     return aviso(`Albarán guardado: ${ok.length} línea${ok.length===1?'':'s'}, ${eur(ok.reduce((s,l)=>s+l.imp,0))}.${subidas?` ${subidas} artículo${subidas===1?' ha':'s han'} subido más de un 10 %: míralo en «Precios».`:''}`);
   }
+  if(a==='altaart'){lineas[+b.dataset.i].alta=true;pintar();const s_=document.querySelector(`#co-li-${b.dataset.i} [data-k="s"]`);if(s_)s_.focus();return}
+  if(a==='noalta'){lineas[+b.dataset.i].alta=false;return pintar()}
+  if(a==='creaart'){
+    const l=lineas[+b.dataset.i]; if(!l)return;
+    const n=String(l.a||'').trim(), sec=String(l.s||'').trim(), u=l.u||'KG';
+    if(!n)return; if(!sec)return aviso('!Escribe la familia del artículo (por ejemplo: Carnes, Pescados, Verduras).');
+    if(window.CO_SUELTA&&!window.CO_INV_OK&&!(typeof inventario!=='undefined'&&inventario))return aviso('!No se ha podido cargar el inventario. Conéctate a internet para dar de alta artículos.');
+    if(typeof inventario==='undefined')return;
+    if(!inventario)inventario={articulos:[],conteos:{},ts:0};
+    if(!Array.isArray(inventario.articulos))inventario.articulos=[];
+    if(artPorNombre(n)){l.alta=false;return pintar()}
+    inventario.articulos.push({s:sec,n,u,p:0}); inventario.ts=Date.now();
+    try{localStorage.setItem('seda_inventario',JSON.stringify(inventario))}catch(e){}
+    if(typeof syncConfig==='function')syncConfig('seda_inventario',inventario);
+    l.a=n; l.alta=false; delete l.s; delete l.u;
+    return aviso(`«${n}» añadido al inventario, en ${sec}. Su precio saldrá de este albarán.`);
+  }
+  if(a==='copiagasto')return copiar(textoGasto(),()=>aviso('Resumen copiado.'));
   if(a==='ver'){abierto=abierto===b.dataset.id?null:b.dataset.id;return pintar()}
   if(a==='anular'){
     const al=C().alb.find(x=>x.id===b.dataset.id); if(!al)return;
@@ -291,7 +368,8 @@ window.initCostes=function(){
     });
     root.addEventListener('input',e=>{
       const t=e.target;
-      if(t.dataset.l!=null){const i=+t.dataset.l;lineas[i][t.dataset.k]=t.value; const tt=ge('co-tot'); if(tt)tt.textContent=totalLineas()?'Total '+eur(totalLineas()):''; const li=ge('co-li-'+i); if(li)li.innerHTML=infoLinea(lineas[i]); return}
+      if(t.dataset.l!=null){const i=+t.dataset.l;lineas[i][t.dataset.k]=t.value; if(t.dataset.k==='s'||t.dataset.k==='u')return; const tt=ge('co-tot'); if(tt)tt.textContent=totalLineas()?'Total '+eur(totalLineas()):''; const li=ge('co-li-'+i); if(li)li.innerHTML=infoLinea(lineas[i],i); return}
+      if(t.id==='co-prov'||t.id==='co-num'||t.id==='co-fecha'){cab[t.id.slice(3)]=t.value;return}
       if(t.id==='co-buscap'||t.id==='co-buscas'||t.id==='co-buscae'){
         if(t.id==='co-buscap')buscaP=t.value;else if(t.id==='co-buscas')buscaS=t.value;else buscaE=t.value;
         const id=t.id,pos=t.selectionStart; pintar(); const n=ge(id); if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}
@@ -301,6 +379,8 @@ window.initCostes=function(){
       const t=e.target;
       if(t.dataset.min!=null){const n=num(t.value);if(n===null||n<0)delete C().min[t.dataset.min];else C().min[t.dataset.min]=n;C().cts=Date.now();subir();return pintar()}
       if(t.dataset.enl!=null){const v=t.value.trim();if(v){C().enl[t.dataset.enl]=v;C().cts=Date.now();subir();return pintar()}return}
+      if(t.dataset.l!=null&&t.dataset.k==='u'){lineas[+t.dataset.l].u=t.value;return}
+      if(t.id==='co-mes'){mesG=t.value;return pintar()}
       if(t.id==='co-rk1'){rk1=t.value;return pintar()}
       if(t.id==='co-rk2'){rk2=t.value;return pintar()}
     });
@@ -333,5 +413,12 @@ const CSS=`#co-root .card{margin-bottom:10px}
 .co-tiles div{background:var(--bg-secondary);border-radius:var(--radius);padding:8px 10px;display:flex;flex-direction:column;gap:2px}.co-tiles small{font-size:11px;color:var(--text-secondary)}.co-tiles b{font-size:18px;font-variant-numeric:tabular-nums}
 .co-tabla-w{overflow-x:auto}.co-tabla{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;font-variant-numeric:tabular-nums}
 .co-tabla th,.co-tabla td{text-align:left;padding:5px 6px;border-bottom:.5px solid var(--border);white-space:nowrap}.co-tabla td:first-child{white-space:normal;min-width:120px}
-.co-tabla th{font-size:11px;color:var(--text-secondary);font-weight:600}`;
+.co-tabla th{font-size:11px;color:var(--text-secondary);font-weight:600}
+.co-alta{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:flex-end;padding:8px;margin-top:2px;border-radius:var(--radius);background:var(--bg-secondary)}
+.co-alta>b{flex-basis:100%;font-size:12px}.co-alta label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--text-secondary);flex:1;min-width:110px}
+.co-bar{padding:7px 0;border-top:.5px solid var(--border)}.co-bar:first-of-type{border-top:0}
+.co-bar-t{display:flex;justify-content:space-between;gap:8px;font-size:13px}.co-bar-t span{min-width:0;overflow-wrap:anywhere}.co-bar-t b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.co-bar-f{height:6px;border-radius:3px;background:var(--bg-secondary);margin:4px 0 2px;overflow:hidden}.co-bar-f i{display:block;height:100%;background:#c9a84c;border-radius:3px}
+.co-bar small{font-size:11px;color:var(--text-secondary)}
+.co-imp{font-variant-numeric:tabular-nums;white-space:nowrap}.co-suma{border-top:1px solid var(--text-primary)}`;
 })();
