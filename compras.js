@@ -72,6 +72,7 @@ window.comprasDesdeNube=v=>{
   if(ge('tab-costes')&&ge('tab-costes').offsetParent!==null)pintar();
 };
 window.comprasSubir=subir;
+window.comprasBajoMinimo=()=>Object.keys(C().min).filter(n=>{const a=artPorNombre(n),s=a&&stockEstimado(n);return s&&s.est<C().min[n]}); // avisos.js
 
 /* ── Precios ── */
 // Guarda el precio nuevo del artículo en el inventario y en el historial; si está enlazado, también en el escandallo.

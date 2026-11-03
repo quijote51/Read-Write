@@ -50,8 +50,8 @@
 ## Mejoras del estudio de mercado (3/11/2026)
 - [x] 1. Desperdicio alimentario (Ley 1/2025): `desperdicio.js`. Activado (PR #14 y SQL, 3/11/2026).
 - [x] 2. Foto del albarán: lectura GRATIS en el móvil (`albaran-ocr.js`). La versión con IA está hecha y desplegada, pero sin clave (el usuario no quiere pagar); se activaría poniendo `ANTHROPIC_API_KEY` en Supabase y pegando `supabase/albaran-ia.sql`.
-- [x] 3. Carta QR de alérgenos: `cartas.js` + `carta.html`. Falta pegar `supabase/cartas-publicas.sql` en Supabase.
-- [ ] 4. Avisos en el móvil.
+- [x] 3. Carta QR de alérgenos: `cartas.js` + `carta.html`. Activada (PR #17 y SQL, 3/11/2026).
+- [x] 4. Avisos: campana en la app y notificaciones en el móvil (`avisos.js`, función `avisos-push` desplegada). Falta pegar `supabase/avisos.sql`. El stock bajo mínimo solo sale en la campana (se calcula en el aparato).
 - [ ] 5. Rendimiento de ingredientes · 6. Fichaje · 7. Hoja por departamento · 8. Previsión de producción.
 - Estudio: https://claude.ai/artifact/1r653St1bewnFA4Z395pcV
 

@@ -24,6 +24,7 @@
 <script src="appcc.js"></script>
 <script src="desperdicio.js"></script>
 <script src="cartas.js"></script>
+<script src="avisos.js"></script>
 <script src="compras.js"></script>
 <script src="albaran-ocr.js"></script>
 <script src="fotos.js"></script>
@@ -1705,6 +1706,7 @@ function aplicarRol(rol){
   });
   // Abrir dashboard si está en el rol
   if(r.tabs.includes('dashboard')) openAccordion('dashboard');
+  if(typeof avisosRecalcular==='function') avisosRecalcular();
 }
 
 
@@ -4726,7 +4728,7 @@ function _cfgLista(){ return [
 
 /* ===== CARGA DESDE LA NUBE ===== */
 async function cargarNube(){
-  if(!_uid){ mostrarSync(false); reducirFotosGuardadas(); return; }
+  if(!_uid){ mostrarSync(false); reducirFotosGuardadas(); if(typeof avisosRefrescar==='function')avisosRefrescar(); return; }
   let ok=true;
   const setLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
   try {
@@ -4769,6 +4771,7 @@ async function cargarNube(){
   } catch(e){ ok=false; console.warn('Carga nube',e); }
   mostrarSync(ok);
   reducirFotosGuardadas();
+  if(typeof avisosRefrescar==='function')avisosRefrescar();
 }
 
 // Reenvía todo lo local a la nube (cambios hechos sin conexión). No baja nada: así no se pisa lo local.
