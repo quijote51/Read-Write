@@ -50,6 +50,8 @@
 - [ ] Precios, inventario y horarios: juntar en vez de sustituir.
 - [ ] Fotos al almacén de archivos de Supabase.
 
+- [x] Plantillas: nunca llegaban a la nube (campo `desc` frente a columna `descripcion`). Arreglado el 3/11/2026; al abrir la app se suben solas.
+
 ## Siguiente
 - [x] Compras hecho (`compras.js`, sección «Albaranes y costes»).
 - [ ] Apuntar los albaranes que lleguen y enlazar en «Enlaces» los artículos que se usan en recetas (hay propuestas automáticas).
