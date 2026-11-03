@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Registros de autocontrol APPCC de cocina · Seda Club Hotel Granada">
+<meta name="description" content="Registros de autocontrol APPCC de cocina · Oído Cocina">
 <meta name="theme-color" content="#1a1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="APPCC">
-<title>APPCC · Seda Club Hotel</title>
+<title>APPCC · Oído Cocina</title>
 <link rel="manifest" href="/manifest-appcc.json">
 <link rel="icon" type="image/png" sizes="32x32" href="/appcc-favicon-32.png">
 <link rel="apple-touch-icon" href="/appcc-apple-180.png">
@@ -17,6 +17,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="/app-base.js"></script>
 <script src="/equipo.js"></script>
+<script src="/marca.js"></script>
 <script src="/config-nube.js"></script>
 <script src="/recetas-nube.js"></script>
 <script src="/instalar.js"></script>
@@ -25,7 +26,7 @@
 </head>
 <body>
 <header>
-  <h1>APPCC <span>Seda</span><br><small>Seda Club Hotel · Granada</small></h1>
+  <h1>APPCC <span id="marca-corto"></span><br><small id="marca-linea">Oído Cocina</small></h1>
   <span class="sp"></span>
   <span id="sync">…</span>
   <button class="btn-sec" id="salir" style="display:none" onclick="salir()">Salir</button>
@@ -34,6 +35,7 @@
 <script>
 // APPCC: temperaturas, limpieza, recepción, muestras testigo y etiquetas. Lógica en appcc.js.
 window.APP={nombre:'APPCC',
+  modulo:'seguridad',
   roles:['admin','direccion','chef','cocina'],
   async arrancar(){ initAPPCC(); await this.recargar(); },
   async recargar(){ await cargarNube({seda_appcc:v=>appccDesdeNube(v)}); initAPPCC(); }

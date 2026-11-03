@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Gestión de cocina y eventos · Seda Club Hotel Granada">
+<meta name="description" content="Gestión de cocina y eventos · Oído Cocina">
 <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1e1e1c" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Oído Cocina · Seda Club Hotel</title>
+<title>Oído Cocina</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -29,6 +29,7 @@
 <script src="recetas-nube.js"></script>
 <script src="tablas-nube.js"></script>
 <script src="equipo.js"></script>
+<script src="marca.js"></script>
 <script src="instalar.js"></script>
 <script>
 // ══════════════════════════════════════
@@ -370,14 +371,14 @@ textarea{resize:vertical;min-height:65px}
 <div class="print-header" style="margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:10px">
   <div style="display:flex;justify-content:space-between;align-items:flex-end">
     <div>
-      <div style="font-size:20px;font-weight:bold;letter-spacing:1px">SEDA CLUB HOTEL</div>
+      <div style="font-size:20px;font-weight:bold;letter-spacing:1px" id="print-hotel-nombre">OÍDO COCINA</div>
       <div style="font-size:13px;color:#666">Ficha de producción de cocina</div>
     </div>
     <div style="text-align:right;font-size:11px;color:#666" id="print-fecha-gen"></div>
   </div>
 </div>
 <div class="print-footer" style="margin-top:20px;border-top:1px solid #ccc;padding-top:8px;font-size:10px;color:#999;display:flex;justify-content:space-between">
-  <span>Seda Club Hotel · Plaza de la Trinidad · Granada</span>
+  <span id="print-hotel-linea"></span>
   <span id="print-page">Impreso el <span id="print-date-foot"></span></span>
 </div>
 <div class="app" id="main-content" role="main">
@@ -390,7 +391,7 @@ textarea{resize:vertical;min-height:65px}
     </div>
     <div>
       <div style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.05rem;font-weight:700;color:var(--blanco);line-height:1.15;letter-spacing:.01em">O<span style="color:#c9a84c">í</span>do <span style="letter-spacing:.18em;font-size:.65rem;font-family:'Karla',sans-serif;font-weight:600;color:rgba(201,168,76,.9);vertical-align:middle">COCINA</span></div>
-      <div style="font-size:9.5px;color:rgba(255,255,255,.28);letter-spacing:.07em;margin-top:1px;text-transform:uppercase" id="header-hotel-nombre">Seda Club Hotel · Granada</div>
+      <div style="font-size:9.5px;color:rgba(255,255,255,.28);letter-spacing:.07em;margin-top:1px;text-transform:uppercase" id="header-hotel-nombre">Oído Cocina</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:6px">
@@ -406,7 +407,7 @@ textarea{resize:vertical;min-height:65px}
 <div id="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1003;align-items:center;justify-content:center;padding:1rem">
   <form class="rol-modal-inner" id="login-form" onsubmit="return entrar(event)">
     <div style="text-align:center;margin-bottom:1.25rem">
-      <div class="rol-modal-badge"><i class="ti ti-building"></i> SEDA CLUB HOTEL · GRANADA</div>
+      <div class="rol-modal-badge marca-badge"><i class="ti ti-building"></i> OÍDO COCINA</div>
       <div id="login-titulo" class="rol-modal-title">O<span style="color:#c9a84c">í</span>do Cocina</div>
       <div class="rol-modal-sub">Inicia sesión para sincronizar tus datos</div>
     </div>
@@ -441,7 +442,7 @@ textarea{resize:vertical;min-height:65px}
 <div id="rol-modal" role="dialog" aria-modal="true" aria-labelledby="rol-modal-titulo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1002;align-items:center;justify-content:center;padding:1rem">
   <div class="rol-modal-inner">
     <div style="text-align:center">
-      <div class="rol-modal-badge"><i class="ti ti-building"></i> SEDA CLUB HOTEL · GRANADA</div>
+      <div class="rol-modal-badge marca-badge"><i class="ti ti-building"></i> OÍDO COCINA</div>
       <div id="rol-modal-titulo" class="rol-modal-title">O<span style="color:#c9a84c">í</span>do Cocina</div>
       <div class="rol-modal-sub">¿Cuál es tu rol hoy?</div>
     </div>
@@ -806,7 +807,7 @@ textarea{resize:vertical;min-height:65px}
 <div class="sec" id="tab-plantillas">
   <div id="plt-lista-view">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-      <p style="font-size:13px;color:var(--text-secondary);margin:0">Define los tipos de evento del Seda Club. Al crear un evento podrás cargar una plantilla y todo se rellena automáticamente.</p>
+      <p style="font-size:13px;color:var(--text-secondary);margin:0">Define tus tipos de evento. Al crear un evento podrás cargar una plantilla y todo se rellena automáticamente.</p>
       <button class="btn btn-p" onclick="showNuevaPlt()"><i class="ti ti-plus"></i> Nueva plantilla</button>
     </div>
     <div id="plt-grid"></div>
@@ -1022,6 +1023,9 @@ textarea{resize:vertical;min-height:65px}
 <div class="sec" id="tab-ajustes">
   <div class="sec-label" style="margin-bottom:1.5rem;font-size:14px;font-weight:600;letter-spacing:.04em"><i class="ti ti-settings"></i> Ajustes del sistema</div>
 
+  <!-- Clientes: solo la cuenta plataforma (equipo.js) -->
+  <div class="card" id="clientes-card" style="margin-bottom:12px;display:none"></div>
+
   <!-- Equipo: cuentas por persona (equipo.js) -->
   <div class="card" id="equipo-card" style="margin-bottom:12px;display:none"></div>
 
@@ -1068,14 +1072,14 @@ textarea{resize:vertical;min-height:65px}
   <div class="card" style="margin-bottom:12px">
     <div class="form-sec" style="margin-top:0"><i class="ti ti-building"></i> Datos del hotel</div>
     <div class="form-2" style="margin-bottom:10px">
-      <div class="fg" style="margin-bottom:0"><label>Nombre del hotel</label><input type="text" id="aj-hotel-nombre" placeholder="Seda Club Hotel"/></div>
+      <div class="fg" style="margin-bottom:0"><label>Nombre del hotel</label><input type="text" id="aj-hotel-nombre" placeholder="Nombre del hotel o restaurante"/></div>
       <div class="fg" style="margin-bottom:0"><label>Ciudad</label><input type="text" id="aj-hotel-ciudad" placeholder="Granada"/></div>
     </div>
     <div class="form-2" style="margin-bottom:10px">
-      <div class="fg" style="margin-bottom:0"><label>Dirección</label><input type="text" id="aj-hotel-dir" placeholder="Plaza de la Trinidad, 2"/></div>
-      <div class="fg" style="margin-bottom:0"><label>Teléfono</label><input type="tel" id="aj-hotel-tel" placeholder="+34 858 160 161"/></div>
+      <div class="fg" style="margin-bottom:0"><label>Dirección</label><input type="text" id="aj-hotel-dir" placeholder="Calle y número"/></div>
+      <div class="fg" style="margin-bottom:0"><label>Teléfono</label><input type="tel" id="aj-hotel-tel" placeholder="+34 600 000 000"/></div>
     </div>
-    <div class="fg" style="margin-bottom:10px"><label>Web</label><input type="text" id="aj-hotel-web" placeholder="sedaclubhotel.com"/></div>
+    <div class="fg" style="margin-bottom:10px"><label>Web</label><input type="text" id="aj-hotel-web" placeholder="mirestaurante.com"/></div>
     <button class="btn btn-p" style="font-size:12px" onclick="guardarAjustesHotel()"><i class="ti ti-check"></i> Guardar datos del hotel</button>
   </div>
 
@@ -1143,7 +1147,7 @@ textarea{resize:vertical;min-height:65px}
         <select id="n-tipo" onchange="actualizarFactorSugerido()"></select>
       </div>
       <div class="fg" style="margin-bottom:0"><label>Lugar</label>
-        <select id="n-lugar"><option>Azotea</option><option>Restaurante Clandestino</option><option>Salón privado</option></select>
+        <select id="n-lugar"><option>Azotea</option><option>Comedor privado</option><option>Salón privado</option></select>
       </div>
     </div>
 
@@ -1218,7 +1222,7 @@ const TIPOS_DEFAULT=[
   {id:'desayuno',  nombre:'Desayuno ejecutivo',factor:1.0, color:'#D85A30'},
   {id:'brunch',    nombre:'Brunch',            factor:1.0, color:'#2E6B47'},
   {id:'cena_gala', nombre:'Cena de gala',      factor:1.0, color:'#9A3080'},
-  {id:'clandestino',nombre:'Servicio Clandestino',factor:1.0,color:'#1A5080'}
+  {id:'clandestino',nombre:'Servicio degustación',factor:1.0,color:'#1A5080'}
 ];
 
 function getTipos(){try{return JSON.parse(localStorage.getItem('seda_tipos')||'null')}catch{return null}}
@@ -1319,7 +1323,7 @@ const CATS=[
 ];
 const CAT_NAMES={F:'Frío',C:'Caliente',P:'Postre',M:'Principal'};
 
-// Platos menú infantil Seda Club
+// Platos del menú infantil
 const PLATOS_INFANTIL=[
   {id:'inf-tortilla',  nombre:'Tortilla española',        emoji:'🥚', alg:['huevo','lacteo'],  precio:6},
   {id:'inf-croquetas', nombre:'Croquetas caseras',         emoji:'🍘', alg:['gluten','lacteo','huevo'], precio:6},
@@ -1332,7 +1336,7 @@ const PLATOS_INFANTIL=[
 const RECETAS_BASE=[
   {id:'pastela-moruna',nombre:'Pastela Moruna',cat:'C',emoji:'🥧',alg:['gluten','huevo','frutos_secos'],ingredientes:[{nombre:'Pasta brick',cant:2,ud:'láminas',alg:['gluten']},{nombre:'Pollo deshuesado cocido desmenuzado',cant:80,ud:'g',alg:[]},{nombre:'Almendras tostadas picadas',cant:15,ud:'g',alg:['frutos_secos']},{nombre:'Huevo',cant:1,ud:'ud',alg:['huevo']},{nombre:'Canela molida',cant:1,ud:'g',alg:[]},{nombre:'Azúcar glas',cant:5,ud:'g',alg:[]},{nombre:'Cebolla pochada',cant:30,ud:'g',alg:[]},{nombre:'Aceite de oliva',cant:10,ud:'ml',alg:[]},{nombre:'Sal y pimienta',cant:1,ud:'pizca',alg:[]}]},
   {id:'croquetas-pollo-jamon',nombre:'Croquetas de pollo y jamón ibérico',cat:'C',emoji:'🍘',alg:['gluten','lacteo','huevo'],ingredientes:[{nombre:'Harina de trigo',cant:60,ud:'g',alg:['gluten']},{nombre:'Leche entera',cant:300,ud:'ml',alg:['lacteo']},{nombre:'Mantequilla',cant:40,ud:'g',alg:['lacteo']},{nombre:'Pollo cocido desmenuzado',cant:80,ud:'g',alg:[]},{nombre:'Jamón ibérico picado',cant:30,ud:'g',alg:[]},{nombre:'Huevo batido (rebozado)',cant:1,ud:'ud',alg:['huevo']},{nombre:'Pan rallado',cant:50,ud:'g',alg:['gluten']},{nombre:'Nuez moscada',cant:1,ud:'pizca',alg:[]},{nombre:'Sal',cant:1,ud:'pizca',alg:[]}]},
-  {id:'mini-burger-seda',nombre:'Mini Búrguer Seda',cat:'C',emoji:'🍔',alg:['gluten','lacteo','huevo'],ingredientes:[{nombre:'Pan brioche mini',cant:1,ud:'ud',alg:['gluten','lacteo','huevo']},{nombre:'Carne vacuno picada',cant:60,ud:'g',alg:[]},{nombre:'Queso cheddar',cant:15,ud:'g',alg:['lacteo']},{nombre:'Cebolla caramelizada',cant:20,ud:'g',alg:[]},{nombre:'Mayonesa de ajo negro',cant:10,ud:'g',alg:['huevo']},{nombre:'Rúcula',cant:5,ud:'g',alg:[]},{nombre:'Sal y pimienta',cant:1,ud:'pizca',alg:[]}]},
+  {id:'mini-burger-seda',nombre:'Mini Búrguer de la casa',cat:'C',emoji:'🍔',alg:['gluten','lacteo','huevo'],ingredientes:[{nombre:'Pan brioche mini',cant:1,ud:'ud',alg:['gluten','lacteo','huevo']},{nombre:'Carne vacuno picada',cant:60,ud:'g',alg:[]},{nombre:'Queso cheddar',cant:15,ud:'g',alg:['lacteo']},{nombre:'Cebolla caramelizada',cant:20,ud:'g',alg:[]},{nombre:'Mayonesa de ajo negro',cant:10,ud:'g',alg:['huevo']},{nombre:'Rúcula',cant:5,ud:'g',alg:[]},{nombre:'Sal y pimienta',cant:1,ud:'pizca',alg:[]}]},
   {id:'ensaladilla-langostinos',nombre:'Ensaladilla rusa de langostinos',cat:'F',emoji:'🥗',alg:['crustaceos','huevo'],ingredientes:[{nombre:'Langostinos cocidos pelados',cant:40,ud:'g',alg:['crustaceos']},{nombre:'Patata cocida en dados',cant:60,ud:'g',alg:[]},{nombre:'Zanahoria cocida en dados',cant:20,ud:'g',alg:[]},{nombre:'Guisantes',cant:15,ud:'g',alg:[]},{nombre:'Mayonesa',cant:30,ud:'g',alg:['huevo']},{nombre:'Huevo de codorniz cocido',cant:1,ud:'ud',alg:['huevo']},{nombre:'Sal y pimienta',cant:1,ud:'pizca',alg:[]}]},
   {id:'dados-bacalao',nombre:'Dados de bacalao frito con muselina de ajo negro',cat:'C',emoji:'🐟',alg:['pescado','huevo'],ingredientes:[{nombre:'Lomo de bacalao desalado',cant:70,ud:'g',alg:['pescado']},{nombre:'Harina de tempura',cant:20,ud:'g',alg:['gluten']},{nombre:'Aceite de oliva (fritura)',cant:30,ud:'ml',alg:[]},{nombre:'Yema de huevo',cant:1,ud:'ud',alg:['huevo']},{nombre:'Aceite de girasol',cant:50,ud:'ml',alg:[]},{nombre:'Ajo negro',cant:2,ud:'dientes',alg:[]},{nombre:'Limón',cant:5,ud:'ml',alg:[]}]},
   {id:'tartar-salmon',nombre:'Tartar de salmón con mango y crema de aguacate',cat:'F',emoji:'🍣',alg:['pescado','sesamo'],ingredientes:[{nombre:'Salmón fresco en dados',cant:60,ud:'g',alg:['pescado']},{nombre:'Mango maduro en dados',cant:30,ud:'g',alg:[]},{nombre:'Aguacate',cant:40,ud:'g',alg:[]},{nombre:'Cebolleta',cant:10,ud:'g',alg:[]},{nombre:'Salsa de soja',cant:5,ud:'ml',alg:['soja']},{nombre:'Lima (zumo)',cant:5,ud:'ml',alg:[]},{nombre:'Sésamo tostado',cant:2,ud:'g',alg:['sesamo']},{nombre:'Aceite de oliva',cant:5,ud:'ml',alg:[]}]},
@@ -1415,7 +1419,7 @@ if(!eventos.length){
        {cat:'C',nombre:'Croquetas de jamón ibérico y pollo',alg:['gluten','lacteo','huevo']},
        {cat:'C',nombre:'Pastela Moruna',alg:['gluten','huevo','frutos_secos']},
        {cat:'C',nombre:'Dados de bacalao frito con muselina de ajo negro',alg:['pescado','huevo']},
-       {cat:'C',nombre:'Mini Búrguer Seda Club',alg:['gluten','lacteo','huevo']},
+       {cat:'C',nombre:'Mini Búrguer de la casa',alg:['gluten','lacteo','huevo']},
        {cat:'P',nombre:'Vasitos de arroz con leche con galletas Lotus',alg:['lacteo','gluten']}
      ]},
     {id:2, nombre:'Cumpleaños Inés Rubio', fecha:d(0), hora:'21:30', pax:23, tipo:'coctel', lugar:'Azotea', precio_venta:55,
@@ -1428,10 +1432,10 @@ if(!eventos.length){
        {cat:'C',nombre:'Croquetas de pollo y jamón ibérico',alg:['gluten','lacteo','huevo']},
        {cat:'C',nombre:'Mini Cruasán relleno de pollo braseado y salsa César',alg:['gluten','lacteo','huevo']},
        {cat:'C',nombre:'Pastela Moruna',alg:['gluten','huevo','frutos_secos']},
-       {cat:'C',nombre:'Mini Búrguer Seda',alg:['gluten','lacteo','huevo']},
+       {cat:'C',nombre:'Mini Búrguer de la casa',alg:['gluten','lacteo','huevo']},
        {cat:'P',nombre:'Tarta de queso casera',alg:['gluten','lacteo','huevo']}
      ]},
-    {id:3, nombre:'Menú Seda Club — Comida Grupo Jaguar', fecha:d(2), hora:'14:00', pax:12, tipo:'menu', lugar:'Restaurante Clandestino', precio_venta:65,
+    {id:3, nombre:'Menú de la casa — Comida de grupo', fecha:d(2), hora:'14:00', pax:12, tipo:'menu', lugar:'Comedor privado', precio_venta:65,
      alergias_txt:'', alergenos_menu:['gluten','crustaceos','huevo','pescado','lacteo'],
      platos:[
        {cat:'F',nombre:'Ensaladilla rusa de langostinos con huevo de corral',alg:['crustaceos','huevo']},
@@ -1453,7 +1457,7 @@ if(!eventos.length){
        {cat:'F',nombre:'Canelón de Wonton relleno de steak tartar y nieve de foie',alg:['gluten','huevo']},
        {cat:'F',nombre:'Blinis de queso de cabra y gota de pimiento rojo',alg:['gluten','lacteo','huevo']},
        {cat:'F',nombre:'Ensaladilla rusa de langostinos con huevo de codorniz',alg:['crustaceos','huevo']},
-       {cat:'C',nombre:'Mini Búrguer Seda',alg:['gluten','lacteo','huevo']},
+       {cat:'C',nombre:'Mini Búrguer de la casa',alg:['gluten','lacteo','huevo']},
        {cat:'C',nombre:'Pastela Moruna',alg:['gluten','huevo','frutos_secos']},
        {cat:'C',nombre:'Sushi flamenquín de cerdo y salsa Tonkatsu',alg:['gluten']},
        {cat:'C',nombre:'Croquetas de pollo y jamón ibérico',alg:['gluten','lacteo','huevo']},
@@ -1461,7 +1465,7 @@ if(!eventos.length){
        {cat:'P',nombre:'Bocaditos de lemon pie y merengue',alg:['gluten','lacteo','huevo']},
        {cat:'P',nombre:'Brownie con dulce de leche y nata',alg:['gluten','lacteo','huevo']}
      ]},
-    {id:5, nombre:'Desayuno Ejecutivo Yaiza Martín', fecha:d(1), hora:'10:30', pax:7, tipo:'desayuno', lugar:'Restaurante Clandestino', precio_venta:21,
+    {id:5, nombre:'Desayuno Ejecutivo Yaiza Martín', fecha:d(1), hora:'10:30', pax:7, tipo:'desayuno', lugar:'Comedor privado', precio_venta:21,
      alergias_txt:'', alergenos_menu:['gluten','lacteo','huevo'],
      platos:[
        {cat:'F',nombre:'Croissant de mantequilla y napolitanas',alg:['gluten','lacteo','huevo']},
@@ -1686,7 +1690,7 @@ function aplicarRol(rol){
   // Mostrar/ocultar accordion items
   document.querySelectorAll('.acc-item[data-tab]').forEach(item=>{
     const tab = item.dataset.tab;
-    const show = r.tabs.includes(tab);
+    const show = r.tabs.includes(tab) && (typeof seccionActiva!=='function' || seccionActiva(tab)); // y módulo de pago activo
     item.style.display = show ? '' : 'none';
     if(!show && item.classList.contains('open')) toggleAccordion(tab);
   });
@@ -1888,7 +1892,7 @@ function renderPersonalEvento(){
   const ev=eventos.find(e=>e.id===evId); if(!ev)return;
   if(!ev.personal_ids)ev.personal_ids=[];
 
-  const msgBase=`*CONVOCATORIA DE TRABAJO*\n*${ev.nombre}*\n📅 ${fmtFecha(ev.fecha)} · ${ev.hora}\n📍 ${ev.lugar} · ${ev.pax} pax\n\nQuedas convocado/a para este evento. Por favor confirma asistencia.\n_Oído Cocina · ${ge('aj-hotel-nombre')?.value||'Seda Club Hotel'}_`;
+  const msgBase=`*CONVOCATORIA DE TRABAJO*\n*${ev.nombre}*\n📅 ${fmtFecha(ev.fecha)} · ${ev.hora}\n📍 ${ev.lugar} · ${ev.pax} pax\n\nQuedas convocado/a para este evento. Por favor confirma asistencia.\n_Oído Cocina · ${hN()}_`;
 
   cont.innerHTML=`
   <div class="card">
@@ -1930,12 +1934,12 @@ function getAjustes(){try{return JSON.parse(localStorage.getItem('seda_ajustes')
 function saveAjustes(a){try{localStorage.setItem('seda_ajustes',JSON.stringify(a))}catch{} syncConfig('seda_ajustes',a);}
 
 let ajustes=getAjustes()||{
-  hotel_nombre:'Seda Club Hotel',
-  hotel_ciudad:'Granada',
-  hotel_dir:'Plaza de la Trinidad, 2',
-  hotel_tel:'+34 858 160 161',
-  hotel_web:'sedaclubhotel.com',
-  lugares:['Azotea','Restaurante Clandestino','Salón privado']
+  hotel_nombre:'',
+  hotel_ciudad:'',
+  hotel_dir:'',
+  hotel_tel:'',
+  hotel_web:'',
+  lugares:['Salón','Terraza','Comedor privado']
 };
 if(!getAjustes()) _semilla('seda_ajustes',ajustes); // datos de ejemplo: solo en este aparato, nunca pisan la nube
 
@@ -1947,9 +1951,7 @@ function initAjustes(){
   ge('aj-hotel-web').value=ajustes.hotel_web||'';
   renderAjustesLugares();
   renderAjustesTipos();
-  // Actualizar cabecera
-  const cabecera=ge('header-hotel-nombre');
-  if(cabecera)cabecera.textContent=`${ajustes.hotel_nombre||'Hotel'} · ${ajustes.hotel_ciudad||''}`;
+  aplicarMarca();
 }
 
 function guardarAjustesHotel(){
@@ -1959,8 +1961,8 @@ function guardarAjustesHotel(){
   ajustes.hotel_tel=ge('aj-hotel-tel').value.trim();
   ajustes.hotel_web=ge('aj-hotel-web').value.trim();
   saveAjustes(ajustes);
-  const cabecera=ge('header-hotel-nombre');
-  if(cabecera)cabecera.textContent=`${ajustes.hotel_nombre} · ${ajustes.hotel_ciudad}`;
+  aplicarMarca();
+  if(typeof guardarHotelNube==='function') guardarHotelNube(ajustes.hotel_nombre, ajustes.hotel_ciudad); // equipo.js: nombre en la lista de clientes
   const btn=event.target;btn.innerHTML='<i class="ti ti-check"></i> Guardado';setTimeout(()=>btn.innerHTML='<i class="ti ti-check"></i> Guardar datos del hotel',1500);
 }
 
@@ -2583,7 +2585,7 @@ let plantillas = getPlt();
 // Plantillas demo precargadas si está vacío
 if(!plantillas.length){
   plantillas = [
-    {id:'plt-seda', nombre:'Menú Seda Club', color:'#1D9E75', factor:'menu', precio:65, desc:'Menú sentado con aperitivos, 2 principales y postre', bodega:'Flor Innata Verdejo + Altún Albiker + Cervezas + Agua',
+    {id:'plt-seda', nombre:'Menú de la casa', color:'#1D9E75', factor:'menu', precio:65, desc:'Menú sentado con aperitivos, 2 principales y postre', bodega:'Flor Innata Verdejo + Altún Albiker + Cervezas + Agua',
      platos:[
        {cat:'F',nombre:'Ensaladilla rusa de langostinos',alg:['crustaceos','huevo']},
        {cat:'F',nombre:'Croquetas de queso de cabra, calabaza y espinacas',alg:['gluten','lacteo','huevo']},
@@ -2602,7 +2604,7 @@ if(!plantillas.length){
        {cat:'F',nombre:'Canelón de Wonton relleno de steak tartar y nieve de foie',alg:['gluten','huevo']},
        {cat:'F',nombre:'Blinis de queso de cabra y gota de pimiento rojo',alg:['gluten','lacteo','huevo']},
        {cat:'F',nombre:'Ensaladilla rusa de langostinos con huevo de codorniz',alg:['crustaceos','huevo']},
-       {cat:'C',nombre:'Mini Búrguer Seda',alg:['gluten','lacteo','huevo']},
+       {cat:'C',nombre:'Mini Búrguer de la casa',alg:['gluten','lacteo','huevo']},
        {cat:'C',nombre:'Pastela Moruna',alg:['gluten','huevo','frutos_secos']},
        {cat:'C',nombre:'Sushi flamenquín de cerdo y salsa Tonkatsu',alg:['gluten']},
        {cat:'C',nombre:'Croquetas de pollo y jamón ibérico',alg:['gluten','lacteo','huevo']},
@@ -2610,7 +2612,7 @@ if(!plantillas.length){
        {cat:'P',nombre:'Bocaditos de lemon pie y merengue',alg:['gluten','lacteo','huevo']},
        {cat:'P',nombre:'Brownie con dulce de leche y nata',alg:['gluten','lacteo','huevo']}
      ]},
-    {id:'plt-clandestino', nombre:'Menú Clandestino', color:'#7F77DD', factor:'menu', precio:75, desc:'Menú degustación en espacio exclusivo', bodega:'Altún Albiker + Flor Innata Verdejo + Cervezas + Agua',
+    {id:'plt-clandestino', nombre:'Menú degustación', color:'#7F77DD', factor:'menu', precio:75, desc:'Menú degustación en espacio exclusivo', bodega:'Altún Albiker + Flor Innata Verdejo + Cervezas + Agua',
      platos:[
        {cat:'F',nombre:'Pipirrana de Granada con aguacate en tempura y burrata',alg:['lacteo']},
        {cat:'F',nombre:'Royal de foie con tostas de pan cristal',alg:['gluten','huevo','lacteo']},
@@ -2672,7 +2674,7 @@ if(!plantillas.length){
        {cat:'F',nombre:'Huevos de araña (huevos de codorniz con mayonesa negra)',alg:['huevo']},
        {cat:'F',nombre:'Ensaladilla rusa teñida de negro con carbón activado',alg:['crustaceos','huevo']},
        {cat:'C',nombre:'Pastela Moruna con presentación terrorífica',alg:['gluten','huevo','frutos_secos']},
-       {cat:'C',nombre:'Mini Búrguer Seda con pan negro de carbón activado',alg:['gluten','lacteo','huevo']},
+       {cat:'C',nombre:'Mini Búrguer de la casa con pan negro de carbón activado',alg:['gluten','lacteo','huevo']},
        {cat:'C',nombre:'Croquetas de calabaza y queso ahumado',alg:['gluten','lacteo','huevo']},
        {cat:'C',nombre:'Dados de bacalao con tinta de calamar y aioli negro',alg:['pescado','huevo','moluscos']},
        {cat:'P',nombre:'Calabaza de chocolate blanco rellena de mousse de toffee',alg:['lacteo','huevo']},
@@ -3863,7 +3865,7 @@ function generarMensaje(prov,ings,evs){
   const linesIng=ings.map(i=>{const q=fmtCant(i.total,i.ud);return `• ${i.nombre}: ${q.txt} ${q.ud||''}`.trim()}).join('\n');
   return `Hola ${prov.nombre}, buenos días 👋
 
-Te paso el pedido del Seda Club Hotel para los siguientes eventos:
+Te paso el pedido de ${hN()} para los siguientes eventos:
 ${eventosStr}
 
 *PEDIDO ${fechaHoy}:*
@@ -3871,7 +3873,7 @@ ${linesIng}
 
 Confirma disponibilidad y hora de entrega. Muchas gracias 🙏
 
-_Seda Club Hotel · Granada_`;
+_${hLinea()}_`;
 }
 
 function escH(str){return String(str??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
@@ -4366,7 +4368,7 @@ function mostrarConfirmacion(evId){
   // ── MSG CLIENTE ──
   const msgCliente=`Estimado/a cliente,
 
-Le confirmamos su reserva en *Seda Club Hotel* ✨
+Le confirmamos su reserva en *${hN()}* ✨
 
 📅 *Fecha:* ${fmtFecha(ev.fecha)}
 🕐 *Hora:* ${ev.hora}
@@ -4377,13 +4379,12 @@ Le confirmamos su reserva en *Seda Club Hotel* ✨
 ${frios.length?`*Aperitivos fríos:*\n${frios.map(p=>'— '+p).join('\n')}\n\n`:''}${calientes.length?`*Aperitivos calientes:*\n${calientes.map(p=>'— '+p).join('\n')}\n\n`:''}${principales.length?`*Platos principales:*\n${principales.map(p=>'— '+p).join('\n')}\n\n`:''}${postres.length?`*Postres:*\n${postres.map(p=>'— '+p).join('\n')}\n\n`:''}${bebActivas.length?`*Bebidas incluidas:*\n${bebActivas.map(b=>'— '+b).join('\n')}\n\n`:''}${ev.notas_bebidas?`*Bodega:* ${ev.notas_bebidas}\n\n`:''}${total>0?`💰 *Total estimado: ${total.toLocaleString('es')}€* (IVA incluido)\n\n`:''}${ev.alergias_txt?`⚠️ *Alergias registradas:* ${ev.alergias_txt}\n\n`:''}Quedamos a su disposición para cualquier consulta.
 
 Un cordial saludo,
-*Seda Club Hotel* · Plaza de la Trinidad · Granada
-T: +34 858 160 161 · sedaclubhotel.com`;
+${hFirma()}`;
 
   // ── MSG MAÎTRE ──
   const vajResumen=vajItems.slice(0,6).map(v=>`— ${v.nombre}: ${v.necesario} uds${!v.ok?' ⚠️ FALTAN '+v.falta:''}`).join('\n');
   const msgMaitre=`*FICHA DE SERVICIO — MAÎTRE*
-*Seda Club Hotel*
+*${hN()}*
 
 📋 *Evento:* ${ev.nombre}
 📅 *Fecha:* ${fmtFecha(ev.fecha)}
@@ -4405,11 +4406,11 @@ ${vajAlerta.length?`\n⚠️ STOCK INSUFICIENTE: ${vajAlerta.map(v=>v.nombre+' (
 
 ${ev.alergias_txt?`⚠️ *ALERGIAS:* ${ev.alergias_txt}`:'✅ Sin alergias registradas'}
 
-_Generado desde Seda Club · Sistema de cocina_`;
+_Generado con Oído Cocina_`;
 
   // ── MSG JEFA DE EVENTOS ──
   const msgJefa=`*CONFIRMACIÓN INTERNA — JEFA DE EVENTOS*
-*Seda Club Hotel*
+*${hN()}*
 
 ✅ *Evento confirmado:* ${ev.nombre}
 
@@ -4430,14 +4431,14 @@ ${ev.notas_bebidas?ev.notas_bebidas:''}
 
 ${ev.alergias_txt?`⚠️ *ALERGIAS:* ${ev.alergias_txt}\n`:'✅ Sin alergias\n'}
 _Por favor confirma recepción._
-_Seda Club · Sistema de gestión_`;
+_Oído Cocina_`;
 
   // ── MSG JEFE DE COCINA ──
   const f=getFactorEvento(ev);
   const raciones=Math.round(ev.pax*f);
   const platosConRaciones=[...frios,...calientes,...principales,...postres].map(p=>`— ${p}: *${raciones} uds*`).join('\n');
   const msgCocina=`*ORDEN DE PRODUCCIÓN — JEFE DE COCINA*
-*Seda Club Hotel*
+*${hN()}*
 
 🍳 *Evento:* ${ev.nombre}
 📅 *Fecha:* ${fmtFecha(ev.fecha)}
@@ -4457,7 +4458,7 @@ ${ev.infantil?.ninos?`
 ${(ev.infantil.platos||[]).map(pid=>{const p=PLATOS_INFANTIL.find(x=>x.id===pid);return p?`— ${p.emoji} ${p.nombre}: ${ev.infantil.ninos} uds`:''}).filter(Boolean).join('\n')}
 `:''}
 _Por favor confirma recepción._
-_Seda Club · Sistema de gestión_`;
+_Oído Cocina_`;
 
   const c=contactosInternos;
 
@@ -4483,7 +4484,7 @@ _Seda Club · Sistema de gestión_`;
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button onclick="copiarMsg('cliente')" class="btn btn-p" style="font-size:12px"><i class="ti ti-copy"></i> Copiar</button>
         <a href="https://wa.me/?text=${encodeURIComponent(msgCliente)}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:#25D366;color:#fff;text-decoration:none;font-size:12px"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>
-        <a href="mailto:?subject=Confirmación reserva Seda Club Hotel&body=${encodeURIComponent(msgCliente.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email</a>
+        <a href="mailto:?subject=${encodeURIComponent('Confirmación reserva '+hN())}&body=${encodeURIComponent(msgCliente.replace(/\*/g,''))}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);background:var(--info-bg);color:var(--info-text);text-decoration:none;font-size:12px"><i class="ti ti-mail"></i> Email</a>
       </div>
     </div>
 
@@ -4530,7 +4531,7 @@ _Seda Club · Sistema de gestión_`;
             <div class="fg" style="margin-bottom:0"><label>Teléfono WhatsApp</label>
               <input type="tel" value="${c[rol].tel}" placeholder="34612345678" onchange="actualizarContacto('${rol}','tel',this.value)"/></div>
             <div class="fg" style="margin-bottom:0"><label>Email</label>
-              <input type="email" value="${c[rol].email}" placeholder="nombre@sedaclub.com" onchange="actualizarContacto('${rol}','email',this.value)"/></div>
+              <input type="email" value="${c[rol].email}" placeholder="nombre@mirestaurante.com" onchange="actualizarContacto('${rol}','email',this.value)"/></div>
           </div>
         </div>`;
       }).join('')}
@@ -4797,12 +4798,12 @@ window.addEventListener('DOMContentLoaded', async function(){
   renderPlatosInfantil();
   renderPltSelector();
   renderTipoSelects();
-  const cab=ge('header-hotel-nombre');
-  if(cab&&ajustes.hotel_nombre)cab.textContent=`${ajustes.hotel_nombre} · ${ajustes.hotel_ciudad||''}`;
+  aplicarMarca(); // marca.js: nombre del hotel o restaurante en cabecera, hoja impresa y título
   const selLugar=ge('n-lugar');
   if(selLugar&&ajustes.lugares?.length)selLugar.innerHTML=ajustes.lugares.map(l=>`<option>${l}</option>`).join('');
   initAccordion();
   equipoPintar(); // Ajustes → Equipo (solo admin y dirección)
+  clientesPintar(); // Ajustes → Clientes (solo la plataforma)
   if(rolActual && ROLES[rolActual] && !(ROLES_PIN.includes(rolActual)&&sessionStorage.getItem('seda_pin_ok')!=='1')){ aplicarRol(rolActual); }
   else {
     // Rol protegido sin PIN: ocultar todo hasta elegir rol. Sin rol (primera vez): mostrar todo y abrir dashboard
@@ -4810,6 +4811,8 @@ window.addEventListener('DOMContentLoaded', async function(){
     else openAccordion('dashboard');
     setTimeout(()=>ge('rol-modal').style.display='flex', 400);
   }
+  // Secciones de módulos que el hotel no tiene: fuera siempre
+  document.querySelectorAll('.acc-item[data-tab]').forEach(i=>{ if(typeof seccionActiva==='function'&&!seccionActiva(i.dataset.tab)) i.style.display='none'; });
 });
 
 </script>

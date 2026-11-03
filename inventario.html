@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Inventario mensual de cocina · Seda Club Hotel Granada">
+<meta name="description" content="Inventario mensual de cocina · Oído Cocina">
 <meta name="theme-color" content="#1a1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Inventario">
-<title>Inventario · Seda Club Hotel</title>
+<title>Inventario · Oído Cocina</title>
 <link rel="manifest" href="/manifest-inventario.json">
 <link rel="icon" type="image/png" sizes="32x32" href="/inventario-favicon-32.png">
 <link rel="apple-touch-icon" href="/inventario-apple-180.png">
@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="/horarios.css">
 <script src="/config-nube.js"></script>
 <script src="/equipo.js"></script>
+<script src="/marca.js"></script>
 <script src="/inventario.js"></script>
 <script src="/instalar.js"></script>
 <style>
@@ -66,7 +67,7 @@ header .btn-sec{color:#f0efe9;border-color:rgba(255,255,255,.25);padding:5px 10p
 </head>
 <body>
 <header>
-  <h1>Inventario <span>Seda</span><br><small>Seda Club Hotel · Granada</small></h1>
+  <h1>Inventario <span id="marca-corto"></span><br><small id="marca-linea">Oído Cocina</small></h1>
   <span class="sp"></span>
   <span id="sync">…</span>
   <button class="btn-sec" id="salir" style="display:none" onclick="salir()">Salir</button>
@@ -75,7 +76,7 @@ header .btn-sec{color:#f0efe9;border-color:rgba(255,255,255,.25);padding:5px 10p
 
 <div id="login" role="dialog" aria-modal="true" aria-labelledby="login-t">
   <form onsubmit="return entrar(event)">
-    <h2 id="login-t">Inventario <span>Seda</span></h2>
+    <h2 id="login-t">Inventario <span>· Oído Cocina</span></h2>
     <p>Entra con tu cuenta de Oído Cocina</p>
     <label for="l-email">Correo</label><input id="l-email" type="email" autocomplete="username" inputmode="email" required>
     <label for="l-pass">Contraseña</label><input id="l-pass" type="password" autocomplete="current-password" required>
@@ -121,8 +122,8 @@ async function salir(){try{await supa.auth.signOut()}catch(e){}try{localStorage.
 
 // Hotel y rol de esta cuenta (equipo.js; _uid pasa a ser el hotel). Inventario: admin, dirección y chef.
 async function esCocina(){
-  await perfilAlEntrar();
-  return !rolEn(['admin','direccion','chef'])}
+  await perfilAlEntrar(); aplicarMarca();
+  return !rolEn(['admin','direccion','chef'])||!moduloActivo('costes')}
 let _prov=LS('iv_prov')||[],_provIds=new Set();
 window.IV_PROV={lista:()=>_prov,guardar:async arr=>{_prov=arr;LS('iv_prov',arr);if(!_uid||!supa||navigator.onLine===false){estado(false);return}
   const rows=arr.map(r=>({id:String(r.id),nombre:r.nombre,tel:r.tel||'',cat:r.cat,hotel_id:_uid}));

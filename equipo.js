@@ -36,6 +36,12 @@ async function perfilCargar(){
   return _perfil;
 }
 const miRol = () => (_perfil && _perfil.rol) || 'admin';
+// Módulos de pago del hotel (fase 3): base, costes, seguridad, equipo. Sin dato (nube antigua): todos.
+const MODULOS = {base: 'Base', costes: 'Costes', seguridad: 'Seguridad alimentaria', equipo: 'Equipo'};
+function moduloActivo(m){ return m === 'base' || !_perfil || !Array.isArray(_perfil.modulos) || _perfil.modulos.includes(m); }
+// Secciones de la app principal de cada módulo (lo que no está aquí es de la base)
+const MODULO_DE = {escandallo: 'costes', inventario: 'costes', costes: 'costes', appcc: 'seguridad', horarios: 'equipo'};
+const seccionActiva = tab => moduloActivo(MODULO_DE[tab] || 'base');
 const rolEn = roles => roles.includes(miRol());
 
 // ── Permisos (los mismos que la base de datos) ──
@@ -44,11 +50,20 @@ const PERM_TABLA = {recetas: ['admin', 'chef'], eventos: ['admin', 'direccion', 
   proveedores: ['admin', 'direccion', 'chef'], personal: ['admin', 'direccion']};
 function puedeTabla(t){ return !PERM_TABLA[t] || rolEn(PERM_TABLA[t]); }
 function puedeConfig(k){
+  if((k === 'seda_precios' || k === 'seda_inventario' || k === 'seda_compras') && !moduloActivo('costes')) return false;
+  if((k === 'seda_appcc' || k === 'seda_alg_rev') && !moduloActivo('seguridad')) return false;
+  if(k === 'seda_horarios' && !moduloActivo('equipo')) return false;
   if(k === 'seda_precios' || k === 'seda_inventario' || k === 'seda_compras' || k === 'seda_horarios') return rolEn(['admin', 'direccion', 'chef']);
   if(k === 'seda_appcc') return rolEn(['admin', 'direccion', 'chef', 'cocina']);
   if(k === 'seda_alg_rev') return rolEn(['admin', 'direccion', 'chef', 'eventos']);
   if(k === 'seda_pin' || k === 'seda_rec') return rolEn(['admin']);
   return rolEn(['admin', 'direccion']);
+}
+
+// Nombre y ciudad del hotel en la lista de clientes (solo admin; si la nube no tiene la fase 3, no pasa nada)
+async function guardarHotelNube(nombre, ciudad){
+  if(!_perfil || _perfil.antiguo || miRol() !== 'admin' || typeof supa === 'undefined' || !supa) return;
+  try{ await supa.rpc('guardar_hotel', {p_nombre: nombre || '', p_ciudad: ciudad || ''}); _perfil.hotel_nombre = nombre || _perfil.hotel_nombre; _perfil.hotel_ciudad = ciudad; }catch(e){}
 }
 
 // ── Unirse a un hotel con un código ──
@@ -67,7 +82,7 @@ function pantallaSinHotel(){
   d.style.cssText = 'position:fixed;inset:0;z-index:1010;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:16px';
   d.innerHTML = `<form style="background:#1a1a1a;color:#f0efe9;border:1px solid #c9a84c;border-radius:14px;padding:20px;max-width:380px;width:100%;font:14px/1.4 system-ui,sans-serif">
     <div style="font-size:18px;font-weight:600;margin-bottom:6px">Únete a tu equipo</div>
-    <p style="margin:0 0 12px;color:rgba(255,255,255,.7)">Tu cuenta aún no está en ningún hotel. Escribe el código de invitación que te han dado.</p>
+    <p style="margin:0 0 12px;color:rgba(255,255,255,.7)">Tu cuenta aún no está en ningún hotel o restaurante. Escribe el código que te han dado (de tu equipo o de cliente nuevo).</p>
     <label style="display:block;font-size:12px;color:rgba(255,255,255,.6)">Código</label>
     <input id="eq-cod" required autocomplete="off" autocapitalize="characters" value="${_eqE(pend && pend.codigo || '')}" style="width:100%;min-height:44px;font-size:18px;letter-spacing:.15em;text-transform:uppercase;margin:4px 0 10px">
     <label style="display:block;font-size:12px;color:rgba(255,255,255,.6)">Tu nombre</label>
@@ -184,5 +199,65 @@ document.addEventListener('click', async e => {
   .eq-sm{padding:4px 9px;font-size:12px;min-height:34px}
   .eq-nuevo{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:12px;padding-top:10px;border-top:.5px solid var(--border,#ddd)}
   .eq-nuevo label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--text-secondary,#777);flex:1;min-width:140px}`;
+  (document.head || document.documentElement).appendChild(st);
+})();
+
+// ── Panel de la plataforma: clientes, códigos de cliente y módulos (solo la cuenta plataforma) ──
+async function clientesPintar(){
+  const c = document.getElementById('clientes-card'); if(!c) return;
+  if(!_perfil || !_perfil.plataforma){ c.style.display = 'none'; return; }
+  c.style.display = '';
+  let lista = [], codigos = [];
+  try{
+    const [l, k] = await Promise.all([supa.rpc('clientes'), supa.from('codigos_cliente').select('*').is('usado_por', null).order('creado', {ascending: false})]);
+    if(l.error) throw l.error; lista = l.data || []; codigos = (k.data || []).filter(x => new Date(x.caduca) > new Date());
+  }catch(e){ c.innerHTML = `<div class="form-sec" style="margin-top:0"><i class="ti ti-building-store"></i> Clientes</div><p style="font-size:13px;color:var(--danger-text)">No se ha podido cargar la lista de clientes.</p>`; return; }
+  const chk = (pref, act) => Object.entries(MODULOS).filter(([k]) => k !== 'base').map(([k, n]) => `<label class="cl-mod"><input type="checkbox" data-cl-mod="${pref}" value="${k}"${act.includes(k) ? ' checked' : ''}${pref === _yo ? ' disabled title="Tu propio hotel: siempre con todo"' : ''}> ${n}</label>`).join('');
+  c.innerHTML = `<div class="form-sec" style="margin-top:0"><i class="ti ti-building-store"></i> Clientes</div>
+    <p style="font-size:13px;color:var(--text-secondary);margin:0 0 10px">Solo lo ves tú. Crea un código para cada cliente nuevo y elige sus módulos. La base (eventos, producción, recetario) va siempre.</p>
+    ${lista.map(h => `<div class="eq-fila" style="flex-wrap:wrap"><div><b>${_eqE(h.nombre || '(sin nombre)')}</b><small>${_eqE([h.ciudad, h.email, (h.personas || 0) + ' persona' + (h.personas == 1 ? '' : 's')].filter(Boolean).join(' · '))}</small></div>
+      <div class="cl-mods" data-cl-owner="${_eqE(h.owner)}">${chk(h.owner, h.modulos || [])}</div></div>`).join('')}
+    ${codigos.length ? `<div style="font-size:12px;font-weight:600;margin:12px 0 4px">Códigos de cliente sin usar</div>` + codigos.map(x => `<div class="eq-fila"><div><b style="letter-spacing:.1em;white-space:nowrap">${_eqE(x.codigo)}</b><small>${_eqE(x.nombre)}${x.ciudad ? ' · ' + _eqE(x.ciudad) : ''} · ${(x.modulos || []).filter(m => m !== 'base').map(m => MODULOS[m]).join(', ') || 'solo base'}</small></div><button class="btn-sec eq-sm" data-cl-copiar="${_eqE(x.codigo)}" data-cl-nom="${_eqE(x.nombre)}">Copiar mensaje</button><button class="btn-sec eq-sm" data-cl-borrar="${_eqE(x.codigo)}" aria-label="Borrar código">✕</button></div>`).join('') : ''}
+    <div class="eq-nuevo"><label>Nombre del cliente<input id="cl-nombre" placeholder="Restaurante…"></label><label>Ciudad<input id="cl-ciudad"></label>
+      <div class="cl-mods" style="flex-basis:100%">${chk('nuevo', ['costes', 'seguridad', 'equipo'])}</div>
+      <button class="btn btn-p" data-cl-crear="1"><i class="ti ti-plus"></i> Crear código de cliente</button></div>
+    <div id="cl-msg" style="font-size:13px;margin-top:8px"></div>`;
+}
+function _clMensaje(codigo, nombre){
+  return `Bienvenido a Oído Cocina, ${nombre}.\n1) Abre https://oidococina-xu7i.vercel.app\n2) Pulsa «Tengo un código de invitación»\n3) Escribe tu correo, una contraseña (mínimo 10 caracteres), tu nombre y este código: ${codigo}\nCon esa cuenta serás el administrador de ${nombre} y podrás invitar a tu equipo. El código caduca en 30 días.`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-cl-crear],[data-cl-copiar],[data-cl-borrar]'); if(!b) return;
+  const msg = t => { const m = document.getElementById('cl-msg'); if(m) m.textContent = t; };
+  try{
+    if(b.dataset.clCrear){
+      const nombre = document.getElementById('cl-nombre').value.trim(), ciudad = document.getElementById('cl-ciudad').value.trim();
+      if(!nombre) return msg('Escribe el nombre del cliente.');
+      const modulos = ['base', ...[...document.querySelectorAll('[data-cl-mod="nuevo"]:checked')].map(x => x.value)];
+      const codigo = 'C' + _eqCodigo().slice(1);
+      const {error} = await supa.from('codigos_cliente').insert({codigo, nombre, ciudad: ciudad || null, modulos});
+      if(error) throw error;
+      await clientesPintar();
+      _eqCopiar(_clMensaje(codigo, nombre), () => msg(`Código ${codigo} creado y mensaje copiado.`));
+      msg(`Código ${codigo} creado. Pulsa «Copiar mensaje» para enviarlo.`);
+    }else if(b.dataset.clCopiar){
+      _eqCopiar(_clMensaje(b.dataset.clCopiar, b.dataset.clNom), () => msg('Mensaje copiado.'));
+    }else if(b.dataset.clBorrar){
+      const {error} = await supa.from('codigos_cliente').delete().eq('codigo', b.dataset.clBorrar); if(error) throw error; await clientesPintar();
+    }
+  }catch(err){ msg('No se ha podido: ' + (err.message || 'revisa la conexión')); }
+});
+document.addEventListener('change', async e => {
+  const x = e.target.closest('.cl-mods[data-cl-owner] input'); if(!x) return;
+  const caja = x.closest('.cl-mods'), owner = caja.dataset.clOwner;
+  const modulos = [...caja.querySelectorAll('input:checked')].map(i => i.value);
+  try{ const {error} = await supa.rpc('cambiar_modulos', {p_owner: owner, p_modulos: modulos}); if(error) throw error;
+    if(owner === _yo && _perfil){ _perfil.modulos = ['base', ...modulos]; }
+  }catch(err){ x.checked = !x.checked; alert('No se ha podido cambiar el módulo: ' + (err.message || 'revisa la conexión')); }
+});
+(function(){
+  if(typeof document === 'undefined' || document.getElementById('cl-css')) return;
+  const st = document.createElement('style'); st.id = 'cl-css';
+  st.textContent = `.cl-mods{display:flex;flex-wrap:wrap;gap:4px 12px;flex-basis:100%}.cl-mod,.eq-nuevo .cl-mod{display:flex;flex-direction:row;flex:0 0 auto;min-width:0;align-items:center;gap:5px;font-size:12px;color:var(--text-primary,#222)}.cl-mod input{width:auto;margin:0;min-height:0}`;
   (document.head || document.documentElement).appendChild(st);
 })();

@@ -1,7 +1,7 @@
 {
   "name": "Horarios Cocina",
   "short_name": "Horarios",
-  "description": "Turnos, vacaciones y cobertura de la cocina · Seda Club Hotel Granada",
+  "description": "Turnos, vacaciones y cobertura de la cocina · Oído Cocina",
   "id": "/horarios.html",
   "start_url": "/horarios.html",
   "scope": "/",

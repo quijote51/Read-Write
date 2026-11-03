@@ -1,7 +1,7 @@
 {
-  "name": "APPCC Seda",
+  "name": "APPCC · Oído Cocina",
   "short_name": "APPCC",
-  "description": "Registros de autocontrol APPCC de cocina · Seda Club Hotel Granada",
+  "description": "Registros de autocontrol APPCC de cocina · Oído Cocina",
   "id": "/appcc.html",
   "start_url": "/appcc.html",
   "scope": "/",
