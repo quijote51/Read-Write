@@ -2458,9 +2458,9 @@ async function subirFotoVajilla(id, input){
   const file=input&&input.files&&input.files[0]; if(!file)return;
   const img=await reducirFoto(file); if(!img)return; // fotos.js: la reduce antes de guardarla
   const v=vajilla.find(x=>x.id===id); if(!v)return;
-  v.img=img;
+  await fotoGuardar(v,'vajilla',img); // al almacén de fotos si hay sesión; si no, dentro de los datos
   saveVaj(vajilla);
-  document.querySelectorAll(`[data-vaj-id="${id}"] img`).forEach(el=>el.src=img);
+  document.querySelectorAll(`[data-vaj-id="${id}"] img`).forEach(el=>el.src=v.img);
   verDetallePieza(id);
 }
 
