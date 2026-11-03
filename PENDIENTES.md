@@ -42,6 +42,12 @@
 - [ ] Crear las elaboraciones base reales (fondo oscuro, bordalesa, masas…) y usarlas en los platos.
 - Próximas mejoras propuestas, por orden: rendimiento de ingredientes (merma al limpiar), avisos en el móvil, hoja de evento por departamento, registro de sobras por evento, cambios al momento entre aparatos y foto del albarán que se rellena sola (IA).
 
+## Estado al cierre del 3/11/2026
+- PR #11 (fotos al almacén) abierta: falta fusionarla y pegar `supabase/fotos-almacen.sql`.
+- Falta pegar `supabase/proteger-inventario.sql` (no se aplicó la primera vez).
+- Copias de seguridad en `copias`: nº 1 a 4 (la 4, antes de juntar config: 312 artículos, 65 precios, 9 plantillas).
+- Plan para vender la app (fases): 1) varias personas sin pisarse — HECHA salvo activar fotos; 2) una cuenta por persona y permisos reales; 3) varios clientes (quitar «Seda» del código, nombre y logo por cliente, módulos activables con bloqueo en la base de datos); 4) copias automáticas, pruebas, planes de pago de Vercel/Supabase y lo legal (RGPD: las alergias son datos de salud).
+
 ## Fase 1: varias personas a la vez sin pisarse (empezada el 3/11/2026)
 - [x] Copia de seguridad de todos los datos (tabla `copias`, función `hacer_copia`).
 - [x] Recetas: una fila por receta; solo se sube lo cambiado; si dos personas tocan la misma receta se juntan por campos.

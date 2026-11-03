@@ -48,6 +48,7 @@ App web (PWA) para la gestión de la cocina y los eventos de un hotel. HTML, CSS
 ## Probar
 - Servir con `python3 -m http.server 8765` y usar Playwright con un ancho de 390 px, entrando con «Seguir sin cuenta».
 - Desde la sesión no se llega a la CDN ni a Supabase. Para probar con nube, simular `supabase-js` con `page.route` (registrar antes el bloqueo de la CDN: gana la última ruta) y crear el contexto con `serviceWorkers:'block'`, o el service worker se salta la simulación al recargar. La simulación debe desordenar las claves de los jsonb como Postgres y rechazar columnas que no existen.
+- Pruebas de sincronización ya hechas en `pruebas/` (ver su README): pasarlas antes de cada PR que toque la nube.
 - Comprobar siempre: sin `pageerror`, `scrollWidth` de 390 y que nada se sale de la pantalla.
 
 ## Git
