@@ -46,7 +46,7 @@
 - [x] Copia de seguridad de todos los datos (tabla `copias`, función `hacer_copia`).
 - [x] Recetas: una fila por receta; solo se sube lo cambiado; si dos personas tocan la misma receta se juntan por campos.
 - [ ] Abrir la app una vez con internet en TODOS los aparatos después de publicar (los que no se actualicen siguen guardando en el sistema antiguo).
-- [ ] Eventos, vajilla, plantillas, proveedores y personal: subir solo lo cambiado y no pisar cambios de otros.
+- [x] Eventos, vajilla, plantillas, proveedores y personal: solo se sube lo cambiado (campo a campo) y no se pisan cambios de otros.
 - [ ] Precios, inventario y horarios: juntar en vez de sustituir.
 - [ ] Fotos al almacén de archivos de Supabase.
 
