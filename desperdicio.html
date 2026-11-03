@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Registro de sobras y plan de prevención del desperdicio · Oído Cocina">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Desperdicio">
+<title>Desperdicio · Oído Cocina</title>
+<link rel="manifest" href="/manifest-desperdicio.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/desperdicio-favicon-32.png">
+<link rel="apple-touch-icon" href="/desperdicio-apple-180.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.50.0/tabler-icons.min.css">
+<link rel="stylesheet" href="/app-base.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="/app-base.js"></script>
+<script src="/equipo.js"></script>
+<script src="/marca.js"></script>
+<script src="/config-nube.js"></script>
+<script src="/recetas-nube.js"></script>
+<script src="/instalar.js"></script>
+<script src="/desperdicio.js"></script>
+</head>
+<body>
+<header>
+  <h1>Desperdicio <span id="marca-corto"></span><br><small id="marca-linea">Oído Cocina</small></h1>
+  <span class="sp"></span>
+  <span id="sync">…</span>
+  <button class="btn-sec" id="salir" style="display:none" onclick="salir()">Salir</button>
+</header>
+<main><div id="dp-root"></div></main>
+<script>
+// Desperdicio alimentario (Ley 1/2025): registro de sobras, resumen, plan y cartel. Lógica en desperdicio.js.
+window.APP={nombre:'Desperdicio',
+  modulo:'seguridad',
+  roles:['admin','direccion','chef','cocina'],
+  async arrancar(){ initDesperdicio(); await this.recargar(); },
+  async recargar(){ await cargarNube({seda_desperdicio:v=>desperdicioDesdeNube(v)}); initDesperdicio(); }
+};
+</script>
+</body>
+</html>

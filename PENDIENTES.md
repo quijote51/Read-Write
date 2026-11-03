@@ -54,6 +54,7 @@
 - [x] 4. Avisos: campana en la app y notificaciones en el móvil (`avisos.js`, función `avisos-push` desplegada). Activado (PR #18 y #19, SQL, 3/11/2026). El stock bajo mínimo solo sale en la campana (se calcula en el aparato).
 - [x] 5. Rendimiento de ingredientes (`rendimiento.js`): % aprovechable en Escandallo → Precios.
 - [ ] Pesar y poner el aprovechable real de pescados, carnes y verduras.
+- [x] Apps con acceso directo de Desperdicio (`desperdicio.html`) y Carta QR (`cartas.html`).
 - [ ] 6. Fichaje · 7. Hoja por departamento · 8. Previsión de producción.
 - Estudio: https://claude.ai/artifact/1r653St1bewnFA4Z395pcV
 
