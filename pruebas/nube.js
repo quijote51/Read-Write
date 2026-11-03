@@ -17,6 +17,7 @@ function almacen(op,a){
   if(op==='remove'){a[0].forEach(n=>{delete ALMACEN[n];log.push('foto borra '+n.split('/').slice(1).join('/').replace(/-.*/,''))});return {data:[],error:null}}
 }
 // Fase 2: perfiles por cuenta (yo → {hotel, rol, nombre}); sin entrada = cuenta sin hotel. rpcActivo=false: nube sin fase 2
+const FUNCIONES={}; const LLAMADAS=[];
 const PERFILES={[HOTEL]:{hotel:HOTEL,rol:'admin',nombre:null,hotel_nombre:'Seda Club Hotel',hotel_ciudad:'Granada',modulos:['base','costes','seguridad','equipo'],plataforma:true}}; const INVIT={}; const CLIENTES={}; let rpcActivo=true;
 const hotelDe=yo=>(PERFILES[yo]&&PERFILES[yo].hotel)||yo;
 function rpc(n,a,yo){
@@ -68,12 +69,13 @@ function q(t){const st={op:'select',f:[],v:null,on:null,single:false};const o={
  update(v){st.op='update';st.v=v;return o},insert(v){st.op='insert';st.v=v;return o},delete(){st.op='delete';return o},
  then(a,b){return window.__db(t,{...JSON.parse(JSON.stringify(st)),yo:window.__YO||'${HOTEL}'}).then(a,b)}};return o}
 const st=b=>({upload:async(n,blob)=>{const buf=await blob.arrayBuffer();return window.__almacen('upload',[n,String(buf.byteLength)])},remove:async(l)=>window.__almacen('remove',[l]),getPublicUrl:n=>({data:{publicUrl:'https://gxkxslkdqgwovgxcuzkr.supabase.co/storage/v1/object/public/'+b+'/'+n}})});
-window.supabase={createClient:()=>({rpc:(n,a)=>window.__rpc(n,a||{},window.__YO||'${HOTEL}'),storage:{from:st},auth:{signUp:async()=>({data:{session:{user:{id:window.__YO}}},error:null}),getSession:async()=>({data:{session:window.__YO==='nadie'?null:{user:{id:window.__YO||'${HOTEL}',email:'yo@x'}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:async()=>{}},from:q})};})();`;
+window.supabase={createClient:()=>({functions:{invoke:async(n,o)=>{const r=await window.__fn(n,(o||{}).body);return r.error?{data:null,error:{message:r.error,context:{json:async()=>({error:r.error})}}}:{data:r.data,error:null}}},rpc:(n,a)=>window.__rpc(n,a||{},window.__YO||'${HOTEL}'),storage:{from:st},auth:{signUp:async()=>({data:{session:{user:{id:window.__YO}}},error:null}),getSession:async()=>({data:{session:window.__YO==='nadie'?null:{user:{id:window.__YO||'${HOTEL}',email:'yo@x'}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:async()=>{}},from:q})};})();`;
 async function pagina(b,url,{w=390,yo=HOTEL}={}){
   const ctx=await b.newContext({viewport:{width:w,height:800},serviceWorkers:'block'});const p=await ctx.newPage();p.errs=[];p.on('pageerror',e=>p.errs.push(e.message));
   await p.exposeFunction('__db',(t,q)=>aplicar(t,q));
   await p.exposeFunction('__almacen',(op,a)=>almacen(op,a));
   await p.exposeFunction('__rpc',(n,a,u)=>rpc(n,a,u));
+  await p.exposeFunction('__fn',(n,body)=>{const h=FUNCIONES[n];if(!h)return {error:'función '+n+' no existe'};LLAMADAS.push({n,body});return h(body)});
   await p.addInitScript(y=>{window.__YO=y},yo);
   await p.route(/supabase\.co\/storage/,r=>r.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64')}));
   await p.route(/fonts\.g|tabler|cdn\.jsdelivr/,r=>r.abort());
@@ -83,4 +85,4 @@ async function pagina(b,url,{w=390,yo=HOTEL}={}){
   await p.evaluate(()=>{const m=document.getElementById('rol-modal');if(m)m.style.display='none'});
   return p;
 }
-module.exports={PERFILES,CLIENTES,INVIT,setRpc:v=>{rpcActivo=v},ALMACEN,setAlmacen:v=>{almacenListo=v},rechazos,get DB(){return DB},set DB(v){DB=v},nuevaDB,log,pagina,setFallar:f=>{fallar=f},HOTEL};
+module.exports={FUNCIONES,LLAMADAS,PERFILES,CLIENTES,INVIT,setRpc:v=>{rpcActivo=v},ALMACEN,setAlmacen:v=>{almacenListo=v},rechazos,get DB(){return DB},set DB(v){DB=v},nuevaDB,log,pagina,setFallar:f=>{fallar=f},HOTEL};

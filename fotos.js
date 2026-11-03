@@ -17,16 +17,16 @@ function _fotoLeer(file){
   return new Promise((ok, mal) => { const r = new FileReader(); r.onload = e => ok(e.target.result); r.onerror = mal; r.readAsDataURL(file); });
 }
 // Devuelve la foto reducida como texto (data:image/jpeg...). Si no se puede reducir, devuelve la original.
-async function reducirImagen(src){
+async function reducirImagen(src, lado = FOTO_LADO, calidad = FOTO_CALIDAD){ // albaranes: más grande para leer la letra
   try{
     const img = await _fotoCargar(src);
-    const esc = Math.min(1, FOTO_LADO / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+    const esc = Math.min(1, lado / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
     const w = Math.max(1, Math.round(img.naturalWidth * esc)), h = Math.max(1, Math.round(img.naturalHeight * esc));
     const c = document.createElement('canvas'); c.width = w; c.height = h;
     const ctx = c.getContext('2d');
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); // fondo blanco para PNG con transparencia
     ctx.drawImage(img, 0, 0, w, h);
-    const out = c.toDataURL('image/jpeg', FOTO_CALIDAD);
+    const out = c.toDataURL('image/jpeg', calidad);
     return out.length < src.length ? out : src;
   }catch(e){ console.warn('Foto', e); return src; }
 }
