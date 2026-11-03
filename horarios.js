@@ -3,33 +3,11 @@
    Forma: {equipo:[{n,rol,g,desde,hasta}], semanas:{lunesISO:{nombre:[7 turnos]}}, extras:{}, practicas:{}, vac:[{e,t,i,f,n}]} */
 const HZ_KEY = 'seda_horarios';
 const HZ_ABR = {L:'LIBRE',V:'VACACIONES',B:'BAJA MATERNAL',P:'12:00-16:00\n20:00-00:00',a:'08:00-16:00',b:'06:30-14:30',c:'16:00-00:00',d:'14:30-22:30',e:'12:00-20:00',f:'09:00-17:00',R:'RECUPERACIÓN DÍA LIBRE TRABAJADO','-':''};
-function hzSeed(){
-  const eq=[['Rubén','Jefe de cocina',0],['Darío','Cocinero',1],['Fabián','Cocinero',1],['Álvaro','Cocinero',1],['Rocío','Segunda cocina',2],['John','Ayudante',3],['David','Ayudante',3],['Ana','Ayudante',3],['Rosa','Fregantina',4],['Camila','Fregantina',4],['Jimena','Fregantina',4]]
-    .map(([n,rol,g])=>({n,rol,g,desde:n==='Jimena'?'2026-10-19':'',hasta:n==='Rosa'?'2026-10-18':''}));
-  const S={
-  '2026-04-20':['c c a a a L L','P P L L d a a','a a b b L L P','L L c c c P P','B B B B B B B','b b L L b b b','V V V V V V V','L L P P c c c','- - c f P P c','B B B B B B B'],
-  '2026-04-27':['e e L L a a a','L L d d d P P','L L P P 10:00-18:00 b b','c c L L P P d','B B B B B B B','b b b b b L L','V V V V V V V','P P L L c c c','L L c c P P e','B B B B B B B'],
-  '2026-05-04':['a P a L L a a','P P L L d d c','b b L L P P e','d d P L L P c','B B B B B B B','V V V V V V V','L L b b b b b','08:00-12:00|20:00-00:00 c c P c L L','L L c c c c P','B B B B B B B'],
-  '2026-05-11':['a P a L L a a','c c P P f L L','P e L L c P 17:00-00:00','V V V V V V V','B B B B B B B','L L b b c P P','b b L L b b b','L L c d P f P','L L a a P P a','B B B B B B B'],
-  '2026-05-18':['e P a a a L L','d d L L d P P','V V V V V V V','L L c c c P P','B B B B B B B','L L b b b b b','b b P L L a a','c L L P P d c','c c c P P P P','B B B B B B B'],
-  '2026-05-25':['a L L P a a a','c P P c L L c','L L c d P P c','d 08:00-12:00|16:00-20:00 L L c c P','B B B B B B B','b b b L L b b','P P f b b L L','V V V V V V V','L L a a P P f','B B B B B B B'],
-  '2026-10-19':['a a c c L a L','L L a a P P c','b b P P L L a','d d L L P P 10:00-18:00','B B B B B B B','L L b b b b b','V V V V V V V','c c L L 08:00-12:00|16:00-20:00 08:00-12:00|16:00-20:00 c','- - - - - - -','B B B B B B B','L L c c c P P'],
-  '2026-10-26':['L L d d R 08:00-12:00|16:00-20:00 a','c c L L c P P','a a P P L L d','V V V V V V V','B B B B B B B','b b L L P P c','L L 06:00-14:00 06:00-14:00 06:00-14:00 06:00-14:00 06:00-14:00','P P f a a L L','- - - - - - -','B B B B B B B','L L c c c P P'],
-  '2026-11-02':['a 08:00-16:00|20:00-22:00 a a L L R','c c L L P a a','L L c c c P P','V V V V V V V','B B B B B B B','10:00-18:00 b b P P L L','06:00-14:00 L L 06:00-14:00 06:00-14:00 06:00-14:00 06:00-14:00','P P c L L c c','- - - - - - -','B B B B B B B','L L a a a P P'],
-  '2026-11-09':['c c L L a a a','a a P P c L L','V V V V V V V','L L a a a P P','B B B B B B B','L L b b b b b','06:00-14:00 06:00-14:00 L L P P 10:00-18:00','P P c c L L c','- - - - - - -','B B B B B B B','L L c c c P P']};
-  const semanas={};
-  for(const k in S){semanas[k]={};S[k].forEach((l,i)=>{semanas[k][eq[i].n]=l.split(' ').map(x=>x in HZ_ABR?HZ_ABR[x]:x.replace('|','\n'))})}
-  const vac=[['Rubén','verano','2026-08-01','2026-08-22','Verano principal'],['Rubén','invierno','2026-12-24','2026-12-31','Navidad'],['Fabián','verano','2026-07-15','2026-08-04','Verano'],['Álvaro','verano','2026-07-01','2026-07-14','Verano'],['Rocío','maternal','2026-01-15','2026-12-31','Baja maternal'],['John','verano','2026-08-10','2026-08-25','Verano'],['David','verano','2026-07-20','2026-08-10','Verano'],['Ana','verano','2026-08-01','2026-08-15','Verano'],['Rosa','verano','2026-07-01','2026-07-21','Verano principal'],['Camila','maternal','2026-01-20','2026-12-31','Baja maternal'],['Fabián','extra','2026-11-09','2026-11-15','Semana de noviembre'],['David','extra','2026-10-19','2026-10-25','Vacaciones octubre'],['Álvaro','extra','2026-10-26','2026-11-08','Vacaciones octubre-noviembre']].map(([e,t,i,f,n])=>({e,t,i,f,n}));
-  return {equipo:eq,semanas,extras:{},practicas:{},vac};
-}
+// Horarios vacíos para empezar (los datos de cada hotel están en su nube; nada de nombres de un cliente en el código)
+function hzSeed(){ return {equipo:[],semanas:{},extras:{},practicas:{},vac:[]}; }
 function hzNormaliza(v){
   if(!v||typeof v!=='object') return hzSeed();
   v.equipo=Array.isArray(v.equipo)?v.equipo:hzSeed().equipo; v.semanas=v.semanas||{}; v.extras=v.extras||{}; v.practicas=v.practicas||{}; v.vac=v.vac||[]; v.ts=v.ts||0; v.wts=v.wts||{};
-  // Semanas cargadas desde fotos que aún no estén en este dispositivo o en la nube (no pisa lo ya editado)
-  const sd=hzSeed();
-  for(const k in sd.semanas) if(!v.semanas[k]) v.semanas[k]=sd.semanas[k];
-  v.equipo.forEach(e=>{ if(e.n==='Jimena'&&e.desde==='2026-11-09') e.desde='2026-10-19'; if(e.n==='Rosa'&&e.hasta==='2026-11-08') e.hasta='2026-10-18'; });
-  sd.vac.filter(x=>/octubre/.test(x.n||'')).forEach(x=>{ if(!v.vac.some(y=>y.e===x.e&&y.i===x.i&&y.f===x.f)) v.vac.push(x); });
   return v;
 }
 const hzClon=o=>JSON.parse(JSON.stringify(o));

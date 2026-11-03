@@ -1,7 +1,7 @@
 {
-  "name": "Inventario Seda",
+  "name": "Inventario · Oído Cocina",
   "short_name": "Inventario",
-  "description": "Inventario mensual de cocina · Seda Club Hotel Granada",
+  "description": "Inventario mensual de cocina · Oído Cocina",
   "id": "/inventario.html",
   "start_url": "/inventario.html",
   "scope": "/",

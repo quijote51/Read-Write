@@ -47,6 +47,12 @@
 - Copias de seguridad en `copias`: nº 1 a 4 (la 4, antes de juntar config: 312 artículos, 65 precios, 9 plantillas).
 - Plan para vender la app (fases): 1) varias personas sin pisarse — HECHA salvo activar fotos; 2) una cuenta por persona y permisos reales; 3) varios clientes (quitar «Seda» del código, nombre y logo por cliente, módulos activables con bloqueo en la base de datos); 4) copias automáticas, pruebas, planes de pago de Vercel/Supabase y lo legal (RGPD: las alergias son datos de salud).
 
+## Fase 3: varios clientes (3/11/2026)
+- [x] Base de datos: `supabase/fase3-clientes.sql` (módulos, códigos de cliente, panel de la plataforma). Probado en PostgreSQL local.
+- [x] App: sin «Seda» fijo (`marca.js`), secciones y apps según módulos, Ajustes → Clientes.
+- [ ] Fusionar la PR y pegar `supabase/fase3-clientes.sql`.
+- [ ] Logo de cada cliente (en hoja impresa y cabecera).
+
 ## Fase 2: una cuenta por persona (3/11/2026)
 - [x] Base de datos: `supabase/fase2-cuentas.sql` (roles, permisos por tabla y por clave, invitaciones). Probado en PostgreSQL local.
 - [x] App: `equipo.js` (perfil, rol fijo para miembros, alta con código, Ajustes → Equipo).

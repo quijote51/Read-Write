@@ -101,7 +101,7 @@ function _pintarLogin(){
   if($('login'))return;
   const n=escH((window.APP&&APP.nombre)||'Oído Cocina');
   const d=document.createElement('div'); d.id='login'; d.setAttribute('role','dialog'); d.setAttribute('aria-modal','true'); d.setAttribute('aria-labelledby','login-t');
-  d.innerHTML=`<form onsubmit="return entrar(event)"><h2 id="login-t">${n} <span>Seda</span></h2><p>Entra con tu cuenta de Oído Cocina</p>
+  d.innerHTML=`<form onsubmit="return entrar(event)"><h2 id="login-t">${n} <span>· Oído Cocina</span></h2><p>Entra con tu cuenta de Oído Cocina</p>
     <label for="l-email">Correo</label><input id="l-email" type="email" autocomplete="username" inputmode="email" required>
     <label for="l-pass">Contraseña</label><input id="l-pass" type="password" autocomplete="current-password" required>
     <div id="login-error" role="alert"></div><button class="btn" id="l-btn" type="submit">Entrar</button></form>`;
@@ -111,6 +111,9 @@ async function _arrancar(){
   const s=$('salir'); if(s)s.style.display='';
   // Hotel y rol de esta cuenta (equipo.js). Cada app dice qué roles la usan (APP.roles)
   if(typeof perfilAlEntrar==='function') await perfilAlEntrar();
+  if(typeof aplicarMarca==='function')aplicarMarca();
+  // Módulo de pago de esta app (APP.modulo): si el hotel no lo tiene, se explica
+  if(window.APP&&APP.modulo&&typeof moduloActivo==='function'&&!moduloActivo(APP.modulo)){document.querySelector('main').innerHTML=`<div class="card hz-vacio">Esta app no está incluida en vuestro plan. Pídela a Oído Cocina.</div>`;estado(true);return}
   const roles=window.APP&&APP.roles;
   if(roles&&typeof rolEn==='function'&&!rolEn(roles)){document.querySelector('main').innerHTML=`<div class="card hz-vacio">Tu rol no usa esta app. Los horarios están en la app Horarios.</div>`;estado(true);return}
   if(window.APP&&APP.arrancar)await APP.arrancar();

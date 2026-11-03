@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Turnos, vacaciones y cobertura de la cocina · Seda Club Hotel Granada">
+<meta name="description" content="Turnos, vacaciones y cobertura de la cocina · Oído Cocina">
 <meta name="theme-color" content="#1a1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Horarios">
-<title>Horarios Cocina · Seda Club Hotel</title>
+<title>Horarios Cocina · Oído Cocina</title>
 <link rel="manifest" href="/manifest-horarios.json">
 <link rel="icon" type="image/png" sizes="32x32" href="/horarios-favicon-32.png">
 <link rel="apple-touch-icon" href="/horarios-apple-180.png">
@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="/horarios.css">
 <script src="/config-nube.js"></script>
 <script src="/equipo.js"></script>
+<script src="/marca.js"></script>
 <script src="/horarios.js"></script>
 <script src="/instalar.js"></script>
 <style>
@@ -65,7 +66,7 @@ header .btn-sec{color:#f0efe9;border-color:rgba(255,255,255,.25);padding:5px 10p
 </head>
 <body>
 <header>
-  <h1>Horarios <span>Cocina</span><br><small>Seda Club Hotel · Granada</small></h1>
+  <h1>Horarios <span>Cocina</span><br><small id="marca-linea">Oído Cocina</small></h1>
   <span class="sp"></span>
   <span id="sync">…</span>
   <button class="btn-sec" id="salir" style="display:none" onclick="salir()">Salir</button>
@@ -154,7 +155,7 @@ window.HZ_CAMB={
 };
 // Hotel y rol de esta cuenta (equipo.js; _uid pasa a ser el hotel). Solo admin, dirección y chef cambian horarios.
 async function detectarRol(){
-  const p=await perfilAlEntrar();
+  const p=await perfilAlEntrar(); aplicarMarca();
   const r=(p&&p.rol)||LS('hz_rol')||'admin';LS('hz_rol',r);
   _hotel=_uid;LS('hz_hotel',_hotel);
   window.HZ_SOLO_LEER=!['admin','direccion','chef'].includes(r);return r}

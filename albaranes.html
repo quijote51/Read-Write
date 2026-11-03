@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Albaranes, precios y gasto de cocina · Seda Club Hotel Granada">
+<meta name="description" content="Albaranes, precios y gasto de cocina · Oído Cocina">
 <meta name="theme-color" content="#1a1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Albaranes">
-<title>Albaranes · Seda Club Hotel</title>
+<title>Albaranes · Oído Cocina</title>
 <link rel="manifest" href="/manifest-albaranes.json">
 <link rel="icon" type="image/png" sizes="32x32" href="/albaranes-favicon-32.png">
 <link rel="apple-touch-icon" href="/albaranes-apple-180.png">
@@ -17,6 +17,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="/app-base.js"></script>
 <script src="/equipo.js"></script>
+<script src="/marca.js"></script>
 <script src="/config-nube.js"></script>
 <script src="/recetas-nube.js"></script>
 <script src="/instalar.js"></script>
@@ -34,7 +35,7 @@ function savePrecios(p){LS('seda_precios',p);if(_preciosNube)syncConfig('seda_pr
 </head>
 <body>
 <header>
-  <h1>Albaranes <span>Seda</span><br><small>Seda Club Hotel · Granada</small></h1>
+  <h1>Albaranes <span id="marca-corto"></span><br><small id="marca-linea">Oído Cocina</small></h1>
   <span class="sp"></span>
   <span id="sync">…</span>
   <button class="btn-sec" id="salir" style="display:none" onclick="salir()">Salir</button>
@@ -43,6 +44,7 @@ function savePrecios(p){LS('seda_precios',p);if(_preciosNube)syncConfig('seda_pr
 <script>
 // Albaranes, gasto y precios. Lógica en compras.js (la misma sección «Albaranes y costes» de la app principal).
 window.APP={nombre:'Albaranes',
+  modulo:'costes',
   roles:['admin','direccion','chef'],
   alCambiar(){ initCostes(); }, // tras juntar con otro aparato, se repinta
   async arrancar(){ initCostes(); await this.recargar(); },
