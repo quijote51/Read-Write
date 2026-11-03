@@ -159,7 +159,7 @@ function vAlb(){
       <input inputmode="decimal" data-l="${i}" data-k="imp" value="${esc(l.imp)}" placeholder="Importe €" aria-label="Importe de la línea">
       <button class="btn-sec co-sm" data-co="quitalin" data-i="${i}" aria-label="Quitar línea">✕</button><div class="co-lin-i" id="co-li-${i}">${infoLinea(l,i)}</div></div>`}).join('');
   const lista=C().alb.slice().reverse().slice(0,30);
-  return `${datalists()}<datalist id="co-secs">${secciones().map(x=>`<option value="${esc(x)}">`).join('')}</datalist><div class="card"><b>Nuevo albarán</b><p class="co-ayuda">Una línea por producto: cantidad en la unidad del inventario e importe total de la línea (sin IVA, como en el albarán). El precio del artículo se actualiza solo.</p>
+  return `${datalists()}<datalist id="co-secs">${secciones().map(x=>`<option value="${esc(x)}">`).join('')}</datalist><div class="card"><div class="co-cab"><b>Nuevo albarán</b>${fotoDisponible()?`<label class="btn-sec co-foto"><i class="ti ti-camera"></i> Leer con foto<input type="file" accept="image/*" capture="environment" id="co-foto" hidden></label>`:''}</div><p class="co-ayuda">Una línea por producto: cantidad en la unidad del inventario e importe total de la línea (sin IVA, como en el albarán). El precio del artículo se actualiza solo.</p>
   <div class="co-form"><label>Proveedor<input id="co-prov" list="co-provs" type="text" value="${esc(cab.prov)}"></label><label>Nº de albarán<input id="co-num" type="text" value="${esc(cab.num)}"></label><label>Fecha<input id="co-fecha" type="date" value="${esc(cab.fecha||hoyK())}"></label></div>
   <div id="co-lineas">${filas}</div>
   <div class="co-acc"><button class="btn-sec" data-co="addlin">Añadir línea</button><span class="co-tot" id="co-tot"></span><button class="btn btn-p" data-co="guardaralb">Guardar albarán</button></div></div>
@@ -179,6 +179,28 @@ function infoLinea(l,i){
   if(!a)return '';
   if(!pu)return `<small>${esc(unidad(a.u))} · precio actual ${eur(a.p)}/${esc(unidad(a.u))}</small>`;
   return `<small class="${a.p&&pu>a.p*1.005?'co-sube':a.p&&pu<a.p*0.995?'co-baja':''}">${eur(pu)}/${esc(unidad(a.u))}${a.p?` · antes ${eur(a.p)} (${pct((pu-a.p)/a.p)})`:''}</small>`;
+}
+/* ── Foto del albarán con IA (función «leer-albaran» de Supabase) ── */
+// Hace falta sesión e internet; la lectura se hace en el servidor (la clave de la IA nunca llega al móvil)
+const fotoDisponible=()=>typeof supa!=='undefined'&&supa&&supa.functions&&typeof _uid!=='undefined'&&_uid&&typeof reducirImagen==='function';
+let leyendo=false;
+async function leerFoto(file){
+  if(!file||leyendo)return; if(!fotoDisponible())return aviso('!La lectura con foto necesita sesión e internet.');
+  leyendo=true; aviso('Leyendo el albarán… tarda unos segundos.');
+  try{
+    const img=await reducirImagen(await new Promise((ok,mal)=>{const r=new FileReader();r.onload=e=>ok(e.target.result);r.onerror=mal;r.readAsDataURL(file)}),1600,0.82);
+    const provs=(typeof proveedores!=='undefined'&&Array.isArray(proveedores)?proveedores:[]).map(p=>p.nombre).filter(Boolean);
+    const {data,error}=await supa.functions.invoke('leer-albaran',{body:{imagen:img.split(',')[1],tipo:'image/jpeg',articulos:arts().map(a=>`${a.n} (${a.u})`),proveedores:provs}});
+    if(error){let t='';try{t=(await error.context.json()).error}catch(_){} throw new Error(t||'La lectura con foto no está disponible ahora.')}
+    if(!data||!Array.isArray(data.lineas))throw new Error('No se ha podido leer el albarán.');
+    if(data.proveedor)cab.prov=data.proveedor; if(data.numero)cab.num=data.numero; if(/^\d{4}-\d{2}-\d{2}$/.test(data.fecha||''))cab.fecha=data.fecha;
+    const coma=v=>v==null?'':String(v).replace('.',',');
+    lineas=data.lineas.map(l=>{const a=l.articulo&&artPorNombre(l.articulo);return {a:a?a.n:(l.texto||''),cant:coma(l.cantidad),imp:coma(l.importe)}});
+    if(!lineas.length)lineas=[{a:'',cant:'',imp:''}];
+    const sinEnlace=lineas.filter(l=>l.a&&!artPorNombre(l.a)).length;
+    aviso(`Leído: ${data.lineas.length} línea${data.lineas.length===1?'':'s'}. Revisa cantidades e importes antes de guardar.${sinEnlace?` ${sinEnlace} no están en el inventario: puedes añadirlas desde su línea.`:''}${data.notas?' Nota: '+data.notas:''}`);
+  }catch(e){aviso('!'+(e.message||'No se ha podido leer el albarán.'))}
+  finally{leyendo=false}
 }
 function totalLineas(){return lineas.reduce((s,l)=>s+(num(l.imp)||0),0)}
 
@@ -378,6 +400,7 @@ window.initCostes=function(){
     });
     root.addEventListener('change',e=>{
       const t=e.target;
+      if(t.id==='co-foto'){const f=t.files&&t.files[0];t.value='';return leerFoto(f)}
       if(t.dataset.min!=null){const n=num(t.value);if(n===null||n<0)delete C().min[t.dataset.min];else C().min[t.dataset.min]=n;C().cts=Date.now();subir();return pintar()}
       if(t.dataset.enl!=null){const v=t.value.trim();if(v){C().enl[t.dataset.enl]=v;C().cts=Date.now();subir();return pintar()}return}
       if(t.dataset.l!=null&&t.dataset.k==='u'){lineas[+t.dataset.l].u=t.value;return}
@@ -415,6 +438,7 @@ const CSS=`#co-root .card{margin-bottom:10px}
 .co-tabla-w{overflow-x:auto}.co-tabla{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;font-variant-numeric:tabular-nums}
 .co-tabla th,.co-tabla td{text-align:left;padding:5px 6px;border-bottom:.5px solid var(--border);white-space:nowrap}.co-tabla td:first-child{white-space:normal;min-width:120px}
 .co-tabla th{font-size:11px;color:var(--text-secondary);font-weight:600}
+.co-cab{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.co-foto{cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:13px}
 .co-alta{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:flex-end;padding:8px;margin-top:2px;border-radius:var(--radius);background:var(--bg-secondary)}
 .co-alta>b{flex-basis:100%;font-size:12px}.co-alta label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--text-secondary);flex:1;min-width:110px}
 .co-bar{padding:7px 0;border-top:.5px solid var(--border)}.co-bar:first-of-type{border-top:0}
