@@ -1,4 +1,4 @@
-# Pendientes (actualizado el 2 de noviembre de 2026)
+# Pendientes (actualizado el 3 de noviembre de 2026)
 
 ## Seguridad
 - [x] SQL de seguridad de cambios de turno aplicado en Supabase (2/11/2026).
@@ -35,6 +35,12 @@
 - Ficha de alérgenos para revisar: https://claude.ai/artifact/UgZsEDQXMzQQ33YPzSHJqR (privada; se comparte desde su botón Compartir).
 - App para el amigo: https://oidococina-xu7i.vercel.app («Seguir sin cuenta»).
 - [ ] Opcional: cuenta de revisor de solo lectura para ver eventos y recetas reales.
+
+## Hecho (3/11/2026): mejoras tras comparar con otras apps
+- [x] Arreglado el botón «Añadir foto» de las recetas (no funcionaba). Las fotos se reducen al guardarlas (de varios MB a unos 20-100 KB), también las que ya había.
+- [x] Elaboraciones base (sub-recetas): fondos, salsas y masas como receta propia con su rinde, usadas dentro de otros platos. Su coste, alérgenos e ingredientes pasan al plato; Producción y Pedidos dicen cuánto preparar. Las recetas ya se pueden editar y borrar.
+- [ ] Crear las elaboraciones base reales (fondo oscuro, bordalesa, masas…) y usarlas en los platos.
+- Próximas mejoras propuestas, por orden: rendimiento de ingredientes (merma al limpiar), avisos en el móvil, hoja de evento por departamento, registro de sobras por evento, cambios al momento entre aparatos y foto del albarán que se rellena sola (IA).
 
 ## Siguiente
 - [x] Compras hecho (`compras.js`, sección «Albaranes y costes»).

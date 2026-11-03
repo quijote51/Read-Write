@@ -18,8 +18,10 @@ App web (PWA) para la gestión de la cocina y los eventos de un hotel. HTML, CSS
 | `alergenos.js` + `alergenos.html` | Los 14 alérgenos, `algDePlato`, cruce con invitados y ficha para el cliente. La revisión se guarda en `config.seda_alg_rev`. |
 | `appcc.js` + `appcc.html` | APPCC: temperaturas, limpieza, recepción, muestra testigo, etiquetas y registros (`config.seda_appcc`). Fusiona con la nube por id. Los registros solo se anulan con motivo; nunca se editan. |
 | `compras.js` | «Albaranes y costes» sobre los artículos del inventario: albaranes (actualizan precio e historial), subidas de precio, stock mínimo con stock estimado, mermas entre dos recuentos y enlaces artículo ↔ ingrediente de receta (`config.seda_compras`). Fusiona con la nube por id, como APPCC. |
+| `recetario.js` | Recetario: ficha, alta, edición y borrado de recetas, y **elaboraciones base** (sub-recetas: `base:true`, `rinde:{cant,ud}`; ingredientes de una tanda). Su coste (`precioSubreceta`, usado por `getPrecioIng`), alérgenos (`algDeRecetaCompleta`) e ingredientes (`ingredientesBrutos`, usado en pedidos) pasan al plato. `htmlElaboracionesBase` en Producción y Pedidos. También se carga en `alergenos.html`. |
+| `fotos.js` | Reduce las fotos (900 px, JPEG) antes de guardarlas: `subirFoto` (recetas), `reducirFoto` (vajilla) y `reducirFotosGuardadas` una vez tras `cargarNube`. |
 | `app-base.js` + `app-base.css` | Base común de las apps sueltas: sesión, carga de eventos, recetas y proveedores, `syncConfig`, `recetaDePlato` y estilos. |
-| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v17`) y añadir a `SHELL` cada archivo nuevo.** |
+| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v18`) y añadir a `SHELL` cada archivo nuevo.** |
 | `manifest-*.json` + `*-192/512/maskable/apple-180/favicon-32.png` | Una app instalable por módulo. Iconos dorados (#c9a84c) sobre fondo #1a1a1a. |
 | `supabase/seguridad-cambios.sql` | Referencia, ya aplicado. |
 | `PENDIENTES.md` | Lista de tareas pendientes. **Leerla al empezar.** |

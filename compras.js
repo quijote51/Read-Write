@@ -212,7 +212,7 @@ function vMermas(){
 }
 
 function ingredientes(){
-  const s=new Set(); (typeof recetas!=='undefined'?recetas:[]).forEach(r=>(r.ingredientes||[]).forEach(i=>i.nombre&&s.add(i.nombre)));
+  const s=new Set(); (typeof recetas!=='undefined'?recetas:[]).forEach(r=>(r.ingredientes||[]).forEach(i=>{ if(i.nombre&&!(typeof subRecetaDe==='function'&&subRecetaDe(i))) s.add(i.nombre); })); // las elaboraciones base no se compran
   return [...s].sort((a,b)=>a.localeCompare(b,'es'));
 }
 // Propuesta automática: el ingrediente cuyo nombre contiene el del artículo (o al revés), con unidades compatibles.
