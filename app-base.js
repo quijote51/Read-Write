@@ -44,15 +44,18 @@ function cargarLocal(){
 async function cargarNube(claves){
   if(!supa||!_uid||navigator.onLine===false){estado(false);return false}
   try{
-    const [ev,pr,cf]=await Promise.all([
+    const [ev,pr,cf,rc]=await Promise.all([
       supa.from('eventos').select('*').order('fecha'),
       supa.from('proveedores').select('*'),
-      supa.from('config').select('key,value').in('key',['seda_rec'].concat(Object.keys(claves||{})))]);
+      // Recetas: tabla propia, una fila por receta (recetas-nube.js). Si aún está vacía, se usa config.seda_rec.
+      supa.from('config').select('key,value').in('key',['seda_rec'].concat(Object.keys(claves||{}))),
+      supa.from('recetas').select('*').eq('hotel_id',_uid)]);
     if(ev.error||pr.error||cf.error)throw ev.error||pr.error||cf.error;
     eventos=ev.data.map(({hotel_id,...e})=>({...e,id:/^\d+$/.test(e.id)?Number(e.id):e.id})); LS('seda_ev',eventos);
     proveedores=pr.data.map(({hotel_id,...p})=>p); LS('seda_prov',proveedores);
     const m={}; cf.data.forEach(r=>m[r.key]=r.value);
-    if(Array.isArray(m.seda_rec)){recetas=m.seda_rec;LS('seda_rec',recetas)}
+    if(!rc.error&&rc.data&&rc.data.length&&typeof recDeFila==='function'){recetas=rc.data.filter(f=>!f.borrado).map(recDeFila);LS('seda_rec',recetas)}
+    else if(Array.isArray(m.seda_rec)){recetas=m.seda_rec;LS('seda_rec',recetas)}
     Object.entries(claves||{}).forEach(([k,fn])=>{if(m[k]!==undefined&&m[k]!==null)fn(m[k])});
     estado(true); return true;
   }catch(e){console.warn('Carga',e);estado(false);return false}
