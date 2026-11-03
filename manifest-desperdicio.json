@@ -1,0 +1,37 @@
+{
+  "name": "Desperdicio · Oído Cocina",
+  "short_name": "Desperdicio",
+  "description": "Registro de sobras y plan de prevención del desperdicio · Oído Cocina",
+  "id": "/desperdicio.html",
+  "start_url": "/desperdicio.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    {
+      "src": "/desperdicio-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/desperdicio-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/desperdicio-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/desperdicio-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Cartas con QR de alérgenos para el comensal · Oído Cocina">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Carta QR">
+<title>Carta QR · Oído Cocina</title>
+<link rel="manifest" href="/manifest-cartas.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/cartas-favicon-32.png">
+<link rel="apple-touch-icon" href="/cartas-apple-180.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.50.0/tabler-icons.min.css">
+<link rel="stylesheet" href="/app-base.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="/app-base.js"></script>
+<script src="/equipo.js"></script>
+<script src="/marca.js"></script>
+<script src="/config-nube.js"></script>
+<script src="/recetas-nube.js"></script>
+<script src="/instalar.js"></script>
+<script src="/recetario.js"></script>
+<script src="/alergenos.js"></script>
+<script src="/cartas.js"></script>
+</head>
+<body>
+<header>
+  <h1>Carta QR <span id="marca-corto"></span><br><small id="marca-linea">Oído Cocina</small></h1>
+  <span class="sp"></span>
+  <span id="sync">…</span>
+  <button class="btn-sec" id="salir" style="display:none" onclick="salir()">Salir</button>
+</header>
+<main><div id="cq-root"></div></main>
+<script>
+// Carta QR de alérgenos: crear, actualizar y retirar las cartas que ve el comensal. Lógica en cartas.js.
+window.APP={nombre:'Carta QR',
+  modulo:'seguridad',
+  roles:['admin','direccion','chef','eventos'],
+  async arrancar(){ await this.recargar(); },
+  async recargar(){ await cargarNube({}); initCartas(); }
+};
+</script>
+</body>
+</html>
