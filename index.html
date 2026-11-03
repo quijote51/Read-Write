@@ -23,6 +23,8 @@
 <script src="alergenos.js"></script>
 <script src="appcc.js"></script>
 <script src="compras.js"></script>
+<script src="fotos.js"></script>
+<script src="recetario.js"></script>
 <script>
 // ══════════════════════════════════════
 // OÍDO COCINA · Configuración Supabase
@@ -634,6 +636,7 @@ textarea{resize:vertical;min-height:65px}
         <option value="">Todas</option>
         <option value="F">Fríos</option><option value="C">Calientes</option>
         <option value="P">Postres</option><option value="M">Principales</option>
+        <option value="_base">Elaboraciones base</option>
       </select>
       <button class="btn-sec" onclick="showNuevaReceta()"><i class="ti ti-plus"></i> Nueva receta</button>
     </div>
@@ -643,19 +646,29 @@ textarea{resize:vertical;min-height:65px}
   <div id="nueva-receta-view" style="display:none">
     <button class="back-btn" onclick="volverRecetario()"><i class="ti ti-arrow-left"></i> Volver</button>
     <div class="card">
+      <div id="nr-titulo" style="font-size:15px;font-weight:500;margin-bottom:10px">Nueva receta</div>
       <div class="form-2" style="margin-bottom:10px">
-        <div class="fg" style="margin-bottom:0"><label>Nombre del plato</label><input type="text" id="nr-nombre" placeholder="Ej: Pastela Moruna"/></div>
+        <div class="fg" style="margin-bottom:0"><label>Nombre</label><input type="text" id="nr-nombre" placeholder="Ej: Pastela Moruna"/></div>
         <div class="fg" style="margin-bottom:0"><label>Categoría</label>
           <select id="nr-cat"><option value="F">Frío</option><option value="C">Caliente</option><option value="P">Postre</option><option value="M">Principal</option></select>
         </div>
       </div>
-      <div class="fg"><label>Ingredientes — formato: Nombre | cantidad | unidad (uno por línea)</label>
+      <div class="fg"><label class="sr-chk"><input type="checkbox" id="nr-base" onchange="srFormBase()"/><span>Es una <b>elaboración base</b> (fondo, salsa, masa…) que se usa dentro de otras recetas</span></label></div>
+      <div id="nr-rinde-wrap" class="form-2" style="display:none;margin-bottom:10px">
+        <div class="fg" style="margin-bottom:0"><label>Una tanda rinde</label><input type="number" id="nr-rinde-cant" min="0" step="any" inputmode="decimal" placeholder="Ej: 2000"/></div>
+        <div class="fg" style="margin-bottom:0"><label>Unidad</label><select id="nr-rinde-ud"><option value="g">g</option><option value="kg">kg</option><option value="ml">ml</option><option value="l">l</option><option value="ud">ud</option><option value="raciones">raciones</option></select></div>
+      </div>
+      <div class="fg"><label><span id="nr-ing-label">Ingredientes de UNA RACIÓN</span> — Nombre | cantidad | unidad (uno por línea)</label>
         <textarea id="nr-ing" placeholder="Harina de trigo | 80 | g&#10;Huevo | 1 | ud&#10;Mantequilla | 40 | g" style="min-height:100px"></textarea>
+        <div id="nr-bases"></div>
       </div>
       <div class="fg"><label>Alérgenos de este plato</label>
         <div class="alg-cb-grid" id="nr-alg-sel"></div>
       </div>
-      <button class="btn btn-p" style="margin-top:8px" onclick="guardarReceta()">Guardar receta</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-p" onclick="guardarReceta()">Guardar receta</button>
+        <button class="btn-sec" id="nr-borrar" style="display:none;color:var(--danger-text)" onclick="borrarReceta()"><i class="ti ti-trash"></i> Borrar receta</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1018,6 +1031,7 @@ textarea{resize:vertical;min-height:65px}
       <a class="btn-sec" href="/inventario.html" target="_blank" rel="noopener" style="text-decoration:none"><i class="ti ti-clipboard-list"></i> Inventario</a>
       <a class="btn-sec" href="/appcc.html" target="_blank" rel="noopener" style="text-decoration:none"><i class="ti ti-temperature"></i> APPCC</a>
       <a class="btn-sec" href="/alergenos.html" target="_blank" rel="noopener" style="text-decoration:none"><i class="ti ti-shield-check"></i> Alérgenos</a>
+      <a class="btn-sec" href="/albaranes.html" target="_blank" rel="noopener" style="text-decoration:none"><i class="ti ti-receipt"></i> Albaranes</a>
     </div>
   </div>
 
@@ -1347,6 +1361,7 @@ function buscarReceta(nombrePlato){
   for(const r of recetas){
     const n=_norm(r.nombre); if(!n) continue;
     if(n===p) return r;
+    if(r.base) continue; // las elaboraciones base solo se enlazan a un plato si el nombre es exacto
     let sc=0;
     if(p.includes(n)||n.includes(p)) sc=1000+Math.min(n.length,p.length);
     else{const c=_prefijoComun(p,n); if(c>=12) sc=c;}
@@ -2443,20 +2458,14 @@ function verDetallePieza(id){
     </div>`;
 }
 
-function subirFotoVajilla(id, input){
-  if(!input.files||!input.files[0])return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const v=vajilla.find(x=>x.id===id); if(!v)return;
-    v.img=e.target.result;
-    saveVaj(vajilla);
-    // Actualizar imagen en la vista
-    const imgs=document.querySelectorAll(`[data-vaj-id="${id}"] img`);
-    imgs.forEach(img=>img.src=e.target.result);
-    // Refrescar el detalle
-    verDetallePieza(id);
-  };
-  reader.readAsDataURL(input.files[0]);
+async function subirFotoVajilla(id, input){
+  const file=input&&input.files&&input.files[0]; if(!file)return;
+  const img=await reducirFoto(file); if(!img)return; // fotos.js: la reduce antes de guardarla
+  const v=vajilla.find(x=>x.id===id); if(!v)return;
+  v.img=img;
+  saveVaj(vajilla);
+  document.querySelectorAll(`[data-vaj-id="${id}"] img`).forEach(el=>el.src=img);
+  verDetallePieza(id);
 }
 
 function actualizarNotasVaj(id, valor){
@@ -3178,7 +3187,7 @@ function renderProd(){
   const alergC=ev.alergias_txt?`<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px"><div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:3px"><i class="ti ti-alert-triangle"></i> Alergias de clientes</div><div style="font-size:13px">${escH(ev.alergias_txt)}</div></div>`:'';
   const alergMenu=(ev.alergenos_menu||[]).length?`<div class="card" style="margin-bottom:10px"><div style="font-size:13px;font-weight:500;margin-bottom:5px"><i class="ti ti-shield-check"></i> Alérgenos en este menú</div><div>${(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div></div>`:'';
 
-  let t=`<div class="card" style="padding:0;overflow:hidden"><table class="ptable"><thead><tr><th>Plato</th><th>Alérgenos</th><th style="text-align:right">Uds.</th><th style="text-align:center" class="no-print">Receta</th></tr></thead><tbody>`;
+  let t=`<div class="card ptable-outer" style="padding:0"><table class="ptable"><thead><tr><th>Plato</th><th>Alérgenos</th><th style="text-align:right">Uds.</th><th style="text-align:center" class="no-print">Receta</th></tr></thead><tbody>`;
   CATS.forEach(cat=>{
     const items=ev.platos.filter(p=>p.cat===cat.key);if(!items.length)return;
     t+=`<tr><td colspan="4" class="cat-hdr" style="border-left:3px solid ${cat.color}">${cat.label}</td></tr>`;
@@ -3227,7 +3236,7 @@ function renderProd(){
     <div class="stat"><div class="stat-l">Factor</div><div class="stat-v">${f.toFixed(1)}×</div></div>
     <div class="stat"><div class="stat-l">Platos distintos</div><div class="stat-v">${ev.platos.length}</div></div>
     <div class="stat"><div class="stat-l">Raciones totales</div><div class="stat-v">${total}</div></div>
-  </div>`+alergC+htmlAlertaAlergenos(ev)+htmlHorarioEvento(ev)+alergMenu+t+infHTML;
+  </div>`+alergC+htmlAlertaAlergenos(ev)+htmlHorarioEvento(ev)+alergMenu+t+htmlElaboracionesBase([ev])+infHTML;
 }
 
 function imprimirFicha(){
@@ -3285,72 +3294,7 @@ function buildConjunta(evs){
   cont.innerHTML=html;
 }
 
-/* ---- RECETARIO ---- */
-function renderRecetario(){
-  const busca=ge('receta-busca').value.toLowerCase(),cat=ge('receta-cat').value;
-  let lista=recetas.filter(r=>(!busca||r.nombre.toLowerCase().includes(busca))&&(!cat||r.cat===cat));
-  const grid=ge('receta-grid');
-  if(!lista.length){grid.innerHTML='<div class="empty">No se encontraron recetas.</div>';return;}
-  grid.innerHTML='<div class="receta-grid">'+lista.map(r=>{
-    const algHTML=r.alg.map(a=>`<span class="alg-tag">${algIcon(a)}</span>`).join('');
-    return`<div class="receta-card" onclick="verReceta('${r.id}')">
-      <div class="receta-emoji">${r.img?`<img src="${r.img}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:48px">${r.emoji}</span>`}</div>
-      <div class="receta-body">
-        <div class="receta-nombre">${escH(r.nombre)}</div>
-        <span class="cat-${r.cat}" style="font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block">${CAT_NAMES[r.cat]}</span>
-        <div style="margin-top:4px">${algHTML}</div>
-      </div>
-    </div>`;
-  }).join('')+'</div>';
-}
-
-function verReceta(id){
-  const r=recetas.find(x=>x.id===id);if(!r)return;
-  ge('receta-lista-view').style.display='none';ge('nueva-receta-view').style.display='none';
-  const det=ge('receta-detalle-view');det.style.display='block';
-  det.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-      <button class="back-btn" style="margin-bottom:0" onclick="volverRecetario()"><i class="ti ti-arrow-left"></i> Volver al recetario</button>
-      <button class="btn-print no-print" onclick="imprimirReceta('${r.id}')"><i class="ti ti-printer"></i> Imprimir receta</button>
-    </div>
-    <div class="card">
-      <div style="display:flex;gap:16px;margin-bottom:1rem;align-items:flex-start;flex-wrap:wrap">
-        <div style="width:160px;min-width:120px;height:120px;border-radius:var(--radius);overflow:hidden;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;font-size:56px;flex-shrink:0">
-          ${r.img?`<img src="${r.img}" style="width:100%;height:100%;object-fit:cover">`:`<span>${r.emoji}</span>`}
-        </div>
-        <div style="flex:1">
-          <div style="font-size:17px;font-weight:500;margin-bottom:6px">${escH(r.nombre)}</div>
-          <span class="cat-${r.cat}" style="font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block">${CAT_NAMES[r.cat]}</span>
-          <div style="margin-top:8px">${r.alg.map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div>
-          <div style="margin-top:10px" class="no-print">
-            <label style="font-size:12px;color:var(--text-secondary)">📷 Añadir foto</label>
-            <input type="file" accept="image/*" onchange="subirFoto('${r.id}',this)" style="font-size:12px;margin-top:4px"/>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding:.75rem;background:var(--bg-secondary);border-radius:var(--radius)" class="no-print">
-        <label style="font-size:13px;color:var(--text-secondary);white-space:nowrap"><i class="ti ti-calculator"></i> Escalar a</label>
-        <input type="range" min="1" max="200" value="1" step="1" id="scale-slider" oninput="scaleReceta('${r.id}',this.value)" style="flex:1"/>
-        <span style="font-size:15px;font-weight:500;min-width:30px;text-align:center" id="scale-num">1</span>
-        <label style="font-size:13px;color:var(--text-secondary)">raciones</label>
-      </div>
-      <div style="font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">
-        Ingredientes · <span id="receta-raciones-label">1 ración</span>
-      </div>
-      <table class="ing-table">
-        <thead><tr><th>Ingrediente</th><th>Alérgenos</th><th style="text-align:right">Cantidad</th><th>Ud.</th></tr></thead>
-        <tbody>${r.ingredientes.map(i=>`<tr>
-          <td>${escH(i.nombre)}</td>
-          <td>${i.alg.map(a=>`<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:var(--danger-bg);color:var(--danger-text);margin-right:2px">${algIcon(a)} ${algLabel(a)}</span>`).join('')||'—'}</td>
-          <td style="text-align:right;font-weight:500" id="iq-${r.id}-${i.nombre.replace(/[^a-zA-Z0-9]/g,'_')}">${i.cant}</td>
-          <td style="color:var(--text-secondary)">${i.ud}</td>
-        </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
-  window._recetaActual=r;
-}
-
+/* ---- RECETARIO ---- (ficha, alta, edición y elaboraciones base en recetario.js) */
 function imprimirReceta(id){
   const r=recetas.find(x=>x.id===id);if(!r)return;
   const raciones=parseInt(ge('scale-num')?.textContent)||1;
@@ -3360,20 +3304,9 @@ function imprimirReceta(id){
   const el=ge('print-fecha-gen');
   const el2=ge('print-date-foot');
   if(el)el.innerHTML=`<div style="font-size:16px;font-weight:bold">RECETA · ${r.nombre.toUpperCase()}</div>
-    <div>${CAT_NAMES[r.cat]} · ${raciones} ración${raciones>1?'es':''} · Alérgenos: ${r.alg.map(a=>algLabel(a)).join(', ')||'Ninguno'}</div>`;
+    <div>${r.base?'Elaboración base · '+raciones+' tanda'+(raciones>1?'s':''):CAT_NAMES[r.cat]+' · '+raciones+' ración'+(raciones>1?'es':'')} · Alérgenos: ${algDeRecetaCompleta(r).map(a=>algLabel(a)).join(', ')||'Ninguno'}</div>`;
   if(el2)el2.textContent=fechaStr;
   window.print();
-}
-
-function scaleReceta(id,val){
-  ge('scale-num').textContent=val;
-  const label=ge('receta-raciones-label');
-  if(label)label.textContent=`${val} ración${val>1?'es':''}`;
-  const r=recetas.find(x=>x.id===id);if(!r)return;
-  r.ingredientes.forEach(i=>{
-    const el=ge('iq-'+id+'-'+i.nombre.replace(/[^a-zA-Z0-9]/g,'_'));
-    if(el){const v=i.cant*val;el.textContent=v%1===0?v:v.toFixed(1)}
-  });
 }
 
 function volverRecetario(){
@@ -3381,21 +3314,6 @@ function volverRecetario(){
   ge('receta-detalle-view').style.display='none';
   ge('nueva-receta-view').style.display='none';
   renderRecetario();
-}
-
-function showNuevaReceta(){
-  ge('receta-lista-view').style.display='none';ge('receta-detalle-view').style.display='none';ge('nueva-receta-view').style.display='block';
-  ge('nr-alg-sel').innerHTML=ALERGENOS.map(a=>`<div class="alg-cb" onclick="this.classList.toggle('sel')" style="user-select:none"><span style="font-size:14px">${a.icon}</span><span style="color:var(--text-primary)">${a.label}</span></div>`).join('');
-}
-
-function guardarReceta(){
-  const nombre=ge('nr-nombre').value.trim(),cat=ge('nr-cat').value,ingTxt=ge('nr-ing').value.trim();
-  if(!nombre||!ingTxt){alert('Nombre e ingredientes son obligatorios.');return;}
-  const alg=[...ge('nr-alg-sel').querySelectorAll('.alg-cb.sel')].map(el=>{const lbl=el.querySelector('span:last-child').textContent.trim();return ALERGENOS.find(a=>a.label===lbl)?.id}).filter(Boolean);
-  const ingredientes=ingTxt.split('\n').map(l=>{const p=l.split('|').map(s=>s.trim());return{nombre:p[0]||l,cant:parseFloat(p[1])||1,ud:p[2]||'ud',alg:[]}}).filter(i=>i.nombre);
-  const emojis={F:'🥗',C:'🍳',P:'🍰',M:'🍽️'};
-  recetas.push({id:'c-'+Date.now(),nombre,cat,emoji:emojis[cat]||'🍴',alg,ingredientes});
-  saveRec(recetas);volverRecetario();
 }
 
 /* ===== ESCANDALLO ===== */
@@ -3482,14 +3400,16 @@ function savePrecios(p){try{localStorage.setItem('seda_precios',JSON.stringify(p
 let preciosIng = getPrecios() || JSON.parse(JSON.stringify(PRECIOS_BASE));
 if(!getPrecios()) savePrecios(preciosIng);
 
-function getPrecioIng(nombre){
+// Si el ingrediente es una elaboración base, su precio sale de su propia receta (recetario.js)
+function getPrecioIng(nombre, ud){
+  const sub=typeof precioSubreceta==='function'?precioSubreceta(nombre,ud):null; if(sub!=null) return sub;
   return preciosIng[nombre]?.precio || PRECIOS_BASE[nombre]?.precio || 0;
 }
 
 function calcCosteReceta(receta, raciones=1){
   let coste = 0;
   receta.ingredientes.forEach(ing => {
-    const p = getPrecioIng(ing.nombre);
+    const p = getPrecioIng(ing.nombre, ing.ud);
     coste += p * ing.cant * raciones;
   });
   return coste;
@@ -3647,19 +3567,19 @@ function renderEscPlatos(){
 
   cont.innerHTML = lista.map(r => {
     const coste = calcCosteReceta(r, 1);
-    const ingsConPrecio = r.ingredientes.filter(i=>getPrecioIng(i.nombre)>0);
+    const ingsConPrecio = r.ingredientes.filter(i=>getPrecioIng(i.nombre,i.ud)>0);
     const pct = Math.round(ingsConPrecio.length / r.ingredientes.length * 100);
     return `<div class="card" style="margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
         <div>
-          <div style="font-size:14px;font-weight:500">${r.emoji} ${escH(r.nombre)}</div>
+          <div style="font-size:14px;font-weight:500">${r.emoji} ${escH(r.nombre)}${r.base?` <span class="sr-badge">Elaboración · ${escH(srRindeTxt(r))}</span>`:''}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
             ${r.ingredientes.length} ingredientes · ${ingsConPrecio.length} con precio (${pct}%)
           </div>
         </div>
         <div style="text-align:right">
           <div style="font-size:22px;font-weight:500;color:var(--text-primary)">${coste>0?coste.toFixed(3)+'€':'—'}</div>
-          <div style="font-size:11px;color:var(--text-secondary)">coste por ración</div>
+          <div style="font-size:11px;color:var(--text-secondary)">${r.base?'coste de una tanda':'coste por ración'}</div>
         </div>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px">
@@ -3670,17 +3590,18 @@ function renderEscPlatos(){
           <th style="text-align:right;padding:4px 6px;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-weight:400">Subtotal</th>
         </tr></thead>
         <tbody>${r.ingredientes.map(ing=>{
-          const p = getPrecioIng(ing.nombre);
+          const p = getPrecioIng(ing.nombre, ing.ud);
           const sub = p * ing.cant;
+          const esSub = !!subRecetaDe(ing);
           return `<tr>
-            <td style="padding:4px 6px;border-bottom:.5px solid var(--border)">${escH(ing.nombre)}</td>
+            <td style="padding:4px 6px;border-bottom:.5px solid var(--border)">${esSub?'<i class="ti ti-bowl" title="Elaboración base"></i> ':''}${escH(ing.nombre)}</td>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;color:var(--text-secondary)">${ing.cant} ${ing.ud}</td>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;color:var(--text-secondary)">${p>0?p.toFixed(4)+'€':'—'}</td>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;font-weight:500">${sub>0?sub.toFixed(4)+'€':'—'}</td>
           </tr>`;
         }).join('')}</tbody>
         <tfoot><tr style="background:var(--bg-secondary)">
-          <td colspan="3" style="padding:5px 6px;font-weight:500">Total coste/ración</td>
+          <td colspan="3" style="padding:5px 6px;font-weight:500">${r.base?'Total coste/tanda':'Total coste/ración'}</td>
           <td style="padding:5px 6px;text-align:right;font-weight:500;font-size:13px">${coste>0?coste.toFixed(3)+'€':'—'}</td>
         </tr></tfoot>
       </table>
@@ -3693,6 +3614,7 @@ function renderEscPrecios(){
   const mapa = {};
   recetas.forEach(r=>{
     r.ingredientes.forEach(ing=>{
+      if(subRecetaDe(ing)) return; // las elaboraciones base sacan su precio de su receta
       if(!mapa[ing.nombre]) mapa[ing.nombre]={nombre:ing.nombre,ud:ing.ud,precio:getPrecioIng(ing.nombre)};
     });
   });
@@ -3800,7 +3722,7 @@ function calcIngredientesPedido(evs, sinReceta){
     (ev.platos||[]).forEach(plato=>{
       const rec=recetaDePlato(plato);
       if(!rec){ if(sinReceta&&!sinReceta.some(x=>x.plato===plato.nombre&&x.ev===ev.nombre)) sinReceta.push({plato:plato.nombre,ev:ev.nombre}); return; }
-      rec.ingredientes.forEach(ing=>{
+      ingredientesBrutos(rec).forEach(ing=>{ // las elaboraciones base se abren en sus ingredientes
         const key=ing.nombre.toLowerCase().trim()+'|'+String(ing.ud||'').toLowerCase().trim();
         const total=ing.cant*raciones;
         if(!map[key])map[key]={nombre:ing.nombre,total:0,ud:ing.ud,cat:catDeIngrediente(ing.nombre),platos:[]};
@@ -3860,7 +3782,7 @@ function renderPedidos(){
   // Eventos incluidos
   const evInfo=evs.map(e=>`${fmtFecha(e.fecha)} · ${e.nombre} (${e.pax} pax)`).join('\n');
 
-  let html=avisoSinReceta(sinReceta)+`<div class="card" style="margin-bottom:12px;background:var(--info-bg);border-color:var(--info-text)">
+  let html=avisoSinReceta(sinReceta)+htmlElaboracionesBase(evs)+`<div class="card" style="margin-bottom:12px;background:var(--info-bg);border-color:var(--info-text)">
     <div style="font-size:13px;font-weight:500;color:var(--info-text);margin-bottom:4px"><i class="ti ti-info-circle"></i> Pedidos generados para:</div>
     <div style="font-size:13px;color:var(--text-primary)">${evs.map(e=>`<b>${escH(e.nombre)}</b> · ${fmtFecha(e.fecha)} · ${e.pax} pax`).join('<br>')}</div>
   </div>`;
@@ -4764,7 +4686,7 @@ function renderCuenta(){
 
 /* ===== CARGA DESDE LA NUBE ===== */
 async function cargarNube(){
-  if(!_uid){ mostrarSync(false); return; }
+  if(!_uid){ mostrarSync(false); reducirFotosGuardadas(); return; }
   let ok=true;
   const setLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
   try {
@@ -4810,6 +4732,7 @@ async function cargarNube(){
     }
   } catch(e){ ok=false; console.warn('Carga nube',e); }
   mostrarSync(ok);
+  reducirFotosGuardadas();
 }
 
 // Reenvía todo lo local a la nube (cambios hechos sin conexión). No baja nada: así no se pisa lo local.

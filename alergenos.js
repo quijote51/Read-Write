@@ -26,7 +26,10 @@ const _algEsc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>
 function algDePlato(p){
   const set=new Set(p.alg||[]);
   const r=typeof recetaDePlato==='function'?recetaDePlato(p):null;
-  if(r){ (r.alg||[]).forEach(a=>set.add(a)); (r.ingredientes||[]).forEach(i=>(i.alg||[]).forEach(a=>set.add(a))); }
+  if(r){
+    if(typeof algDeRecetaCompleta==='function') algDeRecetaCompleta(r).forEach(a=>set.add(a)); // con sus elaboraciones base (recetario.js)
+    else { (r.alg||[]).forEach(a=>set.add(a)); (r.ingredientes||[]).forEach(i=>(i.alg||[]).forEach(a=>set.add(a))); }
+  }
   return [...set];
 }
 const ALG_PALABRAS={
@@ -67,7 +70,8 @@ function avisosFichaAlergenos(ev){
   (ev.platos||[]).forEach(p=>{
     const r=typeof recetaDePlato==='function'?recetaDePlato(p):null;
     if(!r && !(p.alg||[]).length) sinReceta.push(p.nombre);
-    const textos=[p.nombre].concat(r?(r.ingredientes||[]).map(i=>i.nombre):[]).join(' · ');
+    const ings=r?(typeof ingredientesBrutos==='function'?ingredientesBrutos(r).map(i=>i.nombre+(i.via?' · '+i.via:'')):(r.ingredientes||[]).map(i=>i.nombre)):[]; // con lo de dentro de sus elaboraciones base
+    const textos=[p.nombre].concat(ings).join(' · ');
     if(ALG_HUEVO_CRUDO.test(textos) && !ALG_PASTEURIZADO.test(textos)) huevo.push(p.nombre);
   });
   return {sinReceta, huevo};

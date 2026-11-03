@@ -1,4 +1,4 @@
-# Pendientes (actualizado el 2 de noviembre de 2026)
+# Pendientes (actualizado el 3 de noviembre de 2026)
 
 ## Seguridad
 - [x] SQL de seguridad de cambios de turno aplicado en Supabase (2/11/2026).
@@ -26,7 +26,7 @@
 - [ ] Más adelante: mover los registros a una tabla propia en Supabase cuando haya muchos (ahora van en config 'seda_appcc').
 
 ## Apps con acceso directo
-- Horarios (`/horarios.html`), Inventario (`/inventario.html`), APPCC (`/appcc.html`) y Alérgenos (`/alergenos.html`), con enlaces en Ajustes.
+- Horarios (`/horarios.html`), Inventario (`/inventario.html`), APPCC (`/appcc.html`), Alérgenos (`/alergenos.html`) y Albaranes (`/albaranes.html`), con enlaces en Ajustes.
 - APPCC y Alérgenos comparten `app-base.js` y `app-base.css` (sesión, nube y estilos).
 - [ ] Opcional: pasar Inventario a `app-base.js` para quitar código repetido.
 - [ ] Los miembros con rol «cocina» no pueden usar APPCC con su propia cuenta (solo ven horarios). Para eso hace falta una tabla con permisos en Supabase.
@@ -36,9 +36,16 @@
 - App para el amigo: https://oidococina-xu7i.vercel.app («Seguir sin cuenta»).
 - [ ] Opcional: cuenta de revisor de solo lectura para ver eventos y recetas reales.
 
+## Hecho (3/11/2026): mejoras tras comparar con otras apps
+- [x] Arreglado el botón «Añadir foto» de las recetas (no funcionaba). Las fotos se reducen al guardarlas (de varios MB a unos 20-100 KB), también las que ya había.
+- [x] Elaboraciones base (sub-recetas): fondos, salsas y masas como receta propia con su rinde, usadas dentro de otros platos. Su coste, alérgenos e ingredientes pasan al plato; Producción y Pedidos dicen cuánto preparar. Las recetas ya se pueden editar y borrar.
+- [ ] Crear las elaboraciones base reales (fondo oscuro, bordalesa, masas…) y usarlas en los platos.
+- Próximas mejoras propuestas, por orden: rendimiento de ingredientes (merma al limpiar), avisos en el móvil, hoja de evento por departamento, registro de sobras por evento, cambios al momento entre aparatos y foto del albarán que se rellena sola (IA).
+
 ## Siguiente
 - [x] Compras hecho (`compras.js`, sección «Albaranes y costes»).
 - [ ] Apuntar los albaranes que lleguen y enlazar en «Enlaces» los artículos que se usan en recetas (hay propuestas automáticas).
 - [ ] Poner mínimos a los artículos que no pueden faltar.
 - [ ] Las mermas salen a partir del segundo recuento de inventario (el primero es del 26/10/2026).
-- [ ] Opcional: app suelta de Albaranes con acceso directo.
+- [x] App suelta de Albaranes (`/albaranes.html`) con pestaña «Gasto» (sumas por mes, proveedor, familia y artículo) y alta de productos nuevos desde el albarán.
+- [ ] Instalarla en el móvil: abrir oidococina-xu7i.vercel.app/albaranes.html → «Añadir a pantalla de inicio».
