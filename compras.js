@@ -180,25 +180,39 @@ function infoLinea(l,i){
   if(!pu)return `<small>${esc(unidad(a.u))} · precio actual ${eur(a.p)}/${esc(unidad(a.u))}</small>`;
   return `<small class="${a.p&&pu>a.p*1.005?'co-sube':a.p&&pu<a.p*0.995?'co-baja':''}">${eur(pu)}/${esc(unidad(a.u))}${a.p?` · antes ${eur(a.p)} (${pct((pu-a.p)/a.p)})`:''}</small>`;
 }
-/* ── Foto del albarán con IA (función «leer-albaran» de Supabase) ── */
-// Hace falta sesión e internet; la lectura se hace en el servidor (la clave de la IA nunca llega al móvil)
-const fotoDisponible=()=>typeof supa!=='undefined'&&supa&&supa.functions&&typeof _uid!=='undefined'&&_uid&&typeof reducirImagen==='function';
+/* ── Foto del albarán ──
+   Si la lectura con IA está activada (función «leer-albaran» de Supabase con su clave), se usa esa. Si no (o sin
+   sesión), se lee GRATIS en el propio móvil (albaran-ocr.js). En los dos casos se rellena todo para revisar. */
+const fotoDisponible=()=>typeof reducirImagen==='function'&&(typeof ocrAlbaran==='function'||(typeof supa!=='undefined'&&supa&&supa.functions));
 let leyendo=false;
+function progresoFoto(t){const m=document.querySelector('#co-root .hz-aviso');if(m)m.textContent=t}
+async function leerConIA(img){
+  if(typeof supa==='undefined'||!supa||!supa.functions||typeof _uid==='undefined'||!_uid)return null;
+  const provs=(typeof proveedores!=='undefined'&&Array.isArray(proveedores)?proveedores:[]).map(p=>p.nombre).filter(Boolean);
+  try{
+    const {data,error}=await supa.functions.invoke('leer-albaran',{body:{imagen:img.split(',')[1],tipo:'image/jpeg',articulos:arts().map(a=>`${a.n} (${a.u})`),proveedores:provs}});
+    if(error||!data||!Array.isArray(data.lineas))return null; // sin activar o sin conexión: se lee en el móvil
+    return data;
+  }catch(e){return null}
+}
 async function leerFoto(file){
-  if(!file||leyendo)return; if(!fotoDisponible())return aviso('!La lectura con foto necesita sesión e internet.');
-  leyendo=true; aviso('Leyendo el albarán… tarda unos segundos.');
+  if(!file||leyendo)return; if(!fotoDisponible())return aviso('!Este aparato no puede leer fotos.');
+  leyendo=true; aviso('Leyendo el albarán…');
   try{
     const img=await reducirImagen(await new Promise((ok,mal)=>{const r=new FileReader();r.onload=e=>ok(e.target.result);r.onerror=mal;r.readAsDataURL(file)}),1600,0.82);
-    const provs=(typeof proveedores!=='undefined'&&Array.isArray(proveedores)?proveedores:[]).map(p=>p.nombre).filter(Boolean);
-    const {data,error}=await supa.functions.invoke('leer-albaran',{body:{imagen:img.split(',')[1],tipo:'image/jpeg',articulos:arts().map(a=>`${a.n} (${a.u})`),proveedores:provs}});
-    if(error){let t='';try{t=(await error.context.json()).error}catch(_){} throw new Error(t||'La lectura con foto no está disponible ahora.')}
-    if(!data||!Array.isArray(data.lineas))throw new Error('No se ha podido leer el albarán.');
+    let data=await leerConIA(img);
+    if(!data){
+      if(typeof ocrAlbaran!=='function')throw new Error('La lectura con foto no está disponible ahora.');
+      progresoFoto('Leyendo en el móvil… la primera vez tarda un poco más.');
+      const provs=(typeof proveedores!=='undefined'&&Array.isArray(proveedores)?proveedores:[]).map(p=>p.nombre).filter(Boolean);
+      data=await ocrAlbaran(img,arts(),provs,pct=>progresoFoto(`Leyendo en el móvil… ${pct} %`));
+    }
     if(data.proveedor)cab.prov=data.proveedor; if(data.numero)cab.num=data.numero; if(/^\d{4}-\d{2}-\d{2}$/.test(data.fecha||''))cab.fecha=data.fecha;
     const coma=v=>v==null?'':String(v).replace('.',',');
     lineas=data.lineas.map(l=>{const a=l.articulo&&artPorNombre(l.articulo);return {a:a?a.n:(l.texto||''),cant:coma(l.cantidad),imp:coma(l.importe)}});
-    if(!lineas.length)lineas=[{a:'',cant:'',imp:''}];
+    if(!lineas.length){lineas=[{a:'',cant:'',imp:''}];return aviso('!No se han encontrado líneas en la foto. Prueba con más luz y el albarán recto, o apúntalo a mano.')}
     const sinEnlace=lineas.filter(l=>l.a&&!artPorNombre(l.a)).length;
-    aviso(`Leído: ${data.lineas.length} línea${data.lineas.length===1?'':'s'}. Revisa cantidades e importes antes de guardar.${sinEnlace?` ${sinEnlace} no están en el inventario: puedes añadirlas desde su línea.`:''}${data.notas?' Nota: '+data.notas:''}`);
+    aviso(`Leído: ${data.lineas.length} línea${data.lineas.length===1?'':'s'}. Revisa cantidades e importes antes de guardar.${sinEnlace?` ${sinEnlace} no están en el inventario: puedes añadirlas desde su línea o borrarlas.`:''}${data.notas?' Nota: '+data.notas:''}`);
   }catch(e){aviso('!'+(e.message||'No se ha podido leer el albarán.'))}
   finally{leyendo=false}
 }
