@@ -171,6 +171,8 @@ window.ivDictar=dictado;
 function pintar(){
   const r=ge('iv-root');if(!r)return;
   if(!I().articulos.length&&!claves().length){r.innerHTML='<div class="card hz-vacio">Todavía no hay inventario cargado.</div>';return}
+  // Artículos sin ningún recuento (p. ej. dados de alta desde un albarán): se ofrece empezar uno
+  if(!claves().length){r.innerHTML=`<div class="card hz-vacio">Hay ${I().articulos.length} artículos, pero todavía ningún recuento.<br><button class="btn btn-p" data-iv="nuevo" style="margin-top:10px">Nuevo inventario</button></div>`;return}
   if(!fecha||!I().conteos[fecha])fecha=claves().pop();
   r.innerHTML=cabecera()+`<div id="iv-lista">${lista()}</div>`;pintaVoz()}
 

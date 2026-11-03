@@ -21,6 +21,8 @@ function mostrarSync(ok){estado(ok)}
 function syncConfig(key,val){clearTimeout(_t[key]);_t[key]=setTimeout(()=>subirConfig(key,val),700)}
 async function subirConfig(key,val){
   if(!_uid||!supa){estado(false);return}
+  // Nunca se sube un inventario vacío: si este aparato no ha podido cargarlo, no puede borrar el de la nube
+  if(key==='seda_inventario'&&!(val&&Array.isArray(val.articulos)&&val.articulos.length)){console.warn('Inventario vacío: no se sube');return}
   try{const{error}=await supa.from('config').upsert({hotel_id:_uid,key,value:val,updated_at:new Date().toISOString()},{onConflict:'hotel_id,key'});
     if(error)throw error;estado(true)}
   catch(e){console.warn('Sync',e);try{localStorage.setItem('seda_pendiente','1')}catch(_){}estado(false)}
