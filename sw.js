@@ -2,8 +2,9 @@
 // - Páginas (navegación): red primero, y si falla, la copia guardada.
 // - Archivos propios (js, css, iconos): red primero; la copia guardada solo sin conexión.
 // - Librerías de CDN (iconos, SDK, fuentes): caché primero y se refresca en segundo plano.
-// - Supabase y cualquier otra cosa: directo a la red (los datos viven en localStorage y se sincronizan aparte).
-const CACHE = 'oido-cocina-v25';
+// - Fotos del almacén de Supabase: caché primero (cada foto nueva tiene otro nombre).
+// - Datos de Supabase y cualquier otra cosa: directo a la red (los datos viven en localStorage y se sincronizan aparte).
+const CACHE = 'oido-cocina-v26';
 const SHELL = ['/', '/index.html', '/horarios.js', '/inventario.js', '/alergenos.js', '/appcc.js', '/compras.js', '/fotos.js', '/recetario.js', '/config-nube.js', '/recetas-nube.js', '/tablas-nube.js', '/instalar.js', '/horarios.css', '/horarios.html', '/manifest-horarios.json', '/horarios-192.png', '/inventario.html', '/manifest-inventario.json', '/inventario-192.png', '/app-base.js', '/app-base.css', '/appcc.html', '/manifest-appcc.json', '/appcc-192.png', '/alergenos.html', '/manifest-alergenos.json', '/alergenos-192.png', '/albaranes.html', '/manifest-albaranes.json', '/albaranes-192.png', '/manifest.json', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon-32x32.png'];
 const CDN = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
@@ -45,8 +46,10 @@ self.addEventListener('fetch', (e) => {
     );
     return;
   }
-  // Librerías de fuera (iconos, supabase, fuentes): no cambian dentro de una versión, caché primero.
-  if (CDN.includes(url.hostname)) {
+  // Librerías de fuera (iconos, supabase, fuentes) y fotos del almacén (nunca cambian: cada foto nueva tiene
+  // otro nombre): caché primero, así se ven también sin conexión.
+  const foto = url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/storage/v1/object/public/fotos/');
+  if (CDN.includes(url.hostname) || foto) {
     e.respondWith(
       caches.match(req).then(hit => {
         const red = fetch(req).then(r => {
