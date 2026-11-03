@@ -40,7 +40,7 @@ const miRol = () => (_perfil && _perfil.rol) || 'admin';
 const MODULOS = {base: 'Base', costes: 'Costes', seguridad: 'Seguridad alimentaria', equipo: 'Equipo'};
 function moduloActivo(m){ return m === 'base' || !_perfil || !Array.isArray(_perfil.modulos) || _perfil.modulos.includes(m); }
 // Secciones de la app principal de cada módulo (lo que no está aquí es de la base)
-const MODULO_DE = {escandallo: 'costes', inventario: 'costes', costes: 'costes', appcc: 'seguridad', desperdicio: 'seguridad', cartas: 'seguridad', horarios: 'equipo'};
+const MODULO_DE = {escandallo: 'costes', inventario: 'costes', costes: 'costes', appcc: 'seguridad', desperdicio: 'seguridad', cartas: 'seguridad', horarios: 'equipo', fichaje: 'equipo'};
 const seccionActiva = tab => moduloActivo(MODULO_DE[tab] || 'base');
 const rolEn = roles => roles.includes(miRol());
 

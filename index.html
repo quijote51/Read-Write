@@ -26,6 +26,7 @@
 <script src="cartas.js"></script>
 <script src="avisos.js"></script>
 <script src="rendimiento.js"></script>
+<script src="fichaje.js"></script>
 <script src="compras.js"></script>
 <script src="albaran-ocr.js"></script>
 <script src="fotos.js"></script>
@@ -983,6 +984,7 @@ textarea{resize:vertical;min-height:65px}
 <div class="sec" id="tab-appcc"><div id="ap-root"></div></div>
 <div class="sec" id="tab-desperdicio"><div id="dp-root"></div></div>
 <div class="sec" id="tab-cartas"><div id="cq-root"></div></div>
+<div class="sec" id="tab-fichaje"><div id="fh-root"></div></div>
 <div class="sec" id="tab-costes"><div id="co-root"></div></div>
 
 <!-- GESTIÓN DE PERSONAL -->
@@ -1048,6 +1050,7 @@ textarea{resize:vertical;min-height:65px}
       <a class="btn-sec" href="/albaranes.html" target="_blank" rel="noopener" style="text-decoration:none"><i class="ti ti-receipt"></i> Albaranes</a>
       <a class="btn-sec" href="/desperdicio.html" target="_blank" rel="noopener" style="text-decoration:none"><i class="ti ti-recycle"></i> Desperdicio</a>
       <a class="btn-sec" href="/cartas.html" target="_blank" rel="noopener" style="text-decoration:none"><i class="ti ti-qrcode"></i> Carta QR</a>
+      <a class="btn-sec" href="/fichaje.html" target="_blank" rel="noopener" style="text-decoration:none"><i class="ti ti-clock-check"></i> Fichaje</a>
     </div>
   </div>
 
@@ -1507,6 +1510,7 @@ const ACC_TABS = {
   appcc:      {icon:'ti-temperature',       label:'APPCC'},
   desperdicio:{icon:'ti-recycle',           label:'Desperdicio'},
   cartas:{icon:'ti-qrcode',                 label:'Carta QR'},
+  fichaje:{icon:'ti-clock-check',           label:'Fichaje'},
   costes:     {icon:'ti-receipt',           label:'Albaranes y costes'},
   ajustes:    {icon:'ti-settings',          label:'Ajustes'},
   nuevo:      {icon:'ti-plus',              label:'Nuevo evento'},
@@ -1573,6 +1577,7 @@ function callTabInit(name){
   if(name==='appcc'&&typeof initAPPCC==='function')initAPPCC();
   if(name==='desperdicio'&&typeof initDesperdicio==='function')initDesperdicio();
   if(name==='cartas'&&typeof initCartas==='function')initCartas();
+  if(name==='fichaje'&&typeof initFichaje==='function')initFichaje();
   if(name==='costes'&&typeof initCostes==='function')initCostes();
   if(name==='ajustes')initAjustes();
 }
@@ -1607,12 +1612,12 @@ function showTab(name,btn){
 
 /* ===== SELECTOR DE ROL ===== */
 const ROLES = {
-  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina','horarios','inventario','appcc','desperdicio','cartas','costes']},
-  sala:      {icon:'<i class="ti ti-tools-kitchen-2"></i>',  nombre:'Sala / Maître',  tabs:['dashboard','bebidas','vajilla','eventos']},
-  eventos:   {icon:'<i class="ti ti-calendar-event"></i>',   nombre:'Jefa de eventos',tabs:['dashboard','eventos','calendario','plantillas','escandallo','cartas','nuevo']},
-  direccion: {icon:'<i class="ti ti-chart-bar"></i>',        nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos','horarios','inventario','appcc','desperdicio','cartas','costes']},
-  cocina:    {icon:'<i class="ti ti-tools-kitchen"></i>',    nombre:'Cocina',          tabs:['horarios','produccion','recetario','appcc','desperdicio']},
-  admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','horarios','inventario','appcc','desperdicio','cartas','costes','ajustes','nuevo']}
+  chef:      {icon:'<i class="ti ti-chef-hat"></i>',         nombre:'Chef',           tabs:['dashboard','produccion','conjunta','recetario','compras','cocina','horarios','inventario','appcc','desperdicio','cartas','costes','fichaje']},
+  sala:      {icon:'<i class="ti ti-tools-kitchen-2"></i>',  nombre:'Sala / Maître',  tabs:['dashboard','bebidas','vajilla','eventos','fichaje']},
+  eventos:   {icon:'<i class="ti ti-calendar-event"></i>',   nombre:'Jefa de eventos',tabs:['dashboard','eventos','calendario','plantillas','escandallo','cartas','nuevo','fichaje']},
+  direccion: {icon:'<i class="ti ti-chart-bar"></i>',        nombre:'Dirección',       tabs:['dashboard','historial','escandallo','calendario','eventos','horarios','inventario','appcc','desperdicio','cartas','costes','fichaje']},
+  cocina:    {icon:'<i class="ti ti-tools-kitchen"></i>',    nombre:'Cocina',          tabs:['horarios','produccion','recetario','appcc','desperdicio','fichaje']},
+  admin:     {icon:'<i class="ti ti-settings"></i>',         nombre:'Administración', tabs:['dashboard','eventos','calendario','produccion','conjunta','recetario','pedidos','escandallo','bebidas','plantillas','vajilla','compras','cocina','historial','personal','horarios','inventario','appcc','desperdicio','cartas','costes','ajustes','nuevo','fichaje']}
 };
 
 let rolActual = localStorage.getItem('seda_rol') || null;

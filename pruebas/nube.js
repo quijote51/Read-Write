@@ -5,7 +5,7 @@ let DB=nuevaDB(); let fallar=null; const log=[]; const ALMACEN={}; let almacenLi
 // Como Postgres (jsonb): dentro de objetos y listas, las claves salen ordenadas por longitud y luego alfabéticamente
 function jsonb(v){if(Array.isArray(v))return v.map(jsonb);if(v&&typeof v==='object'){const o={};Object.keys(v).sort((a,b)=>a.length-b.length||(a<b?-1:a>b?1:0)).forEach(k=>o[k]=jsonb(v[k]));return o}return v}
 // Columnas reales de Supabase (3/11/2026): la nube rechaza cualquier otra, como PostgREST
-const COLS={invitaciones:'codigo,hotel_id,rol,nombre',cartas_publicas:'id,hotel_id,titulo,contenido,publicada,actualizado',eventos:'id,nombre,fecha,hora,pax,tipo,lugar,alergias_txt,alergenos_menu,platos,infantil,factor_custom,precio_venta,notas,personal_ids,bebidas,notas_bebidas,hotel_id',
+const COLS={fichajes:'id,hotel_id,user_id,persona,tipo,hora,registrado,origen,nota,corrige',invitaciones:'codigo,hotel_id,rol,nombre',cartas_publicas:'id,hotel_id,titulo,contenido,publicada,actualizado',eventos:'id,nombre,fecha,hora,pax,tipo,lugar,alergias_txt,alergenos_menu,platos,infantil,factor_custom,precio_venta,notas,personal_ids,bebidas,notas_bebidas,hotel_id',
  recetas:'id,nombre,cat,emoji,alg,ingredientes,img,hotel_id,base,rinde,extra,borrado,updated_at',
  plantillas:'id,nombre,color,factor,precio,descripcion,bodega,platos,hotel_id',vajilla:'id,nombre,cat,stock,factor_coctel,factor_menu,notas,img,hotel_id',
  proveedores:'id,nombre,tel,cat,hotel_id',personal:'id,nombre,rol,tel,hotel_id',config:'key,value,updated_at,hotel_id',miembros:'user_id,hotel_id,rol,creado,nombre'};
@@ -53,11 +53,12 @@ function aplicar(t,q){
     q.f=q.f.concat([['eq','hotel_id',miHotel]]);
     if(q.op==='upsert'||q.op==='insert')q.v=[].concat(q.v).map(r=>({...r,hotel_id:miHotel}));
   }
-  const pasa=r=>q.f.every(([op,k,v])=>op==='is'?(r[k]??null)===v:op==='eq'?String(r[k])===String(v):op==='in'?v.map(String).includes(String(r[k])):true);
+  const pasa=r=>q.f.every(([op,k,v])=>op==='is'?(r[k]??null)===v:op==='eq'?String(r[k])===String(v):op==='in'?v.map(String).includes(String(r[k])):op==='gte'?String(r[k])>=String(v):true);
   if(fallar&&fallar(t,q))return {data:null,error:{message:'sin conexión (simulado)'}};
   if(q.op==='select'){let d=filas.filter(pasa);if(q.single)return {data:d[0]?JSON.parse(JSON.stringify(d[0])):null,error:null};return {data:JSON.parse(JSON.stringify(d)),error:null};}
   if(q.op==='upsert'){const rows=[].concat(q.v).map(r=>{const o={};Object.keys(r).forEach(k=>o[k]=jsonb(r[k]));return o});const keys=(q.on||'id').split(',');rows.forEach(r=>{r={hotel_id:HOTEL,...r};if(t==='recetas')r.updated_at=new Date().toISOString();const i=filas.findIndex(x=>keys.every(k=>String(x[k])===String(r[k])));if(i>=0)filas[i]={...filas[i],...r};else filas.push(r)});log.push(t+' upsert '+rows.map(r=>r.id||r.key).join(','));return {data:JSON.parse(JSON.stringify(filas.filter(x=>rows.some(r=>keys.every(k=>String(x[k])===String(r[k])))))),error:null};}
   if(q.op==='update'){const v={};Object.keys(q.v).forEach(k=>v[k]=jsonb(q.v[k]));const af=filas.filter(pasa);af.forEach(r=>Object.assign(r,v,t==='recetas'?{updated_at:new Date().toISOString()}:{}));log.push(t+' update '+Object.keys(q.v).join(',')+' '+JSON.stringify(q.f.filter(f=>f[1]!=='hotel_id').map(f=>f[2])));return {data:JSON.parse(JSON.stringify(af)),error:null};}
+  if(q.op==='insert'&&t==='fichajes')q.v=[].concat(q.v).map(r=>({id:'f'+Math.random().toString(36).slice(2,9),...r,hora:r.origen==='manual'||r.origen==='sin_conexion'?r.hora:new Date().toISOString(),hotel_id:hotelDe(q.yo||HOTEL),user_id:q.yo||HOTEL}));
   if(q.op==='insert'){const rows=[].concat(q.v).map(r=>{const o={hotel_id:HOTEL};Object.keys(r).forEach(k=>o[k]=jsonb(r[k]));return o});
     for(const r of rows){if(filas.some(x=>(t==='config'?['hotel_id','key']:['id']).every(k=>String(x[k])===String(r[k]))))return {data:null,error:{code:'23505',message:'duplicate key'}}}
     rows.forEach(r=>filas.push(r));log.push(t+' insert '+rows.map(r=>r.id||r.key).join(','));return {data:JSON.parse(JSON.stringify(rows)),error:null};}
@@ -66,7 +67,7 @@ function aplicar(t,q){
 const MOCK=`(function(){
 function q(t){const st={op:'select',f:[],v:null,on:null,single:false};const o={
  select(){return o},order(){return o},limit(){return o},
- eq(k,v){st.f.push(['eq',k,v]);return o},is(k,v){st.f.push(['is',k,v]);return o},in(k,v){st.f.push(['in',k,v]);return o},
+ eq(k,v){st.f.push(['eq',k,v]);return o},gte(k,v){st.f.push(['gte',k,v]);return o},is(k,v){st.f.push(['is',k,v]);return o},in(k,v){st.f.push(['in',k,v]);return o},
  maybeSingle(){st.single=true;return o},
  upsert(v,opt){st.op='upsert';st.v=v;st.on=opt&&opt.onConflict;return o},
  update(v){st.op='update';st.v=v;return o},insert(v){st.op='insert';st.v=v;return o},delete(){st.op='delete';return o},
