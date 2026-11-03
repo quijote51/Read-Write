@@ -7,10 +7,21 @@
    - Al cargar: primero sube lo pendiente de este aparato y luego baja la lista de la nube.
    - Primera vez (tabla vacía para este hotel): pasa las recetas de config.seda_rec (o las del aparato) a la tabla.
      config.seda_rec se deja como estaba, de copia.
-   - Si otra persona cambió la misma receta mientras tanto, se juntan por campos: de este aparato solo se suben
-     los campos que ha cambiado aquí (nombre, ingredientes, foto…) y se respetan los que cambió el otro.
+   - De cada receta cambiada se suben SOLO los campos cambiados aquí (nombre, ingredientes, foto…): lo que otra
+     persona cambie en otros campos de la misma receta se respeta, aunque guarden en el mismo segundo.
      Solo si los dos cambiaron el mismo campo, queda el último, y se avisa en pantalla.
    Se usa en la app principal (recCargar, recSubir, recProgramar) y en las apps sueltas (recDeFila, vía app-base.js). */
+
+// Texto estable de un dato para compararlo: mismas claves en el mismo orden (la nube devuelve los campos de
+// las listas, como los ingredientes, en otro orden que el móvil) y sin campos vacíos.
+function canonJSON(v){
+  const orden = x => {
+    if(Array.isArray(x)) return x.map(orden);
+    if(x && typeof x === 'object'){ const o = {}; Object.keys(x).sort().forEach(k => { if(x[k] !== undefined) o[k] = orden(x[k]); }); return o; }
+    return x;
+  };
+  return JSON.stringify(orden(v)) ?? 'null';
+}
 
 const REC_COLS = ['id', 'nombre', 'cat', 'emoji', 'alg', 'ingredientes', 'img', 'base', 'rinde'];
 const REC_SYNC = 'seda_rec_sync';
@@ -33,7 +44,7 @@ function recDeFila(f){
   if(f.base){ r.base = true; r.rinde = f.rinde || {cant: 1, ud: 'ud'}; }
   return r;
 }
-const recFirma = r => JSON.stringify(recAFila(r));
+const recFirma = r => canonJSON(recAFila(r));
 
 // Lo que este aparato sabe que hay en la nube: {id: firma}. null = este aparato aún no ha usado la tabla.
 let _recNube = (() => { try{ return JSON.parse(localStorage.getItem(REC_SYNC) || 'null'); }catch(e){ return null; } })();
@@ -66,34 +77,45 @@ async function recSubir(){
     try{
       const {cambiadas, borradas} = recPendientes();
       if(cambiadas.length){
-        // Cómo están ahora en la nube (por si otro aparato las ha cambiado desde que este las bajó)
+        // Cómo están ahora en la nube: solo para avisar si otro aparato ha tocado el mismo dato
         const ids = cambiadas.map(r => String(r.id));
         const {data: actuales, error: e0} = await supa.from('recetas').select('*').eq('hotel_id', _uid).in('id', ids);
         if(e0) throw e0;
         const enNube = {}; (actuales || []).forEach(f => { enNube[String(f.id)] = f; });
         const choques = [];
-        const filas = cambiadas.map(r => {
+        let tocado = false;
+        for(const r of cambiadas){
           const id = String(r.id), mia = recAFila(r), nube = enNube[id], base = _recNube[id] ? JSON.parse(_recNube[id]) : null;
-          if(!nube || !base) return mia;
-          const deNube = recAFila(recDeFila(nube));
-          if(JSON.stringify(deNube) === _recNube[id]) return mia; // nadie más la ha tocado
-          // Juntar campo a campo: lo que he cambiado yo, mío; lo demás, de la nube
-          const junta = {...deNube, borrado: false};
-          Object.keys(mia).forEach(k => {
-            const yoCambie = JSON.stringify(mia[k]) !== JSON.stringify(base[k]);
-            if(!yoCambie) return;
-            if(JSON.stringify(deNube[k]) !== JSON.stringify(base[k]) && JSON.stringify(deNube[k]) !== JSON.stringify(mia[k])) choques.push(r.nombre || id);
-            junta[k] = mia[k];
-          });
-          // La receta del aparato pasa a ser la juntada
-          const i = _recLista().findIndex(x => String(x.id) === id);
-          if(i >= 0) recetas[i] = recDeFila(junta);
-          return junta;
-        });
-        const {error} = await supa.from('recetas').upsert(filas.map(f => ({...f, hotel_id: _uid})), {onConflict: 'hotel_id,id'});
-        if(error) throw error;
-        filas.forEach(f => { _recNube[String(f.id)] = recFirma(recDeFila(f)); });
-        if(filas.some((f, i) => recFirma(recDeFila(f)) !== recFirma(cambiadas[i]))){
+          let fila = null;
+          if(base && nube){
+            // Se suben SOLO los campos cambiados en este aparato (nombre, ingredientes, foto…)
+            const deNube = recAFila(recDeFila(nube)), cambio = {};
+            Object.keys(mia).forEach(k => {
+              if(k === 'id' || canonJSON(mia[k]) === canonJSON(base[k])) return;
+              cambio[k] = mia[k];
+              if(canonJSON(deNube[k]) !== canonJSON(base[k]) && canonJSON(deNube[k]) !== canonJSON(mia[k])) choques.push(r.nombre || id);
+            });
+            if(!Object.keys(cambio).length){ _recNube[id] = recFirma(r); continue; }
+            if(nube.borrado) cambio.borrado = false; // se estaba editando aquí: se recupera
+            const {data, error} = await supa.from('recetas').update(cambio).eq('hotel_id', _uid).eq('id', id).select();
+            if(error) throw error;
+            fila = data && data[0];
+          }
+          if(!fila){
+            const {data, error} = await supa.from('recetas').upsert({...mia, hotel_id: _uid}, {onConflict: 'hotel_id,id'}).select();
+            if(error) throw error;
+            fila = data && data[0];
+          }
+          if(fila){
+            const nueva = recDeFila(fila);
+            if(recFirma(nueva) !== recFirma(r)){
+              const i = _recLista().findIndex(x => String(x.id) === id);
+              if(i >= 0){ recetas[i] = nueva; tocado = true; }
+            }
+            _recNube[id] = recFirma(nueva);
+          }else _recNube[id] = recFirma(r);
+        }
+        if(tocado){
           try{ localStorage.setItem('seda_rec', JSON.stringify(recetas)); }catch(e){}
           if(typeof renderRecetario === 'function' && document.getElementById('receta-grid')){ try{ renderRecetario(); }catch(e){} }
         }
