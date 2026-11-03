@@ -25,6 +25,7 @@
 <script src="compras.js"></script>
 <script src="fotos.js"></script>
 <script src="recetario.js"></script>
+<script src="recetas-nube.js"></script>
 <script src="instalar.js"></script>
 <script>
 // ══════════════════════════════════════
@@ -1389,7 +1390,8 @@ function vincularPlatos(platos){
   return cambios;
 }
 function getRec(){try{return JSON.parse(localStorage.getItem('seda_rec')||'null')}catch{return null}}
-function saveRec(r){try{localStorage.setItem('seda_rec',JSON.stringify(r))}catch{} syncConfig('seda_rec',r);}
+// Las recetas van a la tabla «recetas», una fila por receta: solo se suben las que cambian (recetas-nube.js)
+function saveRec(r){try{localStorage.setItem('seda_rec',JSON.stringify(r))}catch{} if(_uid) recProgramar();}
 
 let eventos=getEv();
 let recetas=getRec()||JSON.parse(JSON.stringify(RECETAS_BASE));
@@ -2049,7 +2051,7 @@ function importarDatos(input){
 function resetearTodo(){
   if(!confirm('⚠️ ¿Borrar TODOS los datos? Esta acción no se puede deshacer.'))return;
   if(!confirm('¿Estás seguro? Se borrarán todos los eventos, recetas, plantillas y configuración.'))return;
-  ['seda_ev','seda_rec','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev','seda_appcc','seda_compras'].forEach(k=>localStorage.removeItem(k));
+  ['seda_ev','seda_rec','seda_rec_sync','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev','seda_appcc','seda_compras'].forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
 
@@ -4699,7 +4701,6 @@ async function cargarNube(){
       ['personal','seda_personal',()=>personal,v=>{personal=v}]
     ];
     const cfgs=[
-      ['seda_rec',()=>recetas,v=>{recetas=v}],
       ['seda_precios',()=>preciosIng,v=>{preciosIng=v}],
       ['seda_tipos',()=>tiposServicio,v=>{tiposServicio=v}],
       ['seda_ajustes',()=>ajustes,v=>{ajustes=v}],
@@ -4731,6 +4732,7 @@ async function cargarNube(){
         else if(get()!=null) syncConfig(k,get()); // primera vez: sube lo local
       });
     }
+    if(!(await recCargar())) ok=false; // recetas: tabla propia (recetas-nube.js)
   } catch(e){ ok=false; console.warn('Carga nube',e); }
   mostrarSync(ok);
   reducirFotosGuardadas();
@@ -4745,7 +4747,7 @@ async function reenviarTodo(){
     await Promise.all([
       _subirTabla('eventos',eventos.filter(x=>!_esDemo(x))), _subirTabla('plantillas',plantillas),
       _subirTabla('vajilla',vajilla), _subirTabla('proveedores',proveedores), _subirTabla('personal',personal),
-      _subirConfig('seda_rec',recetas), _subirConfig('seda_precios',preciosIng), _subirConfig('seda_tipos',tiposServicio),
+      recSubir(), _subirConfig('seda_precios',preciosIng), _subirConfig('seda_tipos',tiposServicio),
       _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos), _subirConfig('seda_horarios',horarios), ...(inventario?[_subirConfig('seda_inventario',inventario)]:[]),
       ...(getPinCfg()?[_subirConfig('seda_pin',getPinCfg())]:[]),
       ...(Object.keys(algRevisiones).length?[_subirConfig('seda_alg_rev',algRevisiones)]:[]),

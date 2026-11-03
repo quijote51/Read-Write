@@ -42,6 +42,14 @@
 - [ ] Crear las elaboraciones base reales (fondo oscuro, bordalesa, masas…) y usarlas en los platos.
 - Próximas mejoras propuestas, por orden: rendimiento de ingredientes (merma al limpiar), avisos en el móvil, hoja de evento por departamento, registro de sobras por evento, cambios al momento entre aparatos y foto del albarán que se rellena sola (IA).
 
+## Fase 1: varias personas a la vez sin pisarse (empezada el 3/11/2026)
+- [x] Copia de seguridad de todos los datos (tabla `copias`, función `hacer_copia`).
+- [x] Recetas: una fila por receta; solo se sube lo cambiado; si dos personas tocan la misma receta se juntan por campos.
+- [ ] Abrir la app una vez con internet en TODOS los aparatos después de publicar (los que no se actualicen siguen guardando en el sistema antiguo).
+- [ ] Eventos, vajilla, plantillas, proveedores y personal: subir solo lo cambiado y no pisar cambios de otros.
+- [ ] Precios, inventario y horarios: juntar en vez de sustituir.
+- [ ] Fotos al almacén de archivos de Supabase.
+
 ## Siguiente
 - [x] Compras hecho (`compras.js`, sección «Albaranes y costes»).
 - [ ] Apuntar los albaranes que lleguen y enlazar en «Enlaces» los artículos que se usan en recetas (hay propuestas automáticas).
