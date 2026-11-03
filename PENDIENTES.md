@@ -50,7 +50,7 @@
 ## Fase 2: una cuenta por persona (3/11/2026)
 - [x] Base de datos: `supabase/fase2-cuentas.sql` (roles, permisos por tabla y por clave, invitaciones). Probado en PostgreSQL local.
 - [x] App: `equipo.js` (perfil, rol fijo para miembros, alta con código, Ajustes → Equipo).
-- [ ] Pegar `supabase/fase2-cuentas.sql` en el SQL Editor y fusionar la PR.
+- [x] SQL aplicado y PR #12 fusionada (3/11/2026).
 - [ ] Crear un código para cada persona del equipo y enviárselo.
 - [ ] Más adelante: quién hizo cada cambio (columna «cambiado por»).
 
