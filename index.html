@@ -25,6 +25,7 @@
 <script src="desperdicio.js"></script>
 <script src="cartas.js"></script>
 <script src="avisos.js"></script>
+<script src="rendimiento.js"></script>
 <script src="compras.js"></script>
 <script src="albaran-ocr.js"></script>
 <script src="fotos.js"></script>
@@ -3430,8 +3431,9 @@ if(!getPrecios()) _semilla('seda_precios',preciosIng); // datos de ejemplo: solo
 // Si el ingrediente es una elaboración base, su precio sale de su propia receta (recetario.js)
 function getPrecioIng(nombre, ud){
   const sub=typeof precioSubreceta==='function'?precioSubreceta(nombre,ud):null; if(sub!=null) return sub;
-  return preciosIng[nombre]?.precio || PRECIOS_BASE[nombre]?.precio || 0;
+  return precioCompra(nombre) / (typeof rendDe==='function'?rendDe(nombre):1); // precio del producto limpio (rendimiento.js)
 }
+function precioCompra(nombre){ return preciosIng[nombre]?.precio || PRECIOS_BASE[nombre]?.precio || 0; }
 
 function calcCosteReceta(receta, raciones=1){
   let coste = 0;
@@ -3621,7 +3623,7 @@ function renderEscPlatos(){
           const sub = p * ing.cant;
           const esSub = !!subRecetaDe(ing);
           return `<tr>
-            <td style="padding:4px 6px;border-bottom:.5px solid var(--border)">${esSub?'<i class="ti ti-bowl" title="Elaboración base"></i> ':''}${escH(ing.nombre)}</td>
+            <td style="padding:4px 6px;border-bottom:.5px solid var(--border)">${esSub?'<i class="ti ti-bowl" title="Elaboración base"></i> ':''}${escH(ing.nombre)}${!esSub&&typeof htmlRendNota==='function'?htmlRendNota(ing.nombre):''}</td>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;color:var(--text-secondary)">${ing.cant} ${ing.ud}</td>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;color:var(--text-secondary)">${p>0?p.toFixed(4)+'€':'—'}</td>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;font-weight:500">${sub>0?sub.toFixed(4)+'€':'—'}</td>
@@ -3642,7 +3644,7 @@ function renderEscPrecios(){
   recetas.forEach(r=>{
     r.ingredientes.forEach(ing=>{
       if(subRecetaDe(ing)) return; // las elaboraciones base sacan su precio de su receta
-      if(!mapa[ing.nombre]) mapa[ing.nombre]={nombre:ing.nombre,ud:ing.ud,precio:getPrecioIng(ing.nombre)};
+      if(!mapa[ing.nombre]) mapa[ing.nombre]={nombre:ing.nombre,ud:ing.ud,precio:precioCompra(ing.nombre)};
     });
   });
   const lista = Object.values(mapa).sort((a,b)=>a.nombre.localeCompare(b.nombre));
@@ -3654,6 +3656,7 @@ function renderEscPrecios(){
         <th>Ingrediente</th>
         <th style="text-align:center">Unidad</th>
         <th style="text-align:right">€ por unidad</th>
+        <th style="text-align:right" title="% aprovechable después de limpiar">Aprov.</th>
       </tr></thead>
       <tbody>${lista.map(ing=>`
         <tr>
@@ -3665,12 +3668,16 @@ function renderEscPrecios(){
               onchange="actualizarPrecioIng('${ing.nombre.replace(/'/g,"\\'")}',this.value)"
             />
           </td>
+          <td style="text-align:right">${typeof htmlRendCelda==='function'?htmlRendCelda(ing.nombre):''}</td>
         </tr>`).join('')}
       </tbody>
     </table>
   </div>
   <p style="font-size:12px;color:var(--text-secondary);margin-top:8px">
     <i class="ti ti-info-circle"></i> Los precios son por la unidad indicada. Ej: si el salmón cuesta 22€/kg, introduce 0.022 (€/g).
+  </p>
+  <p style="font-size:12px;color:var(--text-secondary);margin-top:4px">
+    <i class="ti ti-scale"></i> <b>Aprovechable</b>: lo que queda después de limpiar (en las recetas va el peso limpio). Si de 1 kg de merluza entera salen 450 g de lomo, pon 45: el escandallo cuenta el coste real y los pedidos piden el peso bruto. Con ⚖ lo calculas pesando antes y después. Los «típicos» son orientativos: mejor pesar los tuyos.
   </p>`;
 }
 
@@ -3751,7 +3758,7 @@ function calcIngredientesPedido(evs, sinReceta){
       if(!rec){ if(sinReceta&&!sinReceta.some(x=>x.plato===plato.nombre&&x.ev===ev.nombre)) sinReceta.push({plato:plato.nombre,ev:ev.nombre}); return; }
       ingredientesBrutos(rec).forEach(ing=>{ // las elaboraciones base se abren en sus ingredientes
         const key=ing.nombre.toLowerCase().trim()+'|'+String(ing.ud||'').toLowerCase().trim();
-        const total=ing.cant*raciones;
+        const total=ing.cant*raciones/(typeof rendDe==='function'?rendDe(ing.nombre):1); // se compra el peso bruto (rendimiento.js)
         if(!map[key])map[key]={nombre:ing.nombre,total:0,ud:ing.ud,cat:catDeIngrediente(ing.nombre),platos:[]};
         map[key].total+=total;
         map[key].platos.push({plato:plato.nombre,ev:ev.nombre,qty:total,ud:ing.ud});
