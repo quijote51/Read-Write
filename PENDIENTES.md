@@ -43,8 +43,7 @@
 - Próximas mejoras propuestas, por orden: rendimiento de ingredientes (merma al limpiar), avisos en el móvil, hoja de evento por departamento, registro de sobras por evento, cambios al momento entre aparatos y foto del albarán que se rellena sola (IA).
 
 ## Estado al cierre del 3/11/2026
-- PR #11 (fotos al almacén) abierta: falta fusionarla y pegar `supabase/fotos-almacen.sql`.
-- Falta pegar `supabase/proteger-inventario.sql` (no se aplicó la primera vez).
+- Fase 1 terminada y activada (PR #6 a #11, almacén de fotos y protección del inventario).
 - Copias de seguridad en `copias`: nº 1 a 4 (la 4, antes de juntar config: 312 artículos, 65 precios, 9 plantillas).
 - Plan para vender la app (fases): 1) varias personas sin pisarse — HECHA salvo activar fotos; 2) una cuenta por persona y permisos reales; 3) varios clientes (quitar «Seda» del código, nombre y logo por cliente, módulos activables con bloqueo en la base de datos); 4) copias automáticas, pruebas, planes de pago de Vercel/Supabase y lo legal (RGPD: las alergias son datos de salud).
 
@@ -54,12 +53,12 @@
 - [ ] Abrir la app una vez con internet en TODOS los aparatos después de publicar (los que no se actualicen siguen guardando en el sistema antiguo).
 - [x] Eventos, vajilla, plantillas, proveedores y personal: solo se sube lo cambiado (campo a campo) y no se pisan cambios de otros.
 - [x] Precios, inventario, horarios y demás configuración: se juntan dato a dato; guardar a la vez no pisa nada. Un móvil nuevo ya no sube los datos de ejemplo encima de los reales.
-- [x] Fotos al almacén de archivos de Supabase (código). - [ ] Pegar `supabase/fotos-almacen.sql` en el SQL Editor para activarlo.
+- [x] Fotos al almacén de archivos de Supabase (activado el 3/11/2026).
 
 - [x] Plantillas: nunca llegaban a la nube (campo `desc` frente a columna `descripcion`). Arreglado el 3/11/2026; al abrir la app se suben solas.
 
 - [x] Inventario en blanco tras publicar (3/11/2026): el móvil mezclaba la página nueva con un archivo viejo guardado y la carga se cortaba. Arreglado: archivos propios siempre de la red, cada parte de la carga por separado y nunca se sube un inventario vacío. Copia nº 3 con los 312 artículos.
-- [ ] Pegar `supabase/proteger-inventario.sql` en el SQL Editor (protección en la base de datos).
+- [x] Protección del inventario en la base de datos (activada el 3/11/2026).
 
 ## Siguiente
 - [x] Compras hecho (`compras.js`, sección «Albaranes y costes»).
