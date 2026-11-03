@@ -14,6 +14,7 @@
 <link rel="apple-touch-icon" href="/inventario-apple-180.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <link rel="stylesheet" href="/horarios.css">
+<script src="/config-nube.js"></script>
 <script src="/inventario.js"></script>
 <script src="/instalar.js"></script>
 <style>
@@ -96,8 +97,10 @@ async function subir(key,val){
   if(!_uid||!supa){estado(false);return}
   // Nunca se sube un inventario vacío: si este aparato no ha podido cargarlo, no puede borrar el de la nube
   if(key==='seda_inventario'&&!(val&&Array.isArray(val.articulos)&&val.articulos.length)){console.warn('Inventario vacío: no se sube');return}
-  try{const{error}=await supa.from('config').upsert({hotel_id:_uid,key,value:val,updated_at:new Date().toISOString()},{onConflict:'hotel_id,key'});
-    if(error)throw error;estado(true)}
+  try{
+    // Se junta dato a dato con lo que haya en la nube (config-nube.js): dos personas contando a la vez no se pisan
+    await cfgSubir(key,val,v=>{inventario=v;LS('seda_inventario',v);initInventario()});
+    estado(true)}
   catch(e){console.warn('Sync',e);estado(false)}
 }
 async function leerSesion(){
@@ -113,7 +116,7 @@ async function entrar(ev){
     $('login').style.display='none';await arrancar()}
   catch(e){er.textContent=/invalid|credentials/i.test(String(e&&e.message))?'Correo o contraseña incorrectos.':'No se pudo entrar. Revisa la conexión e inténtalo de nuevo.';er.style.display='block'}
   b.disabled=false;b.textContent='Entrar';return false}
-async function salir(){try{await supa.auth.signOut()}catch(e){}try{localStorage.removeItem('seda_cuenta');localStorage.removeItem('iv_rol');localStorage.removeItem('seda_inventario');localStorage.removeItem('iv_prov')}catch(e){}location.reload()}
+async function salir(){try{await supa.auth.signOut()}catch(e){}try{localStorage.removeItem('seda_cuenta');localStorage.removeItem('iv_rol');localStorage.removeItem('seda_inventario');localStorage.removeItem('seda_cfgbase_seda_inventario');localStorage.removeItem('iv_prov')}catch(e){}location.reload()}
 
 async function esCocina(){
   let r=LS('iv_rol');
@@ -136,9 +139,10 @@ async function cargar(){
   try{
     const{data,error}=await supa.from('config').select('value').eq('key','seda_inventario');
     if(error)throw error;
-    const nube=data&&data[0]&&data[0].value,loc=inventario;
-    if(nube&&(!loc||(nube.ts||0)>=(loc.ts||0))){inventario=nube;LS('seda_inventario',nube)}
-    else if(loc&&(!nube||(loc.ts||0)>(nube.ts||0)))await subir('seda_inventario',loc);
+    const nube=data&&data[0]&&data[0].value,loc=inventario,base=cfgBase('seda_inventario');
+    if(base!==undefined&&loc&&canonJSON(loc)!==canonJSON(base))await subir('seda_inventario',loc); // cambios de aquí sin subir: se juntan con la nube
+    else if(nube&&(base!==undefined||!loc||(nube.ts||0)>=(loc.ts||0))){inventario=nube;LS('seda_inventario',nube);cfgFijarBase('seda_inventario',nube)}
+    else if(loc&&(!nube||(loc.ts||0)>(nube.ts||0)))await subir('seda_inventario',loc); // primera vez en este aparato
     estado(true)}
   catch(err){console.warn('Carga',err);estado(false)}
 }

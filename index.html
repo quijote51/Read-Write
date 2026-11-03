@@ -25,6 +25,7 @@
 <script src="compras.js"></script>
 <script src="fotos.js"></script>
 <script src="recetario.js"></script>
+<script src="config-nube.js"></script>
 <script src="recetas-nube.js"></script>
 <script src="tablas-nube.js"></script>
 <script src="instalar.js"></script>
@@ -71,8 +72,12 @@ async function _subirConfig(key, valor){
   // Nunca se sube un inventario vacío: si este aparato no ha podido cargarlo, no puede borrar el de la nube
   if(key==='seda_inventario' && !(valor && Array.isArray(valor.articulos) && valor.articulos.length)){ console.warn('Inventario vacío: no se sube'); return; }
   try {
-    const {error} = await supa.from('config').upsert({hotel_id:_uid, key, value:valor, updated_at:new Date().toISOString()}, {onConflict:'hotel_id,key'});
-    if(error) throw error;
+    // Se junta dato a dato con lo que haya en la nube (config-nube.js); si cambia lo de aquí, se aplica
+    await cfgSubir(key, valor, v=>{
+      const e=_cfgLista().find(x=>x[0]===key); if(!e) return;
+      if(key==='seda_horarios'){ horarios=v; try{localStorage.setItem(key,JSON.stringify(v))}catch{} const t=document.getElementById('tab-horarios'); if(t&&t.offsetParent!==null&&typeof initHorarios==='function') initHorarios(); return; }
+      e[2](v); if(key!=='seda_pin') try{localStorage.setItem(key,JSON.stringify(v))}catch{}
+    });
     _okSync();
   } catch(err){ _fallo(key, err); }
 }
@@ -1208,8 +1213,10 @@ const TIPOS_DEFAULT=[
 function getTipos(){try{return JSON.parse(localStorage.getItem('seda_tipos')||'null')}catch{return null}}
 function saveTipos(t){try{localStorage.setItem('seda_tipos',JSON.stringify(t))}catch{} syncConfig('seda_tipos',t);}
 
+// Datos de ejemplo de la primera vez: se guardan solo en el aparato. Si la nube está vacía, cargarNube los sube.
+function _semilla(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 let tiposServicio=getTipos()||JSON.parse(JSON.stringify(TIPOS_DEFAULT));
-if(!getTipos())saveTipos(tiposServicio);
+if(!getTipos()) _semilla('seda_tipos',tiposServicio); // datos de ejemplo: solo en este aparato, nunca pisan la nube
 
 const FACTOR={coctel:1.5,menu:1,desayuno:1};
 const TIPO_LABEL={coctel:'Cóctel',menu:'Menú ×1',desayuno:'Desayuno ×1'};
@@ -1380,7 +1387,7 @@ function saveRec(r){try{localStorage.setItem('seda_rec',JSON.stringify(r))}catch
 
 let eventos=getEv();
 let recetas=getRec()||JSON.parse(JSON.stringify(RECETAS_BASE));
-if(!getRec())saveRec(recetas);
+if(!getRec()) _semilla('seda_rec',recetas); // datos de ejemplo: solo en este aparato, nunca pisan la nube
 
 // Cargar eventos demo si no hay ninguno
 if(!eventos.length){
@@ -1912,7 +1919,7 @@ let ajustes=getAjustes()||{
   hotel_web:'sedaclubhotel.com',
   lugares:['Azotea','Restaurante Clandestino','Salón privado']
 };
-if(!getAjustes())saveAjustes(ajustes);
+if(!getAjustes()) _semilla('seda_ajustes',ajustes); // datos de ejemplo: solo en este aparato, nunca pisan la nube
 
 function initAjustes(){
   ge('aj-hotel-nombre').value=ajustes.hotel_nombre||'';
@@ -2037,6 +2044,7 @@ function resetearTodo(){
   if(!confirm('⚠️ ¿Borrar TODOS los datos? Esta acción no se puede deshacer.'))return;
   if(!confirm('¿Estás seguro? Se borrarán todos los eventos, recetas, plantillas y configuración.'))return;
   ['seda_ev','seda_rec','seda_rec_sync','seda_sync_eventos','seda_sync_plantillas','seda_sync_vajilla','seda_sync_proveedores','seda_sync_personal','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev','seda_appcc','seda_compras'].forEach(k=>localStorage.removeItem(k));
+  Object.keys(localStorage).filter(k=>k.startsWith('seda_cfgbase_')).forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
 
@@ -2240,7 +2248,7 @@ function getVaj(){try{return JSON.parse(localStorage.getItem('seda_vaj')||'null'
 function saveVaj(v){try{localStorage.setItem('seda_vaj',JSON.stringify(v))}catch{} syncTabla('vajilla',v);}
 
 let vajilla = getVaj() || JSON.parse(JSON.stringify(VAJ_STOCK_DEFAULT));
-if(!getVaj()) saveVaj(vajilla);
+if(!getVaj()) _semilla('seda_vaj',vajilla); // datos de ejemplo: solo en este aparato, nunca pisan la nube
 
 function switchVaj(tab, btn){
   document.querySelectorAll('[id^="vaj-tab-"]').forEach(t=>t.classList.remove('active'));
@@ -3386,7 +3394,7 @@ function getPrecios(){try{return JSON.parse(localStorage.getItem('seda_precios')
 function savePrecios(p){try{localStorage.setItem('seda_precios',JSON.stringify(p))}catch{} syncConfig('seda_precios',p);}
 
 let preciosIng = getPrecios() || JSON.parse(JSON.stringify(PRECIOS_BASE));
-if(!getPrecios()) savePrecios(preciosIng);
+if(!getPrecios()) _semilla('seda_precios',preciosIng); // datos de ejemplo: solo en este aparato, nunca pisan la nube
 
 // Si el ingrediente es una elaboración base, su precio sale de su propia receta (recetario.js)
 function getPrecioIng(nombre, ud){
@@ -3944,7 +3952,7 @@ function getBodega(){try{return JSON.parse(localStorage.getItem('seda_bodega')||
 function saveBodega(b){try{localStorage.setItem('seda_bodega',JSON.stringify(b))}catch{} syncConfig('seda_bodega',b);}
 
 let bodegaBase = getBodega() || JSON.parse(JSON.stringify(BODEGA_BASE_DEFAULT));
-if(!getBodega()) saveBodega(bodegaBase);
+if(!getBodega()) _semilla('seda_bodega',bodegaBase); // datos de ejemplo: solo en este aparato, nunca pisan la nube
 
 function calcUnidades(catId, pax, tipo, extra=0){
   const cat = BEB_CATS.find(c=>c.id===catId); if(!cat) return 0;
@@ -4316,7 +4324,7 @@ let contactosInternos = getContactos() || {
   jefa_eventos:{nombre:'Jefa de eventos', tel:'', email:''},
   jefe_cocina: {nombre:'Jefe de cocina',  tel:'', email:''}
 };
-if(!getContactos()) saveContactos(contactosInternos);
+if(!getContactos()) _semilla('seda_contactos',contactosInternos); // datos de ejemplo: solo en este aparato, nunca pisan la nube
 
 /* ===== CONFIRMACIÓN DE EVENTO ===== */
 function mostrarConfirmacion(evId){
@@ -4672,6 +4680,21 @@ function renderCuenta(){
   else { est.textContent='Sin sesión: los datos solo se guardan en este dispositivo.'; btn.innerHTML='<i class="ti ti-login"></i> Iniciar sesión'; }
 }
 
+// Claves de config que usa la app principal: [clave, leer, poner]
+function _cfgLista(){ return [
+    ['seda_precios',()=>preciosIng,v=>{preciosIng=v}],
+    ['seda_tipos',()=>tiposServicio,v=>{tiposServicio=v}],
+    ['seda_ajustes',()=>ajustes,v=>{ajustes=v}],
+    ['seda_bodega',()=>bodegaBase,v=>{bodegaBase=v}],
+    ['seda_contactos',()=>contactosInternos,v=>{contactosInternos=v}],
+    ['seda_horarios',()=>horarios,v=>{hzSync(v)}],
+    ['seda_inventario',()=>inventario,v=>{inventario=v;const t=document.getElementById('tab-inventario');if(t&&t.offsetParent!==null&&typeof initInventario==='function')initInventario()}],
+    ['seda_pin',()=>getPinCfg(),v=>{}],
+    ['seda_alg_rev',()=>algRevisiones,v=>{setAlgRevisiones(v)}],
+    ['seda_appcc',()=>appcc,v=>{appccDesdeNube(v)}],
+    ['seda_compras',()=>compras,v=>{comprasDesdeNube(v)}]
+  ]; }
+
 /* ===== CARGA DESDE LA NUBE ===== */
 async function cargarNube(){
   if(!_uid){ mostrarSync(false); reducirFotosGuardadas(); return; }
@@ -4685,19 +4708,7 @@ async function cargarNube(){
       ['proveedores','seda_prov',()=>proveedores,v=>{proveedores=v}],
       ['personal','seda_personal',()=>personal,v=>{personal=v}]
     ];
-    const cfgs=[
-      ['seda_precios',()=>preciosIng,v=>{preciosIng=v}],
-      ['seda_tipos',()=>tiposServicio,v=>{tiposServicio=v}],
-      ['seda_ajustes',()=>ajustes,v=>{ajustes=v}],
-      ['seda_bodega',()=>bodegaBase,v=>{bodegaBase=v}],
-      ['seda_contactos',()=>contactosInternos,v=>{contactosInternos=v}],
-      ['seda_horarios',()=>horarios,v=>{hzSync(v)}],
-      ['seda_inventario',()=>inventario,v=>{inventario=v;const t=document.getElementById('tab-inventario');if(t&&t.offsetParent!==null&&typeof initInventario==='function')initInventario()}],
-      ['seda_pin',()=>getPinCfg(),v=>{}],
-      ['seda_alg_rev',()=>algRevisiones,v=>{setAlgRevisiones(v)}],
-      ['seda_appcc',()=>appcc,v=>{appccDesdeNube(v)}],
-      ['seda_compras',()=>compras,v=>{comprasDesdeNube(v)}]
-    ];
+    const cfgs=_cfgLista();
     // Primero se sube lo que este aparato tenga pendiente (solo si ya ha hablado antes con la nube)
     const subidas=await Promise.all(tablas.map(([t])=>tabSnap(t)?tabSubir(t):true));
     if(subidas.includes(false)) ok=false;
@@ -4721,7 +4732,7 @@ async function cargarNube(){
     else{
       const m={}; cfg.data.forEach(r=>m[r.key]=r.value);
       cfgs.forEach(([k,get,set])=>{ try{
-        if(m[k]!==undefined&&m[k]!==null){ const antes=get(); if(antes!=null&&JSON.stringify(antes)!==JSON.stringify(m[k])) setLS('seda_prenube_'+k,antes); set(m[k]);if(k!=='seda_horarios')setLS(k,m[k]); }
+        if(m[k]!==undefined&&m[k]!==null){ cfgFijarBase(k,m[k]); const antes=get(); if(antes!=null&&JSON.stringify(antes)!==JSON.stringify(m[k])) setLS('seda_prenube_'+k,antes); set(m[k]);if(k!=='seda_horarios')setLS(k,m[k]); }
         else if(get()!=null) syncConfig(k,get()); // primera vez: sube lo local
       }catch(e){ ok=false; console.warn('Carga',k,e); } }); // un fallo en un dato no corta los demás
     }

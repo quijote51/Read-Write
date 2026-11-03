@@ -12,17 +12,7 @@
      Solo si los dos cambiaron el mismo campo, queda el último, y se avisa en pantalla.
    Se usa en la app principal (recCargar, recSubir, recProgramar) y en las apps sueltas (recDeFila, vía app-base.js). */
 
-// Texto estable de un dato para compararlo: mismas claves en el mismo orden (la nube devuelve los campos de
-// las listas, como los ingredientes, en otro orden que el móvil) y sin campos vacíos.
-function canonJSON(v){
-  const orden = x => {
-    if(Array.isArray(x)) return x.map(orden);
-    if(x && typeof x === 'object'){ const o = {}; Object.keys(x).sort().forEach(k => { if(x[k] !== undefined) o[k] = orden(x[k]); }); return o; }
-    return x;
-  };
-  return JSON.stringify(orden(v)) ?? 'null';
-}
-
+// canonJSON y recAviso están en config-nube.js (se carga antes)
 const REC_COLS = ['id', 'nombre', 'cat', 'emoji', 'alg', 'ingredientes', 'img', 'base', 'rinde'];
 const REC_SYNC = 'seda_rec_sync';
 
@@ -135,16 +125,6 @@ async function recSubir(){
   _recSubiendo = null;
   if(_recOtraVez){ _recOtraVez = false; return recSubir(); }
   return ok;
-}
-// Aviso pequeño abajo (solo cuando dos personas cambian el mismo dato de una receta a la vez)
-function recAviso(txt){
-  if(typeof document === 'undefined' || !document.body) return;
-  const d = document.createElement('div');
-  d.setAttribute('role', 'status');
-  d.style.cssText = 'position:fixed;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom,0px));z-index:9998;max-width:520px;margin:0 auto;background:#1a1a1a;color:#f0efe9;border:1px solid #c9a84c;border-radius:12px;padding:10px 12px;font:14px/1.35 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.35)';
-  d.textContent = txt;
-  document.body.appendChild(d);
-  setTimeout(() => d.remove(), 7000);
 }
 let _recTimer = null;
 function recProgramar(){ clearTimeout(_recTimer); _recTimer = setTimeout(recSubir, 700); }

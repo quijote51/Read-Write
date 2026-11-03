@@ -47,7 +47,7 @@
 - [x] Recetas: una fila por receta; solo se sube lo cambiado; si dos personas tocan la misma receta se juntan por campos.
 - [ ] Abrir la app una vez con internet en TODOS los aparatos después de publicar (los que no se actualicen siguen guardando en el sistema antiguo).
 - [x] Eventos, vajilla, plantillas, proveedores y personal: solo se sube lo cambiado (campo a campo) y no se pisan cambios de otros.
-- [ ] Precios, inventario y horarios: juntar en vez de sustituir.
+- [x] Precios, inventario, horarios y demás configuración: se juntan dato a dato; guardar a la vez no pisa nada. Un móvil nuevo ya no sube los datos de ejemplo encima de los reales.
 - [ ] Fotos al almacén de archivos de Supabase.
 
 - [x] Plantillas: nunca llegaban a la nube (campo `desc` frente a columna `descripcion`). Arreglado el 3/11/2026; al abrir la app se suben solas.

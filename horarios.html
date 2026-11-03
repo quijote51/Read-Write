@@ -14,6 +14,7 @@
 <link rel="apple-touch-icon" href="/horarios-apple-180.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <link rel="stylesheet" href="/horarios.css">
+<script src="/config-nube.js"></script>
 <script src="/horarios.js"></script>
 <script src="/instalar.js"></script>
 <style>
@@ -96,8 +97,10 @@ function syncConfig(key,val){if(window.HZ_SOLO_LEER)return;clearTimeout(_t[key])
 async function subir(key,val){
   if(window.HZ_SOLO_LEER)return;
   if(!_uid||!supa){estado(false);try{localStorage.setItem('hz_pendiente','1')}catch(e){}return}
-  try{const{error}=await supa.from('config').upsert({hotel_id:_uid,key,value:val,updated_at:new Date().toISOString()},{onConflict:'hotel_id,key'});
-    if(error)throw error;try{localStorage.removeItem('hz_pendiente')}catch(e){}estado(true)}
+  try{
+    // Se junta dato a dato con lo que haya en la nube (config-nube.js): dos personas con semanas distintas no se pisan
+    await cfgSubir(key,val,v=>{horarios=v;LS('seda_horarios',v);initHorarios()});
+    try{localStorage.removeItem('hz_pendiente')}catch(e){}estado(true)}
   catch(e){console.warn('Sync',e);try{localStorage.setItem('hz_pendiente','1')}catch(e2){}estado(false)}
 }
 
@@ -130,7 +133,7 @@ async function cargar(){
       eventos=e.data.map(x=>({...x,pax:Number(x.pax)||0}));
       LS('hz_cache',{eventos,ajustes,tipos:tiposServicio});
     }
-    if(m.seda_horarios)hzSync(m.seda_horarios);
+    if(m.seda_horarios){if(!solo)cfgFijarBase('seda_horarios',m.seda_horarios);hzSync(m.seda_horarios)}
     else if(!solo)subir('seda_horarios',horarios); // primera vez
     estado(true);
   }catch(err){console.warn('Carga',err);estado(false)}
