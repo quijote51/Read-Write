@@ -109,7 +109,10 @@ function _pintarLogin(){
 }
 async function _arrancar(){
   const s=$('salir'); if(s)s.style.display='';
-  if(await esCocina()){document.querySelector('main').innerHTML=`<div class="card hz-vacio">Esta app es para la cuenta del hotel (dirección y chef). Los horarios están en la app Horarios.</div>`;estado(true);return}
+  // Hotel y rol de esta cuenta (equipo.js). Cada app dice qué roles la usan (APP.roles)
+  if(typeof perfilAlEntrar==='function') await perfilAlEntrar();
+  const roles=window.APP&&APP.roles;
+  if(roles&&typeof rolEn==='function'&&!rolEn(roles)){document.querySelector('main').innerHTML=`<div class="card hz-vacio">Tu rol no usa esta app. Los horarios están en la app Horarios.</div>`;estado(true);return}
   if(window.APP&&APP.arrancar)await APP.arrancar();
 }
 window.addEventListener('online',()=>{if(_uid&&window.APP&&APP.recargar)APP.recargar()});

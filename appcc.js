@@ -51,6 +51,7 @@ function fusion(a,b){
 let subiendo=false,otraVez=false;
 async function subir(){
   guardarLocal();
+  if(typeof puedeConfig==='function'&&!puedeConfig('seda_appcc'))return;
   if(typeof _uid==='undefined'||!_uid||typeof supa==='undefined'){try{if(typeof _uid!=='undefined'&&!_uid)return;localStorage.setItem('seda_pendiente','1')}catch(e){}return}
   if(subiendo){otraVez=true;return} subiendo=true;
   try{

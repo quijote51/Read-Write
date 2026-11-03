@@ -70,6 +70,7 @@ const CFG_NOMBRES = {seda_precios: 'precios', seda_inventario: 'inventario', sed
 // este aparato (para que la pantalla muestre lo juntado). Lanza el error si no se ha podido guardar.
 const _cfgCola = {};
 function cfgSubir(key, mia, aplicar){
+  if(typeof puedeConfig === 'function' && !puedeConfig(key)) return Promise.resolve(true); // este rol no lo cambia: solo en el aparato
   const sigue = (_cfgCola[key] || Promise.resolve()).then(() => _cfgSubir(key, mia, aplicar));
   _cfgCola[key] = sigue.catch(() => {});
   return sigue;

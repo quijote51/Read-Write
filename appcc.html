@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="/app-base.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="/app-base.js"></script>
+<script src="/equipo.js"></script>
 <script src="/config-nube.js"></script>
 <script src="/recetas-nube.js"></script>
 <script src="/instalar.js"></script>
@@ -33,6 +34,7 @@
 <script>
 // APPCC: temperaturas, limpieza, recepción, muestras testigo y etiquetas. Lógica en appcc.js.
 window.APP={nombre:'APPCC',
+  roles:['admin','direccion','chef','cocina'],
   async arrancar(){ initAPPCC(); await this.recargar(); },
   async recargar(){ await cargarNube({seda_appcc:v=>appccDesdeNube(v)}); initAPPCC(); }
 };

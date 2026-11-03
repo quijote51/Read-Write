@@ -58,6 +58,7 @@ function tabPendientes(t){
 const _tabCola = {};
 // Sube lo cambiado de una tabla. Devuelve true si todo ha ido bien.
 function tabSubir(t){
+  if(typeof puedeTabla === 'function' && !puedeTabla(t)) return Promise.resolve(true); // este rol no lo cambia
   const sigue = (_tabCola[t] || Promise.resolve(true)).then(() => _tabSubir(t));
   _tabCola[t] = sigue.catch(() => false);
   return sigue;

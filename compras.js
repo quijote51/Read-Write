@@ -52,6 +52,7 @@ function fusion(a,b){
 let subiendo=false,otraVez=false;
 async function subir(){
   guardarLocal();
+  if(typeof puedeConfig==='function'&&!puedeConfig('seda_compras'))return;
   if(typeof _uid==='undefined'||!_uid||typeof supa==='undefined'||!supa)return;
   if(subiendo){otraVez=true;return} subiendo=true;
   try{
