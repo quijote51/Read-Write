@@ -56,6 +56,7 @@ function puedeConfig(k){
   if(k === 'seda_precios' || k === 'seda_inventario' || k === 'seda_compras' || k === 'seda_horarios') return rolEn(['admin', 'direccion', 'chef']);
   if(k === 'seda_appcc' || k === 'seda_desperdicio') return rolEn(['admin', 'direccion', 'chef', 'cocina']);
   if(k === 'seda_alg_rev') return rolEn(['admin', 'direccion', 'chef', 'eventos']);
+  if(k === 'seda_prevision') return rolEn(['admin', 'direccion', 'chef', 'eventos', 'cocina']);
   if(k === 'seda_pin' || k === 'seda_rec') return rolEn(['admin']);
   return rolEn(['admin', 'direccion']);
 }

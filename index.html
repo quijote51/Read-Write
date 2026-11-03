@@ -28,6 +28,7 @@
 <script src="rendimiento.js"></script>
 <script src="fichaje.js"></script>
 <script src="hojas.js"></script>
+<script src="prevision.js"></script>
 <script src="compras.js"></script>
 <script src="albaran-ocr.js"></script>
 <script src="fotos.js"></script>
@@ -2086,7 +2087,7 @@ function importarDatos(input){
 function resetearTodo(){
   if(!confirm('⚠️ ¿Borrar TODOS los datos? Esta acción no se puede deshacer.'))return;
   if(!confirm('¿Estás seguro? Se borrarán todos los eventos, recetas, plantillas y configuración.'))return;
-  ['seda_ev','seda_rec','seda_rec_sync','seda_sync_eventos','seda_sync_plantillas','seda_sync_vajilla','seda_sync_proveedores','seda_sync_personal','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev','seda_appcc','seda_compras','seda_desperdicio'].forEach(k=>localStorage.removeItem(k));
+  ['seda_ev','seda_rec','seda_rec_sync','seda_sync_eventos','seda_sync_plantillas','seda_sync_vajilla','seda_sync_proveedores','seda_sync_personal','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev','seda_appcc','seda_compras','seda_desperdicio','seda_prevision'].forEach(k=>localStorage.removeItem(k));
   Object.keys(localStorage).filter(k=>k.startsWith('seda_cfgbase_')).forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
@@ -3275,7 +3276,7 @@ function renderProd(){
     <div class="stat"><div class="stat-l">Factor</div><div class="stat-v">${f.toFixed(1)}×</div></div>
     <div class="stat"><div class="stat-l">Platos distintos</div><div class="stat-v">${ev.platos.length}</div></div>
     <div class="stat"><div class="stat-l">Raciones totales</div><div class="stat-v">${total}</div></div>
-  </div>`+alergC+htmlAlertaAlergenos(ev)+htmlHorarioEvento(ev)+alergMenu+t+htmlElaboracionesBase([ev])+infHTML;
+  </div>`+alergC+htmlAlertaAlergenos(ev)+htmlHorarioEvento(ev)+alergMenu+t+(typeof htmlPrevision==='function'?htmlPrevision(ev):'')+htmlElaboracionesBase([ev])+infHTML;
 }
 
 function imprimirFicha(){
@@ -4742,7 +4743,8 @@ function _cfgLista(){ return [
     ['seda_alg_rev',()=>algRevisiones,v=>{setAlgRevisiones(v)}],
     ['seda_appcc',()=>appcc,v=>{appccDesdeNube(v)}],
     ['seda_desperdicio',()=>desperdicio,v=>{desperdicioDesdeNube(v)}],
-    ['seda_compras',()=>compras,v=>{comprasDesdeNube(v)}]
+    ['seda_compras',()=>compras,v=>{comprasDesdeNube(v)}],
+    ['seda_prevision',()=>prevision,v=>{previsionDesdeNube(v)}]
   ]; }
 
 /* ===== CARGA DESDE LA NUBE ===== */
@@ -4807,6 +4809,7 @@ async function reenviarTodo(){
       ...(Object.keys(algRevisiones).length?[_subirConfig('seda_alg_rev',algRevisiones)]:[]),
       ...(appcc?[appccSubir()]:[]),
       ...(desperdicio?[_subirConfig('seda_desperdicio',desperdicio)]:[]),
+      ...(prevision?[_subirConfig('seda_prevision',prevision)]:[]),
       ...(compras?[comprasSubir()]:[])
     ]);
   } finally { _reenviando=false; }

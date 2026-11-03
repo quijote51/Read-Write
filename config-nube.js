@@ -66,7 +66,7 @@ function cfgBase(key){ try{ const t = localStorage.getItem(_cfgBaseLS(key)); ret
 function cfgFijarBase(key, valor){ try{ localStorage.setItem(_cfgBaseLS(key), JSON.stringify(valor)); }catch(e){} }
 
 const CFG_NOMBRES = {seda_precios: 'precios', seda_inventario: 'inventario', seda_horarios: 'horarios', seda_ajustes: 'ajustes',
-  seda_tipos: 'tipos de servicio', seda_bodega: 'bodega', seda_contactos: 'contactos', seda_alg_rev: 'revisión de alérgenos'};
+  seda_tipos: 'tipos de servicio', seda_bodega: 'bodega', seda_contactos: 'contactos', seda_alg_rev: 'revisión de alérgenos', seda_prevision: 'previsión'};
 
 // Sube una clave juntándola con lo que haya en la nube. aplicar(valor) se llama si el resultado cambia lo de
 // este aparato (para que la pantalla muestre lo juntado). Lanza el error si no se ha podido guardar.
