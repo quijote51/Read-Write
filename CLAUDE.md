@@ -21,8 +21,9 @@ App web (PWA) para la gestión de la cocina y los eventos de un hotel. HTML, CSS
 | `albaranes.html` | App suelta de Albaranes (usa `compras.js` con `window.CO_SUELTA`: solo Albaranes, Gasto y Precios). Lee `seda_inventario`, `seda_precios` y `seda_compras`; los precios del escandallo solo se suben si se han leído de la nube. |
 | `recetario.js` | Recetario: ficha, alta, edición y borrado de recetas, y **elaboraciones base** (sub-recetas: `base:true`, `rinde:{cant,ud}`; ingredientes de una tanda). Su coste (`precioSubreceta`, usado por `getPrecioIng`), alérgenos (`algDeRecetaCompleta`) e ingredientes (`ingredientesBrutos`, usado en pedidos) pasan al plato. `htmlElaboracionesBase` en Producción y Pedidos. También se carga en `alergenos.html`. |
 | `fotos.js` | Reduce las fotos (900 px, JPEG) antes de guardarlas: `subirFoto` (recetas), `reducirFoto` (vajilla) y `reducirFotosGuardadas` una vez tras `cargarNube`. |
+| `instalar.js` | Aviso «Instalar» en todas las apps: botón dorado cuando Android lo permite (`beforeinstallprompt`) y, si no, instrucciones (iPhone: Compartir; Android: abrir en Chrome → ⋮). No sale si ya está instalada o se cerró. |
 | `app-base.js` + `app-base.css` | Base común de las apps sueltas: sesión, carga de eventos, recetas y proveedores, `syncConfig`, `recetaDePlato` y estilos. |
-| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v19`) y añadir a `SHELL` cada archivo nuevo.** |
+| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v20`) y añadir a `SHELL` cada archivo nuevo. Cada app suelta nueva va también en la lista `clave` de navegación.** |
 | `manifest-*.json` + `*-192/512/maskable/apple-180/favicon-32.png` | Una app instalable por módulo. Iconos dorados (#c9a84c) sobre fondo #1a1a1a. |
 | `supabase/seguridad-cambios.sql` | Referencia, ya aplicado. |
 | `PENDIENTES.md` | Lista de tareas pendientes. **Leerla al empezar.** |
