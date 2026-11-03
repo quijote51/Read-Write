@@ -48,7 +48,7 @@
 - Plan para vender la app (fases): 1) varias personas sin pisarse — HECHA salvo activar fotos; 2) una cuenta por persona y permisos reales; 3) varios clientes (quitar «Seda» del código, nombre y logo por cliente, módulos activables con bloqueo en la base de datos); 4) copias automáticas, pruebas, planes de pago de Vercel/Supabase y lo legal (RGPD: las alergias son datos de salud).
 
 ## Mejoras del estudio de mercado (3/11/2026)
-- [x] 1. Desperdicio alimentario (Ley 1/2025): `desperdicio.js`. Falta fusionar la PR y pegar `supabase/desperdicio.sql`.
+- [x] 1. Desperdicio alimentario (Ley 1/2025): `desperdicio.js`. Activado (PR #14 y SQL, 3/11/2026).
 - [ ] 2. Foto del albarán con IA.
 - [ ] 3. QR público de alérgenos.
 - [ ] 4. Avisos en el móvil.
