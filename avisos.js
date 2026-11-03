@@ -50,6 +50,11 @@ function calcular(){
     let b = []; try{ b = comprasBajoMinimo(); }catch(e){}
     if(b.length) out.push({tab: 'costes', ic: 'ti-package', t: `${b.length} artículo${b.length === 1 ? '' : 's'} bajo el mínimo`, d: b.slice(0, 8).join(', ') + (b.length > 8 ? '…' : '')});
   }
+  // Hojas de evento impresas que han cambiado después (hojas.js)
+  if(veo('hojas') && typeof hojasCambiadas === 'function'){
+    let h = []; try{ h = hojasCambiadas(); }catch(e){}
+    h.forEach(x => out.push({tab: 'hojas', ic: 'ti-files', t: `Hoja de ${x.depNombre.toLowerCase()} cambiada: ${x.ev.nombre}`, d: 'Ha cambiado: ' + x.lista.join(', ') + '. Vuelve a imprimirla.'}));
+  }
   // Cambios de turno (los lee refrescar() de la nube)
   const yo = typeof _perfil !== 'undefined' && _perfil && _perfil.nombre;
   const paraMi = cambios.filter(c => c.estado === 'pendiente' && yo && c.a === yo);
