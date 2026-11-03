@@ -33,7 +33,7 @@ App web (PWA) para la gestión de la cocina y los eventos de hoteles y restauran
 | `app-base.js` + `app-base.css` | Base común de las apps sueltas: sesión, carga de eventos, recetas y proveedores, `syncConfig`, `recetaDePlato` y estilos. |
 | `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v28`) y añadir a `SHELL` cada archivo nuevo. Cada app suelta nueva va también en la lista `clave` de navegación.** Archivos propios: red primero (si no, la página nueva se mezcla con un .js viejo guardado); CDN: caché primero. |
 | `manifest-*.json` + `*-192/512/maskable/apple-180/favicon-32.png` | Una app instalable por módulo. Iconos dorados (#c9a84c) sobre fondo #1a1a1a. |
-| `supabase/seguridad-cambios.sql`, `recetas-tabla.sql`, `proteger-inventario.sql`, `fotos-almacen.sql` | Referencia, ya aplicados (los dos últimos el 3/11/2026). |
+| `supabase/*.sql` | Referencia, todos aplicados (fase 2 y fase 3 el 3/11/2026). |
 | `PENDIENTES.md` | Lista de tareas pendientes. **Leerla al empezar.** |
 
 ## Cómo añadir un módulo

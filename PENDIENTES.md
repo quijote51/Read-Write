@@ -50,7 +50,7 @@
 ## Fase 3: varios clientes (3/11/2026)
 - [x] Base de datos: `supabase/fase3-clientes.sql` (módulos, códigos de cliente, panel de la plataforma). Probado en PostgreSQL local.
 - [x] App: sin «Seda» fijo (`marca.js`), secciones y apps según módulos, Ajustes → Clientes.
-- [ ] Fusionar la PR y pegar `supabase/fase3-clientes.sql`.
+- [x] PR #13 fusionada y SQL aplicado (3/11/2026).
 - [ ] Logo de cada cliente (en hoja impresa y cabecera).
 
 ## Fase 2: una cuenta por persona (3/11/2026)
