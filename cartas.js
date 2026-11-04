@@ -44,7 +44,7 @@ function platosDe(c){
 function contenidoDe(c){
   const d = typeof hotelDatos === 'function' ? hotelDatos() : {};
   const sinReceta = c.origen === 'evento' ? platosDe(c).filter(p => !p.alg.length).map(p => p.nombre) : [];
-  return {hotel: d.nombre || '', ciudad: d.ciudad || '', tel: d.tel || '', platos: platosDe(c), nota: (c.nota || '').trim(), origen: c.origen, evento: c.evento || null, recetas: c.recetas || [], sinDatos: sinReceta};
+  return {hotel: d.nombre || '', ciudad: d.ciudad || '', tel: d.tel || '', logo: /^https:/.test(d.logo || '') ? d.logo : '', platos: platosDe(c), nota: (c.nota || '').trim(), origen: c.origen, evento: c.evento || null, recetas: c.recetas || [], sinDatos: sinReceta};
 }
 
 async function cargar(){

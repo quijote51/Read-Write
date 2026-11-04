@@ -78,7 +78,8 @@ function pintar(){
   const apto=p=>!(p.alg||[]).some(x=>elegidos.has(x));
   const cats=[]; platos.forEach(p=>{ const k=p.cat||''; let g=cats.find(x=>x.k===k); if(!g){ g={k,ps:[]}; cats.push(g); } g.ps.push(p); });
   const nAptos=platos.filter(apto).length;
-  app.innerHTML=`<header>${c.hotel?`<div class="hotel">${esc(c.hotel)}${c.ciudad?' · '+esc(c.ciudad):''}</div>`:''}
+  const logo=/^https:\/\/gxkxslkdqgwovgxcuzkr\.supabase\.co\/storage\/v1\/object\/public\/fotos\/[\w\/.-]+$/.test(c.logo||'')?c.logo:'';
+  app.innerHTML=`<header>${logo?`<img src="${logo}" alt="" style="max-height:64px;max-width:200px;object-fit:contain;display:block;margin:0 auto 8px;background:#fff;border-radius:8px;padding:4px">`:''}${c.hotel?`<div class="hotel">${esc(c.hotel)}${c.ciudad?' · '+esc(c.ciudad):''}</div>`:''}
     <h1>${esc(carta.titulo||'Carta')}</h1><div class="fecha">Alérgenos actualizados el ${new Date(carta.actualizado).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</div></header>
     ${c.nota?`<div class="nota">${esc(c.nota)}</div>`:''}
     ${usados.length?`<div class="filtro"><b>Tengo alergia o intolerancia a…</b><div class="chips">${usados.map(a=>`<button class="chip" data-a="${a.id}" aria-pressed="${elegidos.has(a.id)}">${a.icon} ${esc(a.label)}</button>`).join('')}</div>

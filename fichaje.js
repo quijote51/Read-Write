@@ -160,7 +160,7 @@ async function recargar(){ await enviarPendientes(); await cargar(desdeVista());
 function imprimirInforme(){
   const d = typeof hotelDatos === 'function' ? hotelDatos() : {}, js = jornadas(filas, quien).filter(j => j.dia.slice(0, 7) === mes);
   const total = js.reduce((a, j) => a + (j.min || 0), 0);
-  const html = `<h1>Registro de jornada · ${esc(quien)}</h1><p>${esc([d.nombre, d.dir, d.ciudad].filter(Boolean).join(' · '))} · Mes ${mes.split('-').reverse().join('/')}</p>
+  const html = `${typeof hLogo === 'function' ? hLogo(40) : ''}<h1>Registro de jornada · ${esc(quien)}</h1><p>${esc([d.nombre, d.dir, d.ciudad].filter(Boolean).join(' · '))} · Mes ${mes.split('-').reverse().join('/')}</p>
     <table><thead><tr><th>Día</th><th>Entrada</th><th>Salida</th><th>Pausa</th><th>Horas</th></tr></thead><tbody>
     ${js.map(j => `<tr><td>${dmy(j.dia)}</td><td>${hm(j.entrada.hora)}</td><td>${j.salida ? hm(j.salida.hora) : '—'}</td><td>${j.pausaMin ? j.pausaMin + ' min' : ''}</td><td>${horasTxt(j.min)}</td></tr>`).join('')}
     <tr><td colspan="4"><b>Total</b></td><td><b>${horasTxt(total)}</b></td></tr></tbody></table>

@@ -66,7 +66,8 @@
 - [x] Base de datos: `supabase/fase3-clientes.sql` (módulos, códigos de cliente, panel de la plataforma). Probado en PostgreSQL local.
 - [x] App: sin «Seda» fijo (`marca.js`), secciones y apps según módulos, Ajustes → Clientes.
 - [x] PR #13 fusionada y SQL aplicado (3/11/2026).
-- [ ] Logo de cada cliente (en hoja impresa y cabecera).
+- [x] Logo de cada cliente: Ajustes → Datos del hotel → «Subir logo» (cabecera, hojas impresas y carta QR).
+- [ ] Subir el logo del Seda. Las cartas QR ya publicadas lo muestran al pulsar «Actualizar».
 
 ## Fase 2: una cuenta por persona (3/11/2026)
 - [x] Base de datos: `supabase/fase2-cuentas.sql` (roles, permisos por tabla y por clave, invitaciones). Probado en PostgreSQL local.

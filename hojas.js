@@ -131,7 +131,7 @@ function imprimir(){
   LS(IMPR, g);
   const d = typeof hotelDatos === 'function' ? hotelDatos() : {};
   let z = ge('hj-print'); if(!z){ z = document.createElement('div'); z.id = 'hj-print'; document.body.appendChild(z); }
-  z.innerHTML = `<div class="hj-ph">${esc(d.nombre || 'Oído Cocina')} · impresa el ${new Date().toLocaleString('es-ES')}</div>` + htmlHoja(ev, dep);
+  z.innerHTML = `<div class="hj-ph">${typeof hLogo === 'function' ? hLogo(32) + ' ' : ''}${esc(d.nombre || 'Oído Cocina')} · impresa el ${new Date().toLocaleString('es-ES')}</div>` + htmlHoja(ev, dep);
   document.body.classList.add('hj-imprimiendo');
   const fin = () => { document.body.classList.remove('hj-imprimiendo'); window.removeEventListener('afterprint', fin); pintar(); if(typeof avisosRecalcular === 'function') avisosRecalcular(); };
   window.addEventListener('afterprint', fin); window.print(); setTimeout(fin, 1500);

@@ -29,7 +29,8 @@ ok(F().length===4&&F()[3].origen==='sin_conexion'&&F()[3].tipo==='salida','al vo
 const hoy=new Date();const h=(H_,M)=>new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate(),H_,M).toISOString();
 F()[0].hora=h(8,0);F()[1].hora=h(11,0);F()[2].hora=h(11,30);F()[3].hora=h(16,0);
 // El jefe (admin, dueño)
-const A=await N.pagina(b,H+'index.html');await A.evaluate(()=>{aplicarRol('admin');showTab('fichaje')});await A.waitForTimeout(800);
+const A=await N.pagina(b,H+'index.html');await A.clock.setFixedTime(new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate(),18,0)); // reloj del jefe a las 18:00: la salida a mano de las 15:00 ya ha pasado
+await A.evaluate(()=>{aplicarRol('admin');showTab('fichaje')});await A.waitForTimeout(800);
 ok(await A.isVisible('#fh-persona'),'el dueño sin nombre elige quién ficha');
 await A.click('[data-fhv="informe"]');await A.waitForTimeout(600);await A.selectOption('#fh-quien','Rubén');await A.waitForTimeout(200);
 let t=await A.textContent('#fh-root');
