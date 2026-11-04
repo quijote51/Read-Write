@@ -29,7 +29,7 @@ h1{font-size:22px;margin:4px 0 2px}
 .cat h2+.plato{border-top:0}
 .pn{font-weight:600;display:flex;gap:8px;align-items:baseline;justify-content:space-between}
 .est{font-size:11px;font-weight:700;border-radius:6px;padding:2px 6px;white-space:nowrap}
-.est.si{background:var(--ok);color:var(--okt)}.est.no{background:var(--no);color:var(--not)}
+.est.si{background:var(--ok);color:var(--okt)}.est.no{background:var(--no);color:var(--not)}.est.duda{background:var(--borde);color:var(--txt)}
 .plato.oculto{opacity:.45}
 .algs{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;font-size:13px;color:var(--sec)}
 .alg.marca{color:var(--not);font-weight:700}
@@ -75,19 +75,21 @@ function pintar(){
   const c=carta.contenido||{}, platos=c.platos||[];
   document.title='Alérgenos · '+(carta.titulo||'Carta');
   const usados=ALERGENOS.filter(a=>platos.some(p=>(p.alg||[]).includes(a.id)));
-  const apto=p=>!(p.alg||[]).some(x=>elegidos.has(x));
+  // Un plato sin alérgenos apuntados puede ser que no estén apuntados: nunca se le dice al comensal que no lleva.
+  const sinDato=p=>!(p.alg||[]).length;
+  const apto=p=>!sinDato(p)&&!(p.alg||[]).some(x=>elegidos.has(x));
   const cats=[]; platos.forEach(p=>{ const k=p.cat||''; let g=cats.find(x=>x.k===k); if(!g){ g={k,ps:[]}; cats.push(g); } g.ps.push(p); });
-  const nAptos=platos.filter(apto).length;
+  const nAptos=platos.filter(apto).length, nSinDato=platos.filter(sinDato).length;
   const logo=/^https:\/\/gxkxslkdqgwovgxcuzkr\.supabase\.co\/storage\/v1\/object\/public\/fotos\/[\w\/.-]+$/.test(c.logo||'')?c.logo:'';
   app.innerHTML=`<header>${logo?`<img src="${logo}" alt="" style="max-height:64px;max-width:200px;object-fit:contain;display:block;margin:0 auto 8px;background:#fff;border-radius:8px;padding:4px">`:''}${c.hotel?`<div class="hotel">${esc(c.hotel)}${c.ciudad?' · '+esc(c.ciudad):''}</div>`:''}
     <h1>${esc(carta.titulo||'Carta')}</h1><div class="fecha">Alérgenos actualizados el ${new Date(carta.actualizado).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</div></header>
     ${c.nota?`<div class="nota">${esc(c.nota)}</div>`:''}
     ${usados.length?`<div class="filtro"><b>Tengo alergia o intolerancia a…</b><div class="chips">${usados.map(a=>`<button class="chip" data-a="${a.id}" aria-pressed="${elegidos.has(a.id)}">${a.icon} ${esc(a.label)}</button>`).join('')}</div>
-      ${elegidos.size?`<div class="resumen">${nAptos} de ${platos.length} platos no llevan lo que ha marcado.</div>`:''}</div>`:''}
+      ${elegidos.size?`<div class="resumen">${nAptos} de ${platos.length} platos no llevan lo que ha marcado.${nSinDato?` ${nSinDato} sin confirmar: pregunte al personal.`:''}</div>`:''}</div>`:''}
     ${cats.map(g=>`<section class="cat">${g.k?`<h2>${esc(g.k)}</h2>`:''}${g.ps.map(p=>{
-      const a=p.alg||[], ok=apto(p);
-      return `<div class="plato${elegidos.size&&!ok?' oculto':''}"><div class="pn"><span>${esc(p.nombre)}</span>${elegidos.size?`<span class="est ${ok?'si':'no'}">${ok?'Sin lo marcado':'Contiene'}</span>`:''}</div>
-        ${a.length?`<div class="algs">${a.map(x=>{ const d=alg(x); return `<span class="alg${elegidos.has(x)?' marca':''}">${d.icon} ${esc(d.label)}</span>`; }).join('')}</div>`:'<div class="sin">Sin alérgenos de declaración obligatoria.</div>'}</div>`;
+      const a=p.alg||[], ok=apto(p), duda=sinDato(p);
+      return `<div class="plato${elegidos.size&&!ok&&!duda?' oculto':''}"><div class="pn"><span>${esc(p.nombre)}</span>${elegidos.size?`<span class="est ${duda?'duda':ok?'si':'no'}">${duda?'Consultar':ok?'Sin lo marcado':'Contiene'}</span>`:''}</div>
+        ${a.length?`<div class="algs">${a.map(x=>{ const d=alg(x); return `<span class="alg${elegidos.has(x)?' marca':''}">${d.icon} ${esc(d.label)}</span>`; }).join('')}</div>`:'<div class="sin">Alérgenos sin confirmar: pregunte al personal.</div>'}</div>`;
     }).join('')}</section>`).join('')}
     <div class="aviso">Información según el Reglamento (UE) 1169/2011. Las elaboraciones se preparan en una cocina donde se usan los 14 alérgenos y puede haber trazas. Si tiene una alergia, <b>avise siempre al personal</b> antes de pedir.${c.tel?` Teléfono: ${esc(c.tel)}.`:''}</div>
     <footer>Oído Cocina</footer>`;

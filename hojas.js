@@ -25,7 +25,7 @@ const depsDeRol = () => rol() === 'cocina' ? ['cocina'] : rol() === 'sala' ? ['s
 const evs = () => (typeof eventos !== 'undefined' && Array.isArray(eventos) ? eventos : []);
 const ff = f => typeof fmtFecha === 'function' ? fmtFecha(f) : f;
 const algTxt = p => (typeof algDePlato === 'function' ? algDePlato(p) : (p.alg || [])).map(a => typeof algLabel === 'function' ? algLabel(a) : a);
-const sinAlergias = t => !String(t || '').trim() || /^\s*(sin|ninguna|no hay)/i.test(t);
+const sinAlergias = t => algSinAlergias(t);
 
 let evId = null, dep = null;
 

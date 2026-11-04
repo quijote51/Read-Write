@@ -19,7 +19,7 @@ const LS = (k, v) => { try{ if(v === undefined) return JSON.parse(localStorage.g
 const conSesion = () => typeof supa !== 'undefined' && supa && typeof _uid !== 'undefined' && _uid;
 const rol = () => (typeof rolActual !== 'undefined' && rolActual) || 'admin';
 const veo = tab => { const r = typeof ROLES !== 'undefined' && ROLES[rol()]; return !!r && r.tabs.includes(tab) && (typeof seccionActiva !== 'function' || seccionActiva(tab)); };
-const sinAlergias = t => !String(t || '').trim() || /^\s*(sin|ninguna|no hay)/i.test(t);
+const sinAlergias = t => algSinAlergias(t);
 
 let lista = [], cambios = [], abierto = false, msg = '';
 

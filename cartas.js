@@ -43,7 +43,7 @@ function platosDe(c){
 }
 function contenidoDe(c){
   const d = typeof hotelDatos === 'function' ? hotelDatos() : {};
-  const sinReceta = c.origen === 'evento' ? platosDe(c).filter(p => !p.alg.length).map(p => p.nombre) : [];
+  const sinReceta = platosDe(c).filter(p => !p.alg.length).map(p => p.nombre);
   return {hotel: d.nombre || '', ciudad: d.ciudad || '', tel: d.tel || '', logo: /^https:/.test(d.logo || '') ? d.logo : '', platos: platosDe(c), nota: (c.nota || '').trim(), origen: c.origen, evento: c.evento || null, recetas: c.recetas || [], sinDatos: sinReceta};
 }
 
@@ -68,7 +68,7 @@ function vLista(){
     ${cartas.length ? cartas.map(c => { const n = (c.contenido.platos || []).length;
       return `<div class="card cq-carta"><div class="cq-fila"><div class="cq-n"><b>${esc(c.titulo)}</b>
         <small>${n} plato${n === 1 ? '' : 's'} · actualizada el ${new Date(c.actualizado).toLocaleDateString('es-ES')}${c.publicada ? '' : ' · <span class="cq-off">retirada</span>'}</small></div></div>
-        ${(c.contenido.sinDatos || []).length ? `<div class="cq-aviso">Sin alérgenos registrados: ${c.contenido.sinDatos.map(esc).join(', ')}. Revisa sus recetas antes de poner el QR.</div>` : ''}
+        ${(c.contenido.sinDatos || []).length ? `<div class="cq-aviso">Sin alérgenos registrados: ${c.contenido.sinDatos.map(esc).join(', ')}. El comensal verá «pregunte al personal»: revisa sus recetas antes de poner el QR.</div>` : ''}
         <div class="cq-acc"><button class="btn-sec cq-sm" data-cq="ver" data-id="${esc(c.id)}"><i class="ti ti-qrcode"></i> QR y enlace</button>
         <button class="btn-sec cq-sm" data-cq="actualizar" data-id="${esc(c.id)}"><i class="ti ti-refresh"></i> Actualizar</button>
         <button class="btn-sec cq-sm" data-cq="editar" data-id="${esc(c.id)}">Editar</button>

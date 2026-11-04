@@ -38,6 +38,11 @@ const ALG_PALABRAS={
   lacteo:['lácteo','lacteo','lactosa','leche'], frutos_secos:['frutos secos','fruto seco','nuez','nueces','almendra','avellana'],
   apio:['apio'], mostaza:['mostaza'], sesamo:['sésamo','sesamo'], sulfitos:['sulfito'], altramuces:['altramuz']
 };
+// ¿La nota de alergias del evento dice que NO hay alergias? Solo si TODA la nota lo dice: «Sin gluten» o «Sin lactosa,
+// 2 pax» SÍ son alergias. Ante la duda se avisa. La misma regla está en avisos_calcular (supabase/avisos.sql).
+function algSinAlergias(t){
+  return !String(t||'').trim() || /^\s*(sin|ning[uú]n[ao]?|nada|no(\s+hay|\s+tienen?)?)(\s+(alergias?|al[eé]rgenos?|intolerancias?|nada))?(\s+(ni\s+intolerancias?|conocidas?|registradas?|declaradas?|indicadas?))*\s*[.!]*\s*$/i.test(t);
+}
 function algDeTexto(txt){
   const t=String(txt||'').toLowerCase();
   return Object.keys(ALG_PALABRAS).filter(id=>ALG_PALABRAS[id].some(k=>t.includes(k)));
