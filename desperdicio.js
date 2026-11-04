@@ -126,7 +126,7 @@ function htmlPlanImpreso(){
   const p = D().plan, med = p.medidas || {}, d = typeof hotelDatos === 'function' ? hotelDatos() : {nombre: ''};
   const regs = vivos(), desde = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10), ult = regs.filter(r => r.fecha >= desde);
   const tot = ult.reduce((s, r) => s + (r.kg || 0), 0), aprov = ult.filter(r => APROVECHA.includes(r.dest)).reduce((s, r) => s + (r.kg || 0), 0);
-  return `<h1>Plan de prevención de las pérdidas y el desperdicio alimentario</h1>
+  return `${typeof hLogo === 'function' ? hLogo(40) : ''}<h1>Plan de prevención de las pérdidas y el desperdicio alimentario</h1>
     <p><b>${esc(d.nombre || 'Establecimiento')}</b>${d.dir ? ' · ' + esc(d.dir) : ''}${d.ciudad ? ' · ' + esc(d.ciudad) : ''}<br>Ley 1/2025, de 1 de abril, de prevención de las pérdidas y el desperdicio alimentario.</p>
     <p>Responsable: <b>${esc(p.responsable || '—')}</b> · Revisión: <b>${dmy(p.revision || hoyK())}</b>${p.objetivo ? ' · Objetivo: <b>' + esc(p.objetivo) + '</b>' : ''}</p>
     ${p.entidad ? `<p>Donación de excedentes: <b>${esc(p.entidad)}</b>${p.contacto ? ' (' + esc(p.contacto) + ')' : ''}</p>` : ''}
@@ -142,7 +142,7 @@ function htmlPlanImpreso(){
 function htmlCartel(){
   const n = typeof hN === 'function' ? hN() : '';
   return `<div class="dp-cartel"><div class="dp-cartel-t">¿No ha terminado?</div><div class="dp-cartel-s">Llévese lo que no haya consumido.<br>Le damos el envase <b>gratis</b>.</div>
-    <div class="dp-cartel-p">Pídaselo a nuestro personal.</div><div class="dp-cartel-n">${esc(n === 'nuestro restaurante' ? '' : n)} · Ley 1/2025 de prevención del desperdicio alimentario</div></div>`;
+    <div class="dp-cartel-p">Pídaselo a nuestro personal.</div>${typeof hLogo === 'function' && hLogo() ? '<div style="margin-top:10px">' + hLogo(56) + '</div>' : ''}<div class="dp-cartel-n">${esc(n === 'nuestro restaurante' ? '' : n)} · Ley 1/2025 de prevención del desperdicio alimentario</div></div>`;
 }
 function vCartel(){
   return `<div class="card"><b>Cartel del envase para llevar</b><p class="dp-ayuda">La ley obliga a informar de forma visible. Imprímelo y ponlo en la entrada, en la barra o en la carta.</p>

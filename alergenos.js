@@ -111,7 +111,7 @@ function htmlFichaAlergenos(ev){
   // Sin receta ni marcas no sabemos qué lleva: al cliente se le dice que consulte, nunca «sin alérgenos».
   const fila=p=>{const a=algDePlato(p);return `<tr><td class="fa-plato">${_algEsc(p.nombre)}</td><td>${a.length?a.map(x=>`<span class="fa-alg">${algIcon(x)} ${_algEsc(algLabel(x))}</span>`).join(' '):`<span class="fa-no">${_algSinDatos(p)?'Consultar al personal':'Sin alérgenos'}</span>`}</td></tr>`};
   return `<div class="fa-ficha">
-  <div class="fa-cab"><div class="fa-tit">Información sobre alérgenos</div>
+  <div class="fa-cab">${typeof hLogo==='function'&&hLogo()?'<div style="float:right">'+hLogo(44)+'</div>':''}<div class="fa-tit">Información sobre alérgenos</div>
     <div class="fa-ev">${_algEsc(ev.nombre)}</div>
     <div class="fa-meta">${_algEsc(fecha)}${ev.hora?' · '+_algEsc(ev.hora):''}${ev.lugar?' · '+_algEsc(ev.lugar):''}${ev.pax?' · '+_algEsc(ev.pax)+' pax':''}</div></div>
   ${platos.length?`<table class="fa-tabla"><tbody>${grupos.map(([t,ps])=>`<tr><th colspan="2">${_algEsc(t)}</th></tr>${ps.map(fila).join('')}`).join('')}</tbody></table>`:'<p class="fa-no">Este evento todavía no tiene platos.</p>'}

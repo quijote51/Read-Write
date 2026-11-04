@@ -55,6 +55,11 @@ function calcular(){
     let h = []; try{ h = hojasCambiadas(); }catch(e){}
     h.forEach(x => out.push({tab: 'hojas', ic: 'ti-files', t: `Hoja de ${x.depNombre.toLowerCase()} cambiada: ${x.ev.nombre}`, d: 'Ha cambiado: ' + x.lista.join(', ') + '. Vuelve a imprimirla.'}));
   }
+  // Eventos pasados sin cerrar (prevision.js): cuántos vinieron y qué sobró
+  if(veo('produccion') && typeof prevSinCerrar === 'function' && (typeof puedeConfig !== 'function' || puedeConfig('seda_prevision'))){
+    let p = []; try{ p = prevSinCerrar(); }catch(e){}
+    if(p.length) out.push({tab: 'produccion', ic: 'ti-clipboard-check', t: `${p.length} evento${p.length === 1 ? '' : 's'} sin cerrar`, d: 'En Producción, apunta cuántos vinieron y qué sobró: ' + p.slice(0, 5).map(e => e.nombre).join(', ')});
+  }
   // Cambios de turno (los lee refrescar() de la nube)
   const yo = typeof _perfil !== 'undefined' && _perfil && _perfil.nombre;
   const paraMi = cambios.filter(c => c.estado === 'pendiente' && yo && c.a === yo);

@@ -28,6 +28,7 @@
 <script src="rendimiento.js"></script>
 <script src="fichaje.js"></script>
 <script src="hojas.js"></script>
+<script src="prevision.js"></script>
 <script src="compras.js"></script>
 <script src="albaran-ocr.js"></script>
 <script src="fotos.js"></script>
@@ -378,7 +379,7 @@ textarea{resize:vertical;min-height:65px}
 <div class="print-header" style="margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:10px">
   <div style="display:flex;justify-content:space-between;align-items:flex-end">
     <div>
-      <div style="font-size:20px;font-weight:bold;letter-spacing:1px" id="print-hotel-nombre">OÍDO COCINA</div>
+      <span id="print-hotel-logo" style="float:left;margin-right:10px"></span><div style="font-size:20px;font-weight:bold;letter-spacing:1px" id="print-hotel-nombre">OÍDO COCINA</div>
       <div style="font-size:13px;color:#666">Ficha de producción de cocina</div>
     </div>
     <div style="text-align:right;font-size:11px;color:#666" id="print-fecha-gen"></div>
@@ -392,7 +393,7 @@ textarea{resize:vertical;min-height:65px}
 <header style="background:var(--negro);color:var(--blanco);padding:.875rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
   <div style="display:flex;align-items:center;gap:12px">
     <!-- Brand mark: diamond with gold border -->
-    <div style="width:36px;height:36px;border:1.5px solid #c9a84c;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(201,168,76,.08);position:relative;overflow:hidden">
+    <div id="marca-cuadro" style="width:36px;height:36px;border:1.5px solid #c9a84c;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(201,168,76,.08);position:relative;overflow:hidden">
       <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,.12) 0%,transparent 60%)"></div>
       <span style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.1rem;font-weight:700;color:#fff;position:relative">O<span style="color:#c9a84c">í</span></span>
     </div>
@@ -1094,6 +1095,10 @@ textarea{resize:vertical;min-height:65px}
       <div class="fg" style="margin-bottom:0"><label>Teléfono</label><input type="tel" id="aj-hotel-tel" placeholder="+34 600 000 000"/></div>
     </div>
     <div class="fg" style="margin-bottom:10px"><label>Web</label><input type="text" id="aj-hotel-web" placeholder="mirestaurante.com"/></div>
+    <div class="fg" style="margin-bottom:10px"><label>Logo <span style="font-weight:400">(sale en la cabecera, las hojas impresas y la carta QR)</span></label>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span id="aj-logo-vista"></span>
+        <label class="btn" style="font-size:12px;cursor:pointer;margin:0"><i class="ti ti-upload"></i> Subir logo<input type="file" accept="image/png,image/jpeg,image/webp" onchange="subirLogo(this)" style="position:absolute;opacity:0;width:1px;height:1px"></label>
+        <button type="button" class="btn" id="aj-logo-quitar" style="font-size:12px;display:none" onclick="quitarLogo()"><i class="ti ti-trash"></i> Quitar</button></div></div>
     <button class="btn btn-p" style="font-size:12px" onclick="guardarAjustesHotel()"><i class="ti ti-check"></i> Guardar datos del hotel</button>
   </div>
 
@@ -2086,7 +2091,7 @@ function importarDatos(input){
 function resetearTodo(){
   if(!confirm('⚠️ ¿Borrar TODOS los datos? Esta acción no se puede deshacer.'))return;
   if(!confirm('¿Estás seguro? Se borrarán todos los eventos, recetas, plantillas y configuración.'))return;
-  ['seda_ev','seda_rec','seda_rec_sync','seda_sync_eventos','seda_sync_plantillas','seda_sync_vajilla','seda_sync_proveedores','seda_sync_personal','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev','seda_appcc','seda_compras','seda_desperdicio'].forEach(k=>localStorage.removeItem(k));
+  ['seda_ev','seda_rec','seda_rec_sync','seda_sync_eventos','seda_sync_plantillas','seda_sync_vajilla','seda_sync_proveedores','seda_sync_personal','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev','seda_appcc','seda_compras','seda_desperdicio','seda_prevision'].forEach(k=>localStorage.removeItem(k));
   Object.keys(localStorage).filter(k=>k.startsWith('seda_cfgbase_')).forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
@@ -3275,7 +3280,7 @@ function renderProd(){
     <div class="stat"><div class="stat-l">Factor</div><div class="stat-v">${f.toFixed(1)}×</div></div>
     <div class="stat"><div class="stat-l">Platos distintos</div><div class="stat-v">${ev.platos.length}</div></div>
     <div class="stat"><div class="stat-l">Raciones totales</div><div class="stat-v">${total}</div></div>
-  </div>`+alergC+htmlAlertaAlergenos(ev)+htmlHorarioEvento(ev)+alergMenu+t+htmlElaboracionesBase([ev])+infHTML;
+  </div>`+alergC+htmlAlertaAlergenos(ev)+htmlHorarioEvento(ev)+alergMenu+t+(typeof htmlPrevision==='function'?htmlPrevision(ev):'')+htmlElaboracionesBase([ev])+infHTML;
 }
 
 function imprimirFicha(){
@@ -4742,7 +4747,8 @@ function _cfgLista(){ return [
     ['seda_alg_rev',()=>algRevisiones,v=>{setAlgRevisiones(v)}],
     ['seda_appcc',()=>appcc,v=>{appccDesdeNube(v)}],
     ['seda_desperdicio',()=>desperdicio,v=>{desperdicioDesdeNube(v)}],
-    ['seda_compras',()=>compras,v=>{comprasDesdeNube(v)}]
+    ['seda_compras',()=>compras,v=>{comprasDesdeNube(v)}],
+    ['seda_prevision',()=>prevision,v=>{previsionDesdeNube(v)}]
   ]; }
 
 /* ===== CARGA DESDE LA NUBE ===== */
@@ -4807,6 +4813,7 @@ async function reenviarTodo(){
       ...(Object.keys(algRevisiones).length?[_subirConfig('seda_alg_rev',algRevisiones)]:[]),
       ...(appcc?[appccSubir()]:[]),
       ...(desperdicio?[_subirConfig('seda_desperdicio',desperdicio)]:[]),
+      ...(prevision?[_subirConfig('seda_prevision',prevision)]:[]),
       ...(compras?[comprasSubir()]:[])
     ]);
   } finally { _reenviando=false; }

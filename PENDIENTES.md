@@ -57,14 +57,17 @@
 - [x] Apps con acceso directo de Desperdicio (`desperdicio.html`) y Carta QR (`cartas.html`).
 - [x] 6. Fichaje de jornada (`fichaje.js`, app `fichaje.html`). Activado (PR #22 y SQL, 3/11/2026). Cada persona necesita su cuenta con su nombre igual que en Horarios (o fichar desde la cuenta compartida).
 - [x] 7. Hojas de evento por departamento (`hojas.js`).
-- [ ] 8. Previsión de producción (cuando haya meses de datos).
+- [x] 8. Previsión de producción (`prevision.js`): cerrar cada evento en Producción (cuántos vinieron, qué sobró); con 3 eventos cerrados sugiere cantidades. Falta pegar `supabase/prevision.sql`.
+- [ ] Cerrar cada evento al terminar para que la previsión aprenda.
+- [ ] Vercel gratis: máximo 100 publicaciones al día (el 3/11 se agotó y la PR #23 no se publicó sola).
 - Estudio: https://claude.ai/artifact/1r653St1bewnFA4Z395pcV
 
 ## Fase 3: varios clientes (3/11/2026)
 - [x] Base de datos: `supabase/fase3-clientes.sql` (módulos, códigos de cliente, panel de la plataforma). Probado en PostgreSQL local.
 - [x] App: sin «Seda» fijo (`marca.js`), secciones y apps según módulos, Ajustes → Clientes.
 - [x] PR #13 fusionada y SQL aplicado (3/11/2026).
-- [ ] Logo de cada cliente (en hoja impresa y cabecera).
+- [x] Logo de cada cliente: Ajustes → Datos del hotel → «Subir logo» (cabecera, hojas impresas y carta QR).
+- [ ] Subir el logo del Seda. Las cartas QR ya publicadas lo muestran al pulsar «Actualizar».
 
 ## Fase 2: una cuenta por persona (3/11/2026)
 - [x] Base de datos: `supabase/fase2-cuentas.sql` (roles, permisos por tabla y por clave, invitaciones). Probado en PostgreSQL local.
