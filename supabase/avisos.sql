@@ -100,7 +100,7 @@ begin
       select string_agg(format('%s (%s)', e.nombre, e.alergias_txt), '; ' order by e.hora), count(*) into txt, n
       from public.eventos e
       where e.hotel_id = s.hotel_id and e.fecha = d + 1 and coalesce(trim(e.alergias_txt), '') <> ''
-        and e.alergias_txt !~* '^\s*(sin|ninguna|no hay)';
+        and e.alergias_txt !~* '^\s*(sin|ning[uú]n[ao]?|nada|no(\s+hay|\s+tienen?)?)(\s+(alergias?|al[eé]rgenos?|intolerancias?|nada))?(\s+(ni\s+intolerancias?|conocidas?|registradas?|declaradas?|indicadas?))*\s*[.!]*\s*$';  -- misma regla que algSinAlergias (alergenos.js): «Sin gluten» SÍ avisa
       if n > 0 then nuevos := nuevos || 'alg'::text; lineas := lineas || ('Mañana hay alergias: ' || txt || '.'); end if;
     end if;
 

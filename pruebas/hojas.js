@@ -30,6 +30,9 @@ await A.click('[data-hjd="cocina"]');ok(!/Ha cambiado/.test(await A.textContent(
 // Compartir como texto
 const txt=await A.evaluate(async()=>{let r='';navigator.share=async o=>{r=o.text};document.querySelector('[data-hj="compartir"]').click();await new Promise(z=>setTimeout(z,100));return r});
 ok(/\*Hoja de cocina · Boda Peps\*/.test(txt)&&/Croquetas de jamón ×45/.test(txt),'compartir: texto con 45 raciones');
+// «Sin lactosa» es una alergia: la hoja no puede decir «Sin alergias registradas»
+await A.evaluate(()=>{eventos.find(x=>x.nombre==='Boda Peps').alergias_txt='Sin lactosa, 2 pax';initHojas()});await A.waitForTimeout(150);
+t=await hoja();ok(/Sin lactosa, 2 pax/.test(t)&&!/Sin alergias registradas/.test(t),'«Sin lactosa, 2 pax» sale como alergia en la hoja');
 // Roles
 await A.evaluate(()=>{rolActual='cocina';aplicarRol('cocina');showTab('hojas');initHojas()});await A.waitForTimeout(200);
 ok(!(await A.$('[data-hjd]'))&&/Hoja de cocina/.test(await hoja()),'cocina: solo su hoja');

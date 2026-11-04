@@ -36,13 +36,16 @@ await C.route(/rest\/v1\/rpc\/carta_publica/,r=>{llamadas++;const h=r.request().
 await C.goto('http://localhost:8765/carta.html?c='+c1.id);await C.waitForTimeout(600);
 let t=await C.textContent('#app');
 ok(/Carta de otoño/.test(t)&&/Tarta de queso/.test(t)&&/Ensalada de la huerta/.test(t)&&/pan sin gluten/.test(t),'el comensal ve la carta');
-ok(/Sin alérgenos de declaración obligatoria/.test(t),'plato sin alérgenos indicado');
+ok(/Alérgenos sin confirmar: pregunte al personal/.test(t)&&!/Sin alérgenos de declaración/.test(t),'plato sin alérgenos apuntados: pide preguntar, nunca dice que no lleva');
 await C.click('[data-a="gluten"]');await C.waitForTimeout(100);t=await C.textContent('#app');
-ok(/1 de 2 platos/.test(t),'filtro «tengo alergia a gluten»: 1 de 2 platos aptos');
+ok(/0 de 2 platos/.test(t)&&/1 sin confirmar: pregunte al personal/.test(t),'filtro «tengo alergia a gluten»: el plato sin datos no cuenta como apto');
+ok(await C.textContent('.est.duda')==='Consultar'&&!(await C.$('.est.si')),'el plato sin datos sale como «Consultar», no como «Sin lo marcado»');
 await C.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/cq-comensal.png',fullPage:true});
 const swC=await C.evaluate(()=>document.documentElement.scrollWidth);ok(!C.errs.length&&swC<=390,`comensal: sin errores (${C.errs.join(';')}) ancho ${swC}`);
 // 3) Retirar
-await A.click('[data-cq="volver"]');await A.waitForTimeout(200);await A.click('[data-cq="retirar"]');await A.waitForTimeout(800);
+await A.click('[data-cq="volver"]');await A.waitForTimeout(200);
+ok(/Sin alérgenos registrados: Ensalada de la huerta/.test(await A.textContent('#cq-root')),'carta del recetario: avisa al equipo del plato sin alérgenos');
+await A.click('[data-cq="retirar"]');await A.waitForTimeout(800);
 ok(filas()[0].publicada===false,'carta retirada');
 await C.reload();await C.waitForTimeout(600);ok(/ya no está disponible/.test(await C.textContent('#app')),'el QR retirado ya no muestra la carta');
 await C.goto('http://localhost:8765/carta.html');await C.waitForTimeout(300);ok(/Falta el código/.test(await C.textContent('#app')),'sin código: aviso');

@@ -4,7 +4,7 @@ const {chromium}=require('playwright');const N=require('./nube.js');const U='htt
 (async()=>{const b=await chromium.launch();let f=0;const ok=(c,t)=>{if(!c)f++;console.log((c?'✔':'✘ FALLO')+' '+t)};
 const d=n=>{const x=new Date(Date.now()+n*864e5);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
 const ev=(id,nombre,fecha,alergias_txt)=>({hotel_id:'h1',id,nombre,fecha,hora:'14:00',pax:40,tipo:'banquete',lugar:'Salón',alergias_txt,alergenos_menu:[],platos:[],infantil:null,factor_custom:null,precio_venta:50,notas:'',personal_ids:[],bebidas:null,notas_bebidas:''});
-N.DB.eventos.push(ev('1700000000001','Boda Peps',d(1),'2 pax celíacos'),ev('1700000000002','Comida empresa',d(1),'Sin alergias registradas'),ev('1700000000003','Cena gala',d(0),'1 pax marisco'));
+N.DB.eventos.push(ev('1700000000001','Boda Peps',d(1),'2 pax celíacos'),ev('1700000000002','Comida empresa',d(1),'Sin alergias registradas'),ev('1700000000003','Cena gala',d(0),'1 pax marisco'),ev('1700000000004','Comida celíacos',d(1),'Sin gluten, 2 pax'));
 N.DB.config.push({hotel_id:'h1',key:'seda_appcc',updated_at:'2026-11-03T10:00:00.000Z',value:{equipos:[{id:'c1',n:'Cámara 1',min:0,max:4},{id:'c2',n:'Congelador',min:-30,max:-18}],zonas:[{id:'z1',n:'Suelos',frec:'diaria'}],vida:{refrigerado:3,vacio:7,congelado:90},testigoDias:7,cts:1,reg:[]}});
 N.DB.cambios=[{id:'k1',hotel_id:'h1',semana:d(0),dia:2,de:'Ana',a:'Rubén',turno_de:'M',turno_a:'T',estado:'pendiente'},{id:'k2',hotel_id:'h1',semana:d(0),dia:3,de:'Rocío',a:'Darío',turno_de:'M',turno_a:'T',estado:'aceptado'}];
 const A=await N.pagina(b,U);await A.waitForTimeout(500);
@@ -15,6 +15,8 @@ let t=await A.textContent('#av-modal');
 ok(/Temperaturas de la (mañana|tarde) sin apuntar/.test(t)&&/Cámara 1, Congelador/.test(t),'temperaturas sin apuntar');
 ok(/Limpiezas de hoy sin apuntar/.test(t)&&/Muestra testigo sin guardar/.test(t)&&/Cena gala/.test(t),'limpieza y muestra testigo');
 ok(/Mañana hay alergias/.test(t)&&/2 pax celíacos/.test(t)&&!/Comida empresa/.test(t),'mañana con alergias (sin contar «Sin alergias»)');
+ok(/Sin gluten, 2 pax/.test(t),'«Sin gluten, 2 pax» SÍ es una alergia y avisa');
+ok(await A.evaluate(()=>['Sin gluten','sin lactosa','No hay gluten','Sin alergias salvo huevo'].every(x=>!algSinAlergias(x))&&['','Sin alergias registradas','Ninguna','No hay alergias','Sin alergias conocidas.'].every(algSinAlergias)),'qué cuenta como «sin alergias»');
 ok(/Hoy hay alergias/.test(t)&&/1 pax marisco/.test(t),'hoy con alergias');
 ok(/1 cambio de turno espera tu aprobación/.test(t),'cambio de turno que espera aprobación');
 await A.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/av-panel.png'});

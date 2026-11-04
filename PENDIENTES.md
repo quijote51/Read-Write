@@ -1,4 +1,10 @@
-# Pendientes (actualizado el 3 de noviembre de 2026)
+# Pendientes (actualizado el 4 de noviembre de 2026)
+
+## Alergias (4/11/2026)
+- [ ] Pegar `supabase/avisos-regla-alergias.sql` en el SQL Editor: hasta entonces, los avisos del móvil siguen tomando «Sin gluten» como «sin alergias».
+- [ ] Carta QR: un plato sin alérgenos apuntados dice «pregunte al personal». Revisar las recetas sin marcas antes de poner el QR.
+- [ ] La ficha de alérgenos del cliente aún dice «Sin alérgenos» si el plato tiene receta sin marcas: decidir si cambiarlo.
+- [ ] `pruebas/avisos.js` falla en «eventos: solo lo suyo», también sin estos cambios: revisar si es la prueba o la campana.
 
 ## Seguridad
 - [x] SQL de seguridad de cambios de turno aplicado en Supabase (2/11/2026).
