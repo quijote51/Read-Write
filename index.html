@@ -203,6 +203,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
   .cal-cell{min-height:58px!important;padding:3px!important}
   .cal-chip{font-size:0!important;height:6px;padding:0!important;border-radius:3px!important;margin-bottom:3px!important}
 }
+.acc-grupo{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary);margin:16px 4px 6px}
+.acc-grupo:first-of-type{margin-top:4px}
 .acc-item{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:6px;overflow:hidden;transition:border-color var(--t),box-shadow var(--t)}
 .acc-item.open{border-color:rgba(201,168,76,.4);border-left-color:var(--gold);border-left-width:3px;box-shadow:var(--shadow-sm),0 0 0 0 transparent}
 .acc-header{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;font-size:14px;font-weight:500;width:100%;background:none;border:none;color:var(--text-primary);font-family:inherit;text-align:left;transition:background var(--t);user-select:none;-webkit-tap-highlight-color:transparent}
@@ -1581,6 +1583,41 @@ function initAccordion(){
     body.appendChild(inner);
     wrapper.appendChild(header);
     wrapper.appendChild(body);
+  });
+}
+
+// Secciones agrupadas por tema, con un título pequeño por grupo (solo se ve si el rol tiene alguna sección de ese grupo)
+const GRUPOS_SECC = [
+  ["Hoy y eventos", ["dashboard","nuevo","eventos","calendario","plantillas","historial"]],
+  ["Cocina", ["produccion","conjunta","cocina","hojas","recetario","compras","pedidos"]],
+  ["Sala y montaje", ["vajilla","bebidas"]],
+  ["Costes y almacén", ["escandallo","inventario","costes"]],
+  ["Seguridad alimentaria", ["appcc","desperdicio","cartas"]],
+  ["Equipo y ajustes", ["horarios","fichaje","personal","ajustes"]]
+];
+function agruparSecciones(){
+  const items = [...document.querySelectorAll(".acc-item[data-tab]")];
+  if(!items.length || document.querySelector(".acc-grupo")) return;
+  // Se coloca todo antes de una marca (si fuera antes de la primera sección, esa acabaría al final)
+  const padre = items[0].parentNode, ref = document.createComment("grupos");
+  padre.insertBefore(ref, items[0]);
+  const usados = new Set();
+  GRUPOS_SECC.forEach(([titulo, tabs]) => {
+    const t = document.createElement("div"); t.className = "acc-grupo"; t.setAttribute("role","heading"); t.setAttribute("aria-level","2"); t.textContent = titulo;
+    t.dataset.tabs = tabs.join(",");
+    padre.insertBefore(t, ref);
+    tabs.forEach(k => { const it = ge("acc-"+k); if(it && it.parentNode === padre){ padre.insertBefore(it, ref); usados.add(k); } });
+  });
+  // Las que no estén en ningún grupo se quedan al final, como estaban
+  items.filter(it => !usados.has(it.dataset.tab)).forEach(it => padre.insertBefore(it, ref));
+  actualizarGrupos();
+  // Al cambiar de rol o de módulos se ocultan secciones: el título del grupo sigue a sus secciones
+  new MutationObserver(actualizarGrupos).observe(padre, {subtree:true, attributes:true, attributeFilter:["style"]});
+}
+function actualizarGrupos(){
+  document.querySelectorAll(".acc-grupo").forEach(t => {
+    const visible = t.dataset.tabs.split(",").some(k => { const it = ge("acc-"+k); return it && it.style.display !== "none"; });
+    const d = visible ? "" : "none"; if(t.style.display !== d) t.style.display = d;
   });
 }
 
@@ -4891,6 +4928,7 @@ window.addEventListener('DOMContentLoaded', async function(){
   const selLugar=ge('n-lugar');
   if(selLugar&&ajustes.lugares?.length)selLugar.innerHTML=ajustes.lugares.map(l=>`<option>${l}</option>`).join('');
   initAccordion();
+  agruparSecciones();
   equipoPintar(); // Ajustes → Equipo (solo admin y dirección)
   clientesPintar(); // Ajustes → Clientes (solo la plataforma)
   if(rolActual && ROLES[rolActual] && !(ROLES_PIN.includes(rolActual)&&sessionStorage.getItem('seda_pin_ok')!=='1')){ aplicarRol(rolActual); }
