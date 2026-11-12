@@ -25,6 +25,7 @@
 <script src="desperdicio.js"></script>
 <script src="cartas.js"></script>
 <script src="avisos.js"></script>
+<script src="buscador.js"></script>
 <script src="rendimiento.js"></script>
 <script src="fichaje.js"></script>
 <script src="hojas.js"></script>
@@ -402,7 +403,7 @@ textarea{resize:vertical;min-height:65px}
       <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.07em;margin-top:1px;text-transform:uppercase" id="header-hotel-nombre">Oído Cocina</div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:6px">
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:100%">
     <span id="sync-indicator" style="font-size:11px;color:rgba(255,255,255,.55);display:inline-flex;align-items:center;gap:4px;white-space:nowrap"><i class="ti ti-cloud"></i> Conectando...</span>
     <button onclick="abrirSelectorRol()" id="rol-btn" aria-label="Cambiar rol" aria-haspopup="dialog" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,.75);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px;transition:background 150ms ease">
       <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down" style="font-size:11px;opacity:.6"></i>
@@ -1607,12 +1608,22 @@ function openAccordion(name){
   const item=ge('acc-'+name);
   if(!item||item.style.display==='none')return;
   if(!item.classList.contains('open')){
+    // Solo una sección abierta: al abrir otra se cierra la anterior
+    document.querySelectorAll('.acc-item.open').forEach(o=>{
+      if(o===item)return;
+      // Se cierra sin animación para que la página no se mueva mientras bajamos a la nueva
+      const b=o.querySelector('.acc-body'); if(b){ b.style.transition='none'; requestAnimationFrame(()=>requestAnimationFrame(()=>{ b.style.transition=''; })); }
+      o.classList.remove('open');
+      const h=o.querySelector('.acc-header'); if(h)h.setAttribute('aria-expanded','false');
+    });
     item.classList.add('open');
     const hdr=item.querySelector('.acc-header');
     if(hdr)hdr.setAttribute('aria-expanded','true');
     callTabInit(name);
   }
-  setTimeout(()=>item.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+  // Al cerrarse la de arriba la página se mueve: llevar la sección abierta arriba de la pantalla
+  // (se espera a que termine la animación de abrir, 320 ms, o el navegador corrige el desplazamiento a mitad)
+  setTimeout(()=>item.scrollIntoView({behavior:'smooth',block:'start'}),340);
 }
 
 function showTab(name,btn){
