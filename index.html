@@ -1307,7 +1307,7 @@ function renderTiposLista(){
       <span style="font-size:11px;color:var(--text-secondary)">×</span>
       <input type="number" value="${t.factor}" min="0.5" max="5" step="0.1" style="width:65px;font-size:13px;text-align:center"
         onchange="actualizarFactorTipo('${t.id}',this.value)"/>
-      ${!['coctel','menu','desayuno'].includes(t.id)?`<button class="btn-d" style="font-size:11px;padding:2px 7px" onclick="eliminarTipo('${t.id}')"><i class="ti ti-trash"></i></button>`:'<div style="width:46px"></div>'}
+      ${!['coctel','menu','desayuno'].includes(t.id)?`<button class="btn-d" style="font-size:11px;padding:2px 7px" onclick="eliminarTipo('${t.id}')" aria-label="Borrar" title="Borrar"><i class="ti ti-trash" aria-hidden="true"></i></button>`:'<div style="width:46px"></div>'}
     </div>`).join('');
 }
 
@@ -1896,7 +1896,7 @@ function renderPersonalLista(){
             ${p.tel?`<div style="font-size:11px;color:var(--text-secondary)">${p.tel}</div>`:``}
           </div>
           ${p.tel?`<a href="https://wa.me/${p.tel.replace(/\D/g,'')}" target="_blank" class="btn-icon success" style="text-decoration:none;color:var(--success-text)"><i class="ti ti-brand-whatsapp"></i></a>`:''}
-          <button class="btn-icon danger" style="padding:5px 8px" onclick="eliminarPersonal('${p.id}')"><i class="ti ti-trash"></i></button>
+          <button class="btn-icon danger" style="padding:5px 8px" onclick="eliminarPersonal('${p.id}')" aria-label="Borrar" title="Borrar"><i class="ti ti-trash" aria-hidden="true"></i></button>
         </div>`;
       }).join('')}
     </div>`;
@@ -2010,7 +2010,7 @@ function renderAjustesLugares(){
   lista.innerHTML=(ajustes.lugares||[]).map((l,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:.5px solid var(--border)">
       <span style="flex:1;font-size:13px">${l}</span>
-      <button class="btn-d" style="font-size:11px;padding:2px 7px" onclick="eliminarLugar(${i})"><i class="ti ti-trash"></i></button>
+      <button class="btn-d" style="font-size:11px;padding:2px 7px" onclick="eliminarLugar(${i})" aria-label="Borrar" title="Borrar"><i class="ti ti-trash" aria-hidden="true"></i></button>
     </div>`).join('');
   // Actualizar selects de lugar en formulario
   const selLugar=ge('n-lugar');
@@ -2043,7 +2043,7 @@ function renderAjustesTipos(){
       <div style="width:10px;height:10px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
       <span style="flex:1;font-size:13px">${escH(t.nombre)}</span>
       <span style="font-size:12px;color:var(--text-secondary)">×${t.factor}</span>
-      ${!['coctel','menu','desayuno'].includes(t.id)?`<button class="btn-d" style="font-size:11px;padding:2px 7px" onclick="eliminarTipoAjustes('${t.id}')"><i class="ti ti-trash"></i></button>`:''}
+      ${!['coctel','menu','desayuno'].includes(t.id)?`<button class="btn-d" style="font-size:11px;padding:2px 7px" onclick="eliminarTipoAjustes('${t.id}')" aria-label="Borrar" title="Borrar"><i class="ti ti-trash" aria-hidden="true"></i></button>`:''}
     </div>`).join('');
 }
 
@@ -2253,12 +2253,17 @@ function renderPantallaCocina(){
 }
 
 function toggleFullscreen(){
-  const el=ge('cocina-cont');
-  if(!document.fullscreenElement){
-    ge('tab-cocina').requestFullscreen?.();
-  } else {
-    document.exitFullscreen?.();
-  }
+  // Safari (iPhone/iPad) usa los nombres con «webkit»; si el navegador no deja, no pasa nada
+  const t=ge('tab-cocina'), d=document;
+  try{
+    if(!(d.fullscreenElement||d.webkitFullscreenElement)){
+      const p=(t.requestFullscreen||t.webkitRequestFullscreen)?.call(t);
+      if(p&&p.catch)p.catch(()=>{});
+    } else {
+      const p=(d.exitFullscreen||d.webkitExitFullscreen)?.call(d);
+      if(p&&p.catch)p.catch(()=>{});
+    }
+  }catch(e){}
 }
 
 /* ===== VAJILLA ===== */
@@ -2756,8 +2761,8 @@ function renderPltGrid(){
           </div>
         </div>
         <div style="display:flex;gap:6px">
-          <button onclick="editarPlt('${p.id}')" class="btn-sec" style="font-size:12px"><i class="ti ti-edit"></i></button>
-          <button onclick="eliminarPlt('${p.id}')" class="btn-d" style="font-size:12px"><i class="ti ti-trash"></i></button>
+          <button onclick="editarPlt('${p.id}')" class="btn-sec" style="font-size:12px" aria-label="Editar" title="Editar"><i class="ti ti-edit" aria-hidden="true"></i></button>
+          <button onclick="eliminarPlt('${p.id}')" class="btn-d" style="font-size:12px" aria-label="Borrar" title="Borrar"><i class="ti ti-trash" aria-hidden="true"></i></button>
         </div>
       </div>
     </div>`).join('');
@@ -3161,7 +3166,8 @@ function editarEvento(id){
     renderAlgSel('alg-selector',ev.alergenos_menu||[]);
     renderPlatosInfantil(ev.infantil?.platos||[]);
     // Cambiar botón guardar para actualizar en vez de crear
-    ge('n-guardar-btn').textContent='Actualizar evento';
+    ge('n-guardar-btn').disabled=false;
+    ge('n-guardar-btn').innerHTML='<i class="ti ti-check"></i> Actualizar evento';
     ge('n-guardar-btn').onclick=()=>actualizarEvento(id);
     ge('n-edit-aviso').style.display='block';
     ge('n-edit-aviso').textContent=`✏️ Editando: ${ev.nombre}`;
@@ -3197,7 +3203,9 @@ function resetFormEvento(){
   if(ge('n-factor-slider')){ge('n-factor-slider').value='1.5';}
   renderAlgSel('alg-selector');
   renderPlatosInfantil();
-  ge('n-guardar-btn').textContent='Guardar evento';
+  // guardarEvento lo deja desactivado («Guardando...»): se vuelve a activar, o no se podía crear ni editar otro evento sin recargar
+  ge('n-guardar-btn').disabled=false;
+  ge('n-guardar-btn').innerHTML='<i class="ti ti-check"></i> Guardar evento';
   ge('n-guardar-btn').onclick=guardarEvento;
   ge('n-edit-aviso').style.display='none';
 }
@@ -3957,7 +3965,7 @@ function renderProvEdit(){
         <span style="font-size:13px;font-weight:500;margin-left:6px">${escH(p.nombre)}</span>
         <span style="font-size:12px;color:var(--text-secondary);margin-left:8px">${ci.label} · ${p.tel||'sin tel'}</span>
       </div>
-      <button class="btn-d" onclick="eliminarProv('${p.id}')"><i class="ti ti-trash"></i></button>
+      <button class="btn-d" onclick="eliminarProv('${p.id}')" aria-label="Borrar" title="Borrar"><i class="ti ti-trash" aria-hidden="true"></i></button>
     </div>`;
   }).join('')||'<div style="color:var(--text-secondary);font-size:13px;padding:8px 0">No hay proveedores.</div>';
 }
@@ -4371,7 +4379,7 @@ function initDashboard(){
         </div>
         <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
           ${getBadge(ev.fecha)}
-          <button onclick="mostrarConfirmacion(${ev.id})" class="btn-icon success" style="padding:4px 9px"><i class="ti ti-send"></i></button>
+          <button onclick="mostrarConfirmacion(${ev.id})" class="btn-icon success" style="padding:4px 9px" aria-label="Enviar confirmación" title="Enviar confirmación"><i class="ti ti-send" aria-hidden="true"></i></button>
         </div>
       </div>
     </div>`;
