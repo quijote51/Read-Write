@@ -1,4 +1,17 @@
-# Pendientes (actualizado el 12 de noviembre de 2026, noche)
+# Pendientes (actualizado el 12 de noviembre de 2026, cierre del día)
+
+## Para seguir mañana
+- [ ] Probar con la cuenta real lo de abajo («Por probar con la cuenta real»), sobre todo el **dictado de recetas** con el micrófono del móvil y los **Primeros pasos** con los datos del Seda.
+- [ ] Que alguien que no conozca la app la ponga en marcha con «Primeros pasos» y apuntar dónde se atasca.
+- [ ] Ideas pendientes de decidir: foto de la receta (gratis para fichas impresas; con IA de pago para letra a mano), hotel de pruebas para enseñar la app, cliente piloto.
+- Estudio de mercado actualizado: https://claude.ai/artifact/1r653St1bewnFA4Z395pcV
+
+## Hecho el 12/11/2026, más fácil de empezar (PR #40 a #43, todo publicado)
+- [x] Recetas: ingredientes en casillas y «Dictar receta» por voz (`recetas-entrada.js`, #40).
+- [x] Platos de eventos y plantillas elegidos de la lista de recetas, con ✓ Receta / ≈ Usar / ⚠ Sin receta (`platos-entrada.js`, #41).
+- [x] Tarjeta «Primeros pasos» en Inicio, por rol (`pasos.js`, #42).
+- [x] «Elegir qué secciones ves», por rol y móvil (`secciones.js`, #43).
+- [x] PENDIENTES al día y prueba de avisos corregida (#39).
 
 ## Hecho el 12/11/2026 (PR #27 a #38, todo publicado)
 - [x] Copias de seguridad automáticas: cada lunes a las 3:00 UTC (`copias_semanales()` con pg_cron, guarda las 12 últimas). Copia nº 7 a mano.
