@@ -177,7 +177,7 @@ setInterval(() => { if(document.visibilityState === 'visible') window.avisosReca
 window.avisosRecalcular = () => { lista = calcular(); campana(); if(abierto) pintar(); };
 
 const CSS = `#av-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:#c9a84c;cursor:pointer;font-size:14px;min-height:34px;min-width:34px}
-#av-n{position:absolute;top:-6px;right:-6px;background:#c9a84c;color:#111;border-radius:999px;font-size:10px;font-weight:700;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center}
+#av-n{position:absolute;top:-6px;right:-6px;background:#c9a84c;color:#111;border-radius:999px;font-size:11px;font-weight:700;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center}
 #av-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1002;align-items:flex-start;justify-content:center;padding:60px 12px 12px}
 .av-caja{background:var(--bg-primary);color:var(--text-primary);border-radius:var(--radius-lg);width:100%;max-width:460px;max-height:calc(100vh - 80px);overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.3)}
 .av-cab{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:.5px solid var(--border);position:sticky;top:0;background:var(--bg-primary)}

@@ -203,7 +203,7 @@ function verReceta(id){
           const ia = s ? algDeRecetaCompleta(s) : (i.alg || []);
           return `<tr>
           <td>${s ? `<a href="#" class="sr-link" onclick="verReceta('${s.id}');return false"><i class="ti ti-bowl"></i> ${_srE(i.nombre)}</a>` : _srE(i.nombre)}</td>
-          <td>${ia.map(a => `<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:var(--danger-bg);color:var(--danger-text);margin-right:2px;display:inline-block">${algIcon(a)} ${algLabel(a)}</span>`).join('') || '—'}</td>
+          <td>${ia.map(a => `<span style="font-size:11px;padding:1px 5px;border-radius:3px;background:var(--danger-bg);color:var(--danger-text);margin-right:2px;display:inline-block">${algIcon(a)} ${algLabel(a)}</span>`).join('') || '—'}</td>
           <td style="text-align:right;font-weight:500" id="iq-${n}">${_srFmtNum(i.cant)}</td>
           <td style="color:var(--text-secondary)">${_srE(i.ud)}</td>
         </tr>`; }).join('')}

@@ -44,3 +44,10 @@ header .btn-sec{color:#f0efe9;border-color:rgba(255,255,255,.25);padding:5px 10p
 
 .hz-aviso{padding:8px 12px;border-radius:var(--radius);font-size:13px;margin-bottom:10px}.hz-aviso.warn{background:var(--warn-bg);color:var(--warn-text)}.hz-aviso.ok{background:var(--success-bg);color:var(--success-text)}.hz-vacio{color:var(--text-secondary);text-align:center}
 .back-btn{background:none;border:0;color:var(--text-secondary);cursor:pointer;font:inherit;font-size:13px;padding:4px 0;margin-bottom:6px;display:inline-flex;align-items:center;gap:4px}
+
+/* Pantallas táctiles: botones de al menos 40 px de alto, cómodos con prisa o con guantes (revisión 11/2026) */
+@media (pointer:coarse){
+  .btn,.btn-sec{min-height:40px!important}
+  .btn-sec{font-size:13px!important}
+  [role=tab]{min-height:40px}
+}
