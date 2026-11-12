@@ -1,16 +1,30 @@
-# Pendientes (actualizado el 12 de noviembre de 2026)
+# Pendientes (actualizado el 12 de noviembre de 2026, noche)
 
-## Copias y previsión (12/11/2026)
-- [x] Copia nº 7 hecha antes de tocar nada.
-- [x] `supabase/prevision.sql` aplicado: cocina y eventos ya pueden guardar «¿Cómo fue?» de cada evento.
-- [ ] Pegar `supabase/copias-automaticas.sql` en el SQL Editor de Supabase y pulsar Run: copia de cada cliente cada lunes a las 3:00 (UTC), guarda las 12 últimas.
+## Hecho el 12/11/2026 (PR #27 a #38, todo publicado)
+- [x] Copias de seguridad automáticas: cada lunes a las 3:00 UTC (`copias_semanales()` con pg_cron, guarda las 12 últimas). Copia nº 7 a mano.
+- [x] `supabase/prevision.sql` aplicado: cocina y eventos ya pueden guardar «¿Cómo fue?».
+- [x] **Fallo serio arreglado:** tras guardar un evento el botón se quedaba bloqueado y no se podía crear ni editar otro sin recargar (#30).
+- [x] Diseño: cabecera siempre oscura y en una fila en el móvil; botones de 40 px y letra mínima 11 px en pantallas táctiles; solo una sección abierta; secciones agrupadas por tema; botones de icono con nombre (#28, #29, #30, #32, #34, #35).
+- [x] «Sin alergias» en gris; el WhatsApp ya no dice «⚠️ ALERGIAS: Sin alergias registradas» (#28).
+- [x] Buscador con ayuda (lupa): datos, secciones y ~35 preguntas «¿cómo hago…?» (`buscador.js`, #29).
+- [x] Carta QR del comensal en 5 idiomas (ES, EN, FR, DE, IT) (#31).
+- [x] Escandallo: precios en €/kg, €/l o €/ud, importes con coma; se escriben como se compran (40 €/kg); aviso de «faltan precios» (#34, #36).
+- [x] Platos sin «F:», «M:» al editar eventos y plantillas (#33).
+- [x] Inventario vacío con salida y «Pantalla completa» también en iPad (#30).
+- [x] APPCC: hojas mensuales firmadas con el dedo (temperaturas, limpieza y recepción), imprimir o enviar en PDF; «Quién registra» tiene que ser un nombre; recepción muestra quién recibió (`appcc-hojas.js`, #37, #38).
+
+## Por probar con la cuenta real (no se puede sin contraseña)
+- [ ] Fichar entrada y salida; apps sueltas con sesión; carta QR escaneada con otro móvil; dos móviles a la vez; avisos en el móvil; imprimir hojas en papel; PDF de hojas firmadas por WhatsApp.
+- [ ] En APPCC, cambiar «30» por el nombre en «Quién registra». Los registros del 12/11 con «30» se pueden anular con motivo «nombre mal puesto».
+
+## Copias
 - [ ] Las copias no incluyen fichajes, cartas QR ni avisos (los fichajes no se pueden borrar desde la app).
 
 ## Alergias (4/11/2026)
 - [x] `supabase/avisos-regla-alergias.sql` aplicado (4/11/2026): los avisos del móvil ya no toman «Sin gluten» como «sin alergias».
 - [ ] Carta QR: un plato sin alérgenos apuntados dice «pregunte al personal». Revisar las recetas sin marcas antes de poner el QR.
 - [ ] La ficha de alérgenos del cliente aún dice «Sin alérgenos» si el plato tiene receta sin marcas: decidir si cambiarlo.
-- [ ] `pruebas/avisos.js` falla en «eventos: solo lo suyo», también sin estos cambios: revisar si es la prueba o la campana.
+- [x] `pruebas/avisos.js` «eventos: solo lo suyo»: el fallo era de la prueba (leía la casilla «Temperaturas sin apuntar» de los avisos del móvil); ahora mira solo la lista de avisos (12/11/2026).
 
 ## Seguridad
 - [x] SQL de seguridad de cambios de turno aplicado en Supabase (2/11/2026).
