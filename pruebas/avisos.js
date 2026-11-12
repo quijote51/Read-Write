@@ -27,7 +27,9 @@ ok(await A.evaluate(()=>document.querySelector('#acc-appcc').classList.contains(
 await A.evaluate(()=>{const ah=new Date().toISOString();appcc.reg.push({id:'x1',t:'temp',eq:'c1',f:ah,v:2},{id:'x2',t:'temp',eq:'c2',f:ah,v:-20});avisosRecalcular()});
 await A.click('#av-btn');await A.waitForTimeout(200);t=await A.textContent('#av-modal');ok(!/Temperaturas de la/.test(t),'apuntadas: el aviso desaparece');
 // Rol de eventos: no ve APPCC ni cambios
-await A.evaluate(()=>{document.getElementById('av-modal').style.display='none';rolActual='eventos';aplicarRol('eventos')});await A.click('#av-btn');await A.waitForTimeout(200);t=await A.textContent('#av-modal');
+await A.evaluate(()=>{document.getElementById('av-modal').style.display='none';rolActual='eventos';aplicarRol('eventos')});await A.click('#av-btn');await A.waitForTimeout(200);
+// Solo la lista de avisos: abajo, «Avisos en el móvil» tiene la casilla «Temperaturas sin apuntar», que no es un aviso
+t=await A.evaluate(()=>[...document.querySelectorAll('#av-modal .av-item')].map(e=>e.textContent).join(' '));
 ok(!/Limpiezas|Temperaturas|cambio de turno/.test(t)&&/hay alergias/.test(t),'eventos: solo lo suyo');
 await A.evaluate(()=>{document.getElementById('av-modal').style.display='none';rolActual='admin';aplicarRol('admin')});
 // Cocina con nombre: le piden un cambio
