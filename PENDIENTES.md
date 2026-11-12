@@ -1,4 +1,10 @@
-# Pendientes (actualizado el 4 de noviembre de 2026)
+# Pendientes (actualizado el 12 de noviembre de 2026)
+
+## Copias y previsión (12/11/2026)
+- [x] Copia nº 7 hecha antes de tocar nada.
+- [x] `supabase/prevision.sql` aplicado: cocina y eventos ya pueden guardar «¿Cómo fue?» de cada evento.
+- [ ] Pegar `supabase/copias-automaticas.sql` en el SQL Editor de Supabase y pulsar Run: copia de cada cliente cada lunes a las 3:00 (UTC), guarda las 12 últimas.
+- [ ] Las copias no incluyen fichajes, cartas QR ni avisos (los fichajes no se pueden borrar desde la app).
 
 ## Alergias (4/11/2026)
 - [x] `supabase/avisos-regla-alergias.sql` aplicado (4/11/2026): los avisos del móvil ya no toman «Sin gluten» como «sin alergias».
@@ -63,7 +69,7 @@
 - [x] Apps con acceso directo de Desperdicio (`desperdicio.html`) y Carta QR (`cartas.html`).
 - [x] 6. Fichaje de jornada (`fichaje.js`, app `fichaje.html`). Activado (PR #22 y SQL, 3/11/2026). Cada persona necesita su cuenta con su nombre igual que en Horarios (o fichar desde la cuenta compartida).
 - [x] 7. Hojas de evento por departamento (`hojas.js`).
-- [x] 8. Previsión de producción (`prevision.js`): cerrar cada evento en Producción (cuántos vinieron, qué sobró); con 3 eventos cerrados sugiere cantidades. Falta pegar `supabase/prevision.sql`.
+- [x] 8. Previsión de producción (`prevision.js`): cerrar cada evento en Producción (cuántos vinieron, qué sobró); con 3 eventos cerrados sugiere cantidades. `supabase/prevision.sql` aplicado el 12/11/2026.
 - [ ] Cerrar cada evento al terminar para que la previsión aprenda.
 - [ ] Vercel gratis: máximo 100 publicaciones al día (el 3/11 se agotó y la PR #23 no se publicó sola).
 - Estudio: https://claude.ai/artifact/1r653St1bewnFA4Z395pcV
