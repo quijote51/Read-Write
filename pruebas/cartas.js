@@ -29,7 +29,7 @@ ok(!!(await A.$('#cq-poster svg')),'cartel con el QR');
 const url=await A.inputValue('#cq-url');ok(url.endsWith('/carta.html?c='+c1.id),'enlace del QR: '+url);
 await A.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/cq-qr.png'});
 // 2) Página del comensal (sin cuenta, fetch a la función carta_publica)
-const C=await (await b.newContext({viewport:{width:390,height:800},serviceWorkers:'block'})).newPage();C.errs=[];C.on('pageerror',e=>C.errs.push(e.message));
+const C=await (await b.newContext({viewport:{width:390,height:800},serviceWorkers:'block',locale:'es-ES'})).newPage();C.errs=[];C.on('pageerror',e=>C.errs.push(e.message));
 let llamadas=0;
 await C.route(/rest\/v1\/rpc\/carta_publica/,r=>{llamadas++;const h=r.request().headers();const id=JSON.parse(r.request().postData()).p_id;const c=filas().find(x=>x.id===id&&x.publicada);
   if(!h.apikey)return r.fulfill({status:401,body:'{}'});r.fulfill({contentType:'application/json',body:JSON.stringify(c?{titulo:c.titulo,contenido:c.contenido,actualizado:c.actualizado}:null)})});
@@ -40,6 +40,10 @@ ok(/Alérgenos sin confirmar: pregunte al personal/.test(t)&&!/Sin alérgenos de
 await C.click('[data-a="gluten"]');await C.waitForTimeout(100);t=await C.textContent('#app');
 ok(/0 de 2 platos/.test(t)&&/1 sin confirmar: pregunte al personal/.test(t),'filtro «tengo alergia a gluten»: el plato sin datos no cuenta como apto');
 ok(await C.textContent('.est.duda')==='Consultar'&&!(await C.$('.est.si')),'el plato sin datos sale como «Consultar», no como «Sin lo marcado»');
+// Idiomas: el comensal cambia a inglés; alérgenos y avisos traducidos, los platos como están
+await C.click('[data-l="en"]');await C.waitForTimeout(100);t=await C.textContent('#app');
+ok(/I am allergic or intolerant to/.test(t)&&/Gluten/.test(t)&&/Ask staff/.test(t)&&/Tarta de queso/.test(t)&&/Dish names are shown in Spanish/.test(t)&&await C.evaluate(()=>document.documentElement.lang)==='en','idioma inglés');
+await C.click('[data-l="es"]');await C.waitForTimeout(100);
 await C.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/cq-comensal.png',fullPage:true});
 const swC=await C.evaluate(()=>document.documentElement.scrollWidth);ok(!C.errs.length&&swC<=390,`comensal: sin errores (${C.errs.join(';')}) ancho ${swC}`);
 // 3) Retirar
