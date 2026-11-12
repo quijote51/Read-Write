@@ -3527,6 +3527,16 @@ function getPrecioIng(nombre, ud){
 }
 function precioCompra(nombre){ return preciosIng[nombre]?.precio || PRECIOS_BASE[nombre]?.precio || 0; }
 
+// Importes como en cocina: 2,31 € (con coma). Por debajo de 10 céntimos, 3 decimales para que no salga 0,00 €
+function eurEs(n){ const d = Math.abs(n) >= 0.1 ? 2 : 3; return n.toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d})+" €"; }
+// Precio de compra en la unidad que se entiende: gramos → €/kg, mililitros → €/l, el resto → €/unidad
+function precioUdEs(p, ud){
+  const u = String(ud||"").trim().toLowerCase();
+  if(u === "g" || u === "gr") return eurEs(p*1000)+"/kg";
+  if(u === "ml") return eurEs(p*1000)+"/l";
+  return eurEs(p)+"/"+(ud||"ud");
+}
+
 function calcCosteReceta(receta, raciones=1){
   let coste = 0;
   receta.ingredientes.forEach(ing => {
@@ -3625,7 +3635,7 @@ function renderEscEvento(){
 
   // Stats
   const statsHTML = `<div class="stat-g" style="margin-bottom:1rem">
-    <div class="stat"><div class="stat-l">Coste producción</div><div class="stat-v">${totalCoste.toFixed(2)}€</div></div>
+    <div class="stat"><div class="stat-l">Coste producción</div><div class="stat-v">${eurEs(totalCoste)}</div></div>
     <div class="stat"><div class="stat-l">Coste por ración</div><div class="stat-v">${costeRacionMedia.toFixed(2)}€</div></div>
     <div class="stat"><div class="stat-l">Ingresos totales</div><div class="stat-v">${ingresos > 0 ? ingresos.toFixed(0)+'€' : '—'}</div></div>
     <div class="stat" style="${ingresos>0?'border-left:3px solid '+margenColor(margen):''}">
@@ -3656,15 +3666,15 @@ function renderEscEvento(){
       tablaHTML += `<tr>
         <td style="font-weight:500">${escH(p.nombre)}${noReceta}</td>
         <td style="text-align:right;color:var(--text-secondary)">${p.raciones}</td>
-        <td style="text-align:right">${p.costeRacion>0?p.costeRacion.toFixed(3)+'€':'—'}</td>
-        <td style="text-align:right;font-weight:500">${p.costePlato>0?p.costePlato.toFixed(2)+'€':'—'}</td>
+        <td style="text-align:right">${p.costeRacion>0?eurEs(p.costeRacion):'—'}</td>
+        <td style="text-align:right;font-weight:500">${p.costePlato>0?eurEs(p.costePlato):'—'}</td>
       </tr>`;
     });
   });
 
   tablaHTML += `<tr style="background:var(--bg-secondary)">
     <td colspan="3" style="font-weight:500;padding:10px">TOTAL COSTE PRODUCCIÓN</td>
-    <td style="text-align:right;font-size:17px;font-weight:500;padding:10px">${totalCoste.toFixed(2)}€</td>
+    <td style="text-align:right;font-size:17px;font-weight:500;padding:10px">${eurEs(totalCoste)}</td>
   </tr></tbody></table></div>`;
 
   const sinReceta = platosConCoste.filter(p=>!p.tieneReceta);
@@ -3709,7 +3719,7 @@ function renderEscPlatos(){
           </div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:22px;font-weight:500;color:var(--text-primary)">${coste>0?coste.toFixed(3)+'€':'—'}</div>
+          <div style="font-size:22px;font-weight:500;color:var(--text-primary)">${coste>0?eurEs(coste):'—'}</div>
           <div style="font-size:11px;color:var(--text-secondary)">${r.base?'coste de una tanda':'coste por ración'}</div>
         </div>
       </div>
@@ -3717,7 +3727,7 @@ function renderEscPlatos(){
         <thead><tr>
           <th style="text-align:left;padding:4px 6px;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-weight:400">Ingrediente</th>
           <th style="text-align:right;padding:4px 6px;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-weight:400">Cant.</th>
-          <th style="text-align:right;padding:4px 6px;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-weight:400">€/ud</th>
+          <th style="text-align:right;padding:4px 6px;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-weight:400">Precio</th>
           <th style="text-align:right;padding:4px 6px;color:var(--text-secondary);border-bottom:.5px solid var(--border);font-weight:400">Subtotal</th>
         </tr></thead>
         <tbody>${r.ingredientes.map(ing=>{
@@ -3727,13 +3737,13 @@ function renderEscPlatos(){
           return `<tr>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border)">${esSub?'<i class="ti ti-bowl" title="Elaboración base"></i> ':''}${escH(ing.nombre)}${!esSub&&typeof htmlRendNota==='function'?htmlRendNota(ing.nombre):''}</td>
             <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;color:var(--text-secondary)">${ing.cant} ${ing.ud}</td>
-            <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;color:var(--text-secondary)">${p>0?p.toFixed(4)+'€':'—'}</td>
-            <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;font-weight:500">${sub>0?sub.toFixed(4)+'€':'—'}</td>
+            <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;color:var(--text-secondary)">${p>0?precioUdEs(p,ing.ud):'—'}</td>
+            <td style="padding:4px 6px;border-bottom:.5px solid var(--border);text-align:right;font-weight:500">${sub>0?eurEs(sub):'—'}</td>
           </tr>`;
         }).join('')}</tbody>
         <tfoot><tr style="background:var(--bg-secondary)">
           <td colspan="3" style="padding:5px 6px;font-weight:500">${r.base?'Total coste/tanda':'Total coste/ración'}</td>
-          <td style="padding:5px 6px;text-align:right;font-weight:500;font-size:13px">${coste>0?coste.toFixed(3)+'€':'—'}</td>
+          <td style="padding:5px 6px;text-align:right;font-weight:500;font-size:13px">${coste>0?eurEs(coste):'—'}</td>
         </tr></tfoot>
       </table>
     </div>`;
@@ -3757,34 +3767,40 @@ function renderEscPrecios(){
       <thead><tr>
         <th>Ingrediente</th>
         <th style="text-align:center">Unidad</th>
-        <th style="text-align:right">€ por unidad</th>
+        <th style="text-align:right">Precio de compra</th>
         <th style="text-align:right" title="% aprovechable después de limpiar">Aprov.</th>
       </tr></thead>
-      <tbody>${lista.map(ing=>`
+      <tbody>${lista.map(ing=>{
+        // Gramos y mililitros se escriben por kilo o por litro (como se compran); por dentro se sigue guardando por g o ml
+        const u=String(ing.ud||'').trim().toLowerCase(), f=(u==='g'||u==='gr'||u==='ml')?1000:1;
+        const udTxt=f===1000?(u==='ml'?'€/l':'€/kg'):'€/'+(ing.ud||'ud');
+        const val=ing.precio?Math.round(ing.precio*f*1000)/1000:'';
+        return `
         <tr>
           <td style="font-weight:400">${escH(ing.nombre)}</td>
-          <td style="text-align:center;color:var(--text-secondary);font-size:12px">${ing.ud}</td>
-          <td style="text-align:right">
-            <input type="number" value="${ing.precio||''}" placeholder="0.00" min="0" step="0.001"
-              style="width:90px;font-size:13px;text-align:right"
-              onchange="actualizarPrecioIng('${ing.nombre.replace(/'/g,"\\'")}',this.value)"
-            />
+          <td style="text-align:center;color:var(--text-secondary);font-size:12px">${escH(ing.ud||'')}</td>
+          <td style="text-align:right;white-space:nowrap">
+            <input type="number" inputmode="decimal" value="${val}" placeholder="0" min="0" step="0.01"
+              style="width:76px;font-size:13px;text-align:right" aria-label="Precio de ${escH(ing.nombre)} en ${udTxt}"
+              onchange="actualizarPrecioIng('${ing.nombre.replace(/'/g,"\\'")}',this.value,${f})"
+            /> <small style="color:var(--text-secondary)">${escH(udTxt)}</small>
           </td>
           <td style="text-align:right">${typeof htmlRendCelda==='function'?htmlRendCelda(ing.nombre):''}</td>
-        </tr>`).join('')}
+        </tr>`;}).join('')}
       </tbody>
     </table>
   </div>
   <p style="font-size:12px;color:var(--text-secondary);margin-top:8px">
-    <i class="ti ti-info-circle"></i> Los precios son por la unidad indicada. Ej: si el salmón cuesta 22€/kg, introduce 0.022 (€/g).
+    <i class="ti ti-info-circle"></i> Escribe el precio como lo compras: si el salmón cuesta 22 €/kg, pon 22; la leche a 0,90 €/l, pon 0,90; los huevos a 0,25 € la unidad, pon 0,25.
   </p>
   <p style="font-size:12px;color:var(--text-secondary);margin-top:4px">
     <i class="ti ti-scale"></i> <b>Aprovechable</b>: lo que queda después de limpiar (en las recetas va el peso limpio). Si de 1 kg de merluza entera salen 450 g de lomo, pon 45: el escandallo cuenta el coste real y los pedidos piden el peso bruto. Con ⚖ lo calculas pesando antes y después. Los «típicos» son orientativos: mejor pesar los tuyos.
   </p>`;
 }
 
-function actualizarPrecioIng(nombre, valor){
-  const p = parseFloat(valor)||0;
+function actualizarPrecioIng(nombre, valor, factor=1){
+  // factor 1000: se escribió en €/kg o €/l y se guarda por g o ml, como siempre
+  const p = (parseFloat(String(valor).replace(',','.'))||0) / (factor||1);
   if(!preciosIng[nombre]) preciosIng[nombre]={precio:p,ud:''};
   else preciosIng[nombre].precio = p;
   savePrecios(preciosIng);
