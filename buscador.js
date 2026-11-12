@@ -14,7 +14,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 // Sin tildes ni mayúsculas: «Pescádo» encuentra «pescado»
 const norm = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const rol = () => (typeof rolActual !== 'undefined' && rolActual) || 'admin';
-const veo = tab => { if(tab === 'pasos') return ['admin','direccion','chef'].includes(rol()); const r = typeof ROLES !== 'undefined' && ROLES[rol()]; return !!r && r.tabs.includes(tab) && (typeof seccionActiva !== 'function' || seccionActiva(tab)); };
+const veo = tab => { if(tab === 'pasos') return ['admin','direccion','chef'].includes(rol()); if(tab === 'secciones') return true; const r = typeof ROLES !== 'undefined' && ROLES[rol()]; return !!r && r.tabs.includes(tab) && (typeof seccionActiva !== 'function' || seccionActiva(tab)) && !(typeof window.seccionOcultaUsuario === 'function' && window.seccionOcultaUsuario(tab)); };
 const ir = (tab, luego) => { cerrar(); if(typeof showTab === 'function') showTab(tab); if(luego) setTimeout(luego, 120); };
 
 // Palabras que la gente usa para cada sección (además de su nombre)
@@ -48,6 +48,7 @@ const SINONIMOS = {
 
 // Preguntas frecuentes: [pregunta, palabras extra, sección, pasos]
 const AYUDA = [
+  ['¿Cómo quito secciones que no uso?', 'quitar esconder ocultar secciones menu lista corta simplificar no uso elegir mostrar', 'secciones', ['Al final de la lista de secciones pulsa «Elegir qué secciones ves».', 'Quita las que no usas y pulsa «Guardar». Solo cambia en tu móvil y para tu rol.', 'Para recuperarlas, vuelve ahí y pulsa «Mostrar todas».']],
   ['¿Por dónde empiezo? (primeros pasos)', 'primeros pasos empezar empiezo inicio configurar nuevo cliente guia tutorial', 'pasos', ['En Inicio está la tarjeta «Primeros pasos» con lo mínimo para empezar: nombre del hotel, 3 recetas, precios, cámaras del APPCC, primer evento y equipo.', 'Cada paso tiene su botón «Hacerlo» y se marca solo cuando está hecho.', 'Si la ocultaste, «Llévame» la vuelve a mostrar.']],
   ['¿Cómo creo un evento?', 'nuevo evento boda alta crear', 'nuevo', ['En Inicio pulsa «Nuevo evento» (o abre la sección «Nuevo evento»).', 'Rellena nombre, fecha, hora, personas, lugar y tipo.', 'Añade los platos del menú y las alergias de los invitados, y guarda.']],
   ['¿Cómo cambio un evento?', 'editar evento modificar cambiar fecha pax', 'eventos', ['Abre «Eventos» y busca el evento.', 'Pulsa editar (el lápiz), cambia lo que haga falta y guarda.']],
@@ -163,6 +164,7 @@ function pintar(){
 }
 function ayudaHtml(a){
   if(a.tab === 'pasos') acciones.push(() => { cerrar(); if(typeof window.pasosMostrar === 'function') window.pasosMostrar(); });
+  else if(a.tab === 'secciones') acciones.push(() => { cerrar(); if(typeof window.seccionesElegir === 'function') window.seccionesElegir(); });
   else if(a.tab) acciones.push(() => ir(a.tab)); else acciones.push(null);
   const i = acciones.length - 1;
   return `<details class="bus-faq"><summary><i class="ti ti-help-circle"></i> ${esc(a.q)}</summary><ol>${a.pasos.map(p => `<li>${esc(p)}</li>`).join('')}</ol>${a.tab ? `<button class="btn btn-p bus-ir" data-i="${i}"><i class="ti ti-arrow-right"></i> Llévame</button>` : ''}</details>`;
