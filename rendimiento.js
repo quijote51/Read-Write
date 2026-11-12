@@ -78,6 +78,6 @@ function htmlRendNota(nombre){
 .rd-calc{background:var(--bg-secondary);border:.5px solid var(--border);border-radius:6px;min-width:30px;min-height:30px;padding:0;cursor:pointer;font-size:14px;color:var(--text-primary)}
 .rd-tip{display:block;margin:3px 0 0 auto;background:none;border:0;padding:0;font-size:11px;color:var(--info-text);cursor:pointer;text-decoration:underline}
 @media(max-width:480px){#esc-precios-cont .ptable input[type=number]{width:74px!important;padding-left:4px!important;padding-right:4px!important}#esc-precios-cont .ptable th,#esc-precios-cont .ptable td{padding-left:5px;padding-right:5px}}
-.rd-nota{font-size:10.5px;color:var(--text-secondary)}`;
+.rd-nota{font-size:11px;color:var(--text-secondary)}`;
   document.head.appendChild(st);
 })();
