@@ -236,9 +236,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 .ev-card-date-day{font-size:19px;font-weight:700;color:var(--text-primary);line-height:1}
 .ev-card-date-mon{font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
 .ev-card-body{flex:1;min-width:0}
-.ev-card-name{font-size:15px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev-card-name{font-size:15px;font-weight:600;margin-bottom:4px;overflow-wrap:anywhere}
 .ev-card-meta{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;flex-wrap:wrap;line-height:1.5}
-.ev-card-footer{display:flex;gap:4px;align-items:center;padding:7px 12px;border-top:.5px solid var(--border);background:var(--bg-secondary)}
+.ev-card-footer{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:7px 12px;border-top:.5px solid var(--border);background:var(--bg-secondary)}
 /* ── ICON BUTTONS ── */
 .btn-icon{background:var(--bg-primary);border:.5px solid var(--border);border-radius:var(--radius);padding:5px 10px;font-size:12px;color:var(--text-secondary);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:inherit;font-weight:400;transition:all var(--t);min-height:30px;white-space:nowrap}
 .btn-icon:hover{background:var(--bg-tertiary);color:var(--text-primary);border-color:var(--border-md)}
@@ -390,7 +390,7 @@ textarea{resize:vertical;min-height:65px}
   <span id="print-page">Impreso el <span id="print-date-foot"></span></span>
 </div>
 <div class="app" id="main-content" role="main">
-<header style="background:var(--negro);color:var(--blanco);padding:.875rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+<header style="background:#1a1a1a;color:#fff;border-bottom:1px solid rgba(201,168,76,.25);padding:.875rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
   <div style="display:flex;align-items:center;gap:12px">
     <!-- Brand mark: diamond with gold border -->
     <div id="marca-cuadro" style="width:36px;height:36px;border:1.5px solid #c9a84c;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(201,168,76,.08);position:relative;overflow:hidden">
@@ -398,16 +398,16 @@ textarea{resize:vertical;min-height:65px}
       <span style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.1rem;font-weight:700;color:#fff;position:relative">O<span style="color:#c9a84c">í</span></span>
     </div>
     <div>
-      <div style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.05rem;font-weight:700;color:var(--blanco);line-height:1.15;letter-spacing:.01em">O<span style="color:#c9a84c">í</span>do <span style="letter-spacing:.18em;font-size:.65rem;font-family:'Karla',sans-serif;font-weight:600;color:rgba(201,168,76,.9);vertical-align:middle">COCINA</span></div>
-      <div style="font-size:9.5px;color:rgba(255,255,255,.28);letter-spacing:.07em;margin-top:1px;text-transform:uppercase" id="header-hotel-nombre">Oído Cocina</div>
+      <div style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.05rem;font-weight:700;color:#fff;line-height:1.15;letter-spacing:.01em">O<span style="color:#c9a84c">í</span>do <span style="letter-spacing:.18em;font-size:.65rem;font-family:'Karla',sans-serif;font-weight:600;color:rgba(201,168,76,.9);vertical-align:middle">COCINA</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.07em;margin-top:1px;text-transform:uppercase" id="header-hotel-nombre">Oído Cocina</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:6px">
-    <span id="sync-indicator" style="font-size:10px;color:rgba(255,255,255,.28);display:inline-flex;align-items:center;gap:4px"><i class="ti ti-cloud"></i> Conectando...</span>
+    <span id="sync-indicator" style="font-size:11px;color:rgba(255,255,255,.55);display:inline-flex;align-items:center;gap:4px;white-space:nowrap"><i class="ti ti-cloud"></i> Conectando...</span>
     <button onclick="abrirSelectorRol()" id="rol-btn" aria-label="Cambiar rol" aria-haspopup="dialog" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,.75);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px;transition:background 150ms ease">
       <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down" style="font-size:11px;opacity:.6"></i>
     </button>
-    <button onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" aria-label="Ajustes" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.4);cursor:pointer;font-size:13px;min-height:34px;min-width:34px;transition:background 150ms ease"><i class="ti ti-settings"></i></button>
+    <button onclick="showTab('ajustes',document.querySelector('[data-tab=ajustes]'))" aria-label="Ajustes" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.75);cursor:pointer;font-size:15px;min-height:34px;min-width:34px;transition:background 150ms ease"><i class="ti ti-settings"></i></button>
   </div>
 </header>
 
@@ -2196,7 +2196,7 @@ function renderPantallaCocina(){
 
   cont.innerHTML=`
   <!-- Kitchen display header -->
-  <div style="background:var(--negro);color:var(--blanco);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem;position:relative;overflow:hidden">
+  <div style="background:#1a1a1a;color:#fff;border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem;position:relative;overflow:hidden">
     <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold) 70%,transparent)"></div>
     <div style="font-family:'Playfair Display SC','Georgia',serif;font-size:1.3rem;font-weight:700;letter-spacing:.02em;margin-bottom:5px">${escH(ev.nombre)}</div>
     <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.6)">
@@ -2206,7 +2206,7 @@ function renderPantallaCocina(){
       <span style="color:rgba(255,255,255,.9);font-weight:600"><i class="ti ti-users" style="color:var(--gold)"></i> ${ev.pax} pax</span>
       <span style="color:rgba(255,255,255,.9);font-weight:600"><i class="ti ti-stack" style="color:var(--gold)"></i> ${raciones} uds/plato</span>
     </div>
-    ${ev.alergias_txt?`<div style="margin-top:8px;font-size:13px;color:#fbbf24;font-weight:600;background:rgba(251,191,36,.1);border-radius:var(--radius);padding:4px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:''}
+    ${algHay(ev.alergias_txt)?`<div style="margin-top:8px;font-size:13px;color:#fbbf24;font-weight:600;background:rgba(251,191,36,.1);border-radius:var(--radius);padding:4px 10px;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:''}
     ${htmlAlertaAlergenos(ev,true)}${htmlHorarioEvento(ev)}
   </div>
 
@@ -2966,7 +2966,7 @@ function verDiaCalendario(dia){
   det.innerHTML=`<div class="sec-label" style="margin-bottom:10px"><i class="ti ti-calendar-event"></i> ${fecha} <span style="font-size:12px;color:var(--text-secondary);font-weight:400;text-transform:none;letter-spacing:0">${evs.length} evento${evs.length>1?'s':''} · ${evs.reduce((s,e)=>s+e.pax,0)} pax total</span></div>`+
   evs.sort((a,b)=>a.hora.localeCompare(b.hora)).map(ev=>{
     const color=getTipoColor(ev.tipo);
-    const alerg=ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:'';
+    const alerg=algHay(ev.alergias_txt)?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:'';
     const platos=ev.platos?.slice(0,4).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:4px;padding:1px 7px;display:inline-block;margin:2px;border-left:2px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${escH(p.nombre)}</span>`).join('')||'';
     const masPlatos=ev.platos?.length>4?`<span style="font-size:11px;color:var(--text-tertiary)"> +${ev.platos.length-4} más</span>`:'';
     const [,dm,dd]=ev.fecha.split('-');
@@ -3049,7 +3049,7 @@ function renderEventos(){
   if(!evs.length){cont.innerHTML='<div class="empty">No hay eventos.</div>';return;}
   const mesCorto=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   cont.innerHTML=evs.map(ev=>{
-    const alerg=ev.alergias_txt?`<div style="margin-top:5px;font-size:12px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:'';
+    const alerg=algHay(ev.alergias_txt)?`<div style="margin-top:5px;font-size:12px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:'';
     const algHTML=(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
     const chips=(ev.platos||[]).map(p=>`<span style="font-size:11px;background:var(--bg-secondary);border-radius:var(--radius);padding:2px 8px;color:var(--text-secondary);display:inline-block;margin:2px;border-left:3px solid ${CATS.find(c=>c.key===p.cat)?.color||'#888'}">${escH(p.nombre)}</span>`).join('');
     const infHTML=ev.infantil?.ninos?`<div style="margin-top:5px;font-size:12px;background:var(--success-bg);color:var(--success-text);padding:3px 8px;border-radius:var(--radius);display:inline-block"><i class="ti ti-heart"></i> ${ev.infantil.ninos} niño${ev.infantil.ninos>1?'s':''} · Menú infantil${ev.infantil.precio_nino?' · '+ev.infantil.precio_nino+'€/niño':''}</div>`:'';
@@ -3228,7 +3228,7 @@ function renderProd(){
   btnImp.style.display='inline-flex';
   const btnAlg=ge('btn-alergenos'); if(btnAlg) btnAlg.style.display='inline-flex';
 
-  const alergC=ev.alergias_txt?`<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px"><div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:3px"><i class="ti ti-alert-triangle"></i> Alergias de clientes</div><div style="font-size:13px">${escH(ev.alergias_txt)}</div></div>`:'';
+  const alergC=algHay(ev.alergias_txt)?`<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px"><div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:3px"><i class="ti ti-alert-triangle"></i> Alergias de clientes</div><div style="font-size:13px">${escH(ev.alergias_txt)}</div></div>`:'';
   const alergMenu=(ev.alergenos_menu||[]).length?`<div class="card" style="margin-bottom:10px"><div style="font-size:13px;font-weight:500;margin-bottom:5px"><i class="ti ti-shield-check"></i> Alérgenos en este menú</div><div>${(ev.alergenos_menu||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div></div>`:'';
 
   let t=`<div class="card ptable-outer" style="padding:0"><table class="ptable"><thead><tr><th>Plato</th><th>Alérgenos</th><th style="text-align:right">Uds.</th><th style="text-align:center" class="no-print">Receta</th></tr></thead><tbody>`;
@@ -3320,7 +3320,7 @@ function buildConjunta(evs){
   const merged=Object.values(map);
   const totalPax=evs.reduce((s,e)=>s+e.pax,0);
   const todosAlerg=[...new Set(evs.flatMap(e=>e.alergenos_menu||[]))];
-  const alergC=evs.filter(e=>e.alergias_txt).map(e=>`<b>${escH(e.nombre)}:</b> ${escH(e.alergias_txt)}`).join('<br>');
+  const alergC=evs.filter(e=>algHay(e.alergias_txt)).map(e=>`<b>${escH(e.nombre)}:</b> ${escH(e.alergias_txt)}`).join('<br>');
   let html=`<div class="stat-g"><div class="stat"><div class="stat-l">Eventos</div><div class="stat-v">${evs.length}</div></div><div class="stat"><div class="stat-l">Pax total</div><div class="stat-v">${totalPax}</div></div></div>`;
   if(alergC)html+=`<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px"><div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:4px"><i class="ti ti-alert-triangle"></i> Alergias (todos los eventos)</div><div style="font-size:13px;line-height:1.7">${alergC}</div></div>`;
   if(todosAlerg.length)html+=`<div class="card" style="margin-bottom:10px"><div style="font-size:13px;font-weight:500;margin-bottom:5px"><i class="ti ti-shield-check"></i> Alérgenos presentes</div><div>${todosAlerg.map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div></div>`;
@@ -4324,7 +4324,7 @@ function initDashboard(){
             <span style="color:${color};font-weight:500">${LABEL_TIPO[ev.tipo]||ev.tipo}</span>
             ${ev.precio_venta?`<span style="opacity:.3">·</span>${ev.precio_venta}€/pax`:''}
           </div>
-          ${ev.alergias_txt?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:''}
+          ${algHay(ev.alergias_txt)?`<div style="font-size:12px;color:var(--warn-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> ${escH(ev.alergias_txt)}</div>`:`<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px"><i class="ti ti-circle-check"></i> Sin alergias</div>`}
           ${vajAlerta?`<div style="font-size:12px;color:var(--danger-text);margin-top:4px"><i class="ti ti-alert-triangle"></i> Vajilla insuficiente</div>`:''}
         </div>
       </div>
@@ -4355,7 +4355,7 @@ function initDashboard(){
           <div class="ev-card-date-mon">${mesC2[Number(sm)]}</div>
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(ev.nombre)}</div>
+          <div style="font-size:13px;font-weight:600;overflow-wrap:anywhere">${escH(ev.nombre)}</div>
           <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${ev.hora} · ${ev.pax} pax · ${escH(ev.lugar)}</div>
         </div>
         <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
@@ -4439,7 +4439,7 @@ ${ev.notas_bebidas?'Bodega: '+ev.notas_bebidas:''}
 ${vajResumen||'Sin calcular'}
 ${vajAlerta.length?`\n⚠️ STOCK INSUFICIENTE: ${vajAlerta.map(v=>v.nombre+' (faltan '+v.falta+')').join(', ')}`:'✅ Stock OK'}
 
-${ev.alergias_txt?`⚠️ *ALERGIAS:* ${ev.alergias_txt}`:'✅ Sin alergias registradas'}
+${algHay(ev.alergias_txt)?`⚠️ *ALERGIAS:* ${ev.alergias_txt}`:'✅ Sin alergias registradas'}
 
 _Generado con Oído Cocina_`;
 
@@ -4464,7 +4464,7 @@ ${postres.length?`Postres: ${postres.join(' · ')}`:''}
 *BODEGA:* ${bebActivas.join(' + ')||'Sin especificar'}
 ${ev.notas_bebidas?ev.notas_bebidas:''}
 
-${ev.alergias_txt?`⚠️ *ALERGIAS:* ${ev.alergias_txt}\n`:'✅ Sin alergias\n'}
+${algHay(ev.alergias_txt)?`⚠️ *ALERGIAS:* ${ev.alergias_txt}\n`:'✅ Sin alergias\n'}
 _Por favor confirma recepción._
 _Oído Cocina_`;
 
@@ -4487,7 +4487,7 @@ ${calientes.length?`\n🔴 CALIENTES:\n${calientes.map(p=>`— ${p}: ${raciones}
 ${principales.length?`\n🟣 PRINCIPALES:\n${principales.map(p=>`— ${p}: ${ev.pax} uds`).join('\n')}`:''}
 ${postres.length?`\n🟢 POSTRES:\n${postres.map(p=>`— ${p}: ${raciones} uds`).join('\n')}`:''}
 
-${ev.alergias_txt?`⚠️ *ALERGIAS — PREPARAR ALTERNATIVA:*\n${ev.alergias_txt}\n`:'✅ Sin alergias registradas\n'}
+${algHay(ev.alergias_txt)?`⚠️ *ALERGIAS — PREPARAR ALTERNATIVA:*\n${ev.alergias_txt}\n`:'✅ Sin alergias registradas\n'}
 ${ev.infantil?.ninos?`
 🧒 *MENÚ INFANTIL — ${ev.infantil.ninos} NIÑO${ev.infantil.ninos>1?'S':''}:*
 ${(ev.infantil.platos||[]).map(pid=>{const p=PLATOS_INFANTIL.find(x=>x.id===pid);return p?`— ${p.emoji} ${p.nombre}: ${ev.infantil.ninos} uds`:''}).filter(Boolean).join('\n')}
