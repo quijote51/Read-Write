@@ -862,18 +862,18 @@ textarea{resize:vertical;min-height:65px}
       <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Platos base de esta plantilla (uno por línea · prefija con <b>F:</b> frío, <b>C:</b> caliente, <b>P:</b> postre, <b>M:</b> principal)</p>
       <div class="form-2" style="margin-bottom:10px">
         <div class="fg" style="margin-bottom:0"><label>Aperitivos fríos</label>
-          <textarea id="plt-fr" placeholder="F:Ensaladilla rusa de langostinos&#10;F:Salmorejo con jamón y huevo" style="min-height:80px"></textarea>
+          <textarea id="plt-fr" placeholder="Ensaladilla rusa de langostinos&#10;Salmorejo con jamón y huevo" style="min-height:80px"></textarea>
         </div>
         <div class="fg" style="margin-bottom:0"><label>Aperitivos calientes</label>
-          <textarea id="plt-ca" placeholder="C:Pastela Moruna&#10;C:Croquetas de pollo y jamón ibérico" style="min-height:80px"></textarea>
+          <textarea id="plt-ca" placeholder="Pastela Moruna&#10;Croquetas de pollo y jamón ibérico" style="min-height:80px"></textarea>
         </div>
       </div>
       <div class="form-2" style="margin-bottom:12px">
         <div class="fg" style="margin-bottom:0"><label>Postres</label>
-          <textarea id="plt-po" placeholder="P:Bocaditos de lemon pie&#10;P:Brownie con dulce de leche"></textarea>
+          <textarea id="plt-po" placeholder="Bocaditos de lemon pie&#10;Brownie con dulce de leche"></textarea>
         </div>
         <div class="fg" style="margin-bottom:0"><label>Platos principales</label>
-          <textarea id="plt-pr" placeholder="M:Presa ibérica con puré de boniato&#10;M:Lomo de bacalao gratinado"></textarea>
+          <textarea id="plt-pr" placeholder="Presa ibérica con puré de boniato&#10;Lomo de bacalao gratinado"></textarea>
         </div>
       </div>
       <button class="btn btn-p" onclick="guardarPlt()"><i class="ti ti-check"></i> Guardar plantilla</button>
@@ -1207,12 +1207,12 @@ textarea{resize:vertical;min-height:65px}
     <div class="form-sec">Menú</div>
     <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Un plato por línea · <b>F:</b> frío · <b>C:</b> caliente · <b>P:</b> postre · <b>M:</b> principal</p>
     <div class="form-2" style="margin-bottom:10px">
-      <div class="fg" style="margin-bottom:0"><label>Aperitivos fríos</label><textarea id="n-fr" placeholder="F:Ensaladilla rusa de langostinos&#10;F:Tartar de salmón con mango"></textarea></div>
-      <div class="fg" style="margin-bottom:0"><label>Aperitivos calientes</label><textarea id="n-ca" placeholder="C:Pastela Moruna&#10;C:Croquetas de pollo y jamón ibérico"></textarea></div>
+      <div class="fg" style="margin-bottom:0"><label>Aperitivos fríos</label><textarea id="n-fr" placeholder="Ensaladilla rusa de langostinos&#10;Tartar de salmón con mango"></textarea></div>
+      <div class="fg" style="margin-bottom:0"><label>Aperitivos calientes</label><textarea id="n-ca" placeholder="Pastela Moruna&#10;Croquetas de pollo y jamón ibérico"></textarea></div>
     </div>
     <div class="form-2" style="margin-bottom:10px">
-      <div class="fg" style="margin-bottom:0"><label>Postres</label><textarea id="n-po" placeholder="P:Bocaditos de lemon pie"></textarea></div>
-      <div class="fg" style="margin-bottom:0"><label>Platos principales</label><textarea id="n-pr" placeholder="M:Presa ibérica con puré de boniato"></textarea></div>
+      <div class="fg" style="margin-bottom:0"><label>Postres</label><textarea id="n-po" placeholder="Bocaditos de lemon pie"></textarea></div>
+      <div class="fg" style="margin-bottom:0"><label>Platos principales</label><textarea id="n-pr" placeholder="Presa ibérica con puré de boniato"></textarea></div>
     </div>
 
     <div class="form-sec">Alergias y alérgenos</div>
@@ -2800,7 +2800,7 @@ function cargarPlantilla(){
   if(p.precio) ge('n-pax') && (document.querySelector('#tab-nuevo input[placeholder="65"]') || {value:p.precio});
 
   // Cargar platos en los textareas
-  const pp=(cat)=>p.platos.filter(x=>x.cat===cat).map(x=>x.cat+':'+x.nombre).join('\n');
+  const pp=(cat)=>p.platos.filter(x=>x.cat===cat).map(x=>x.nombre).join('\n');
   ge('n-fr').value=pp('F');
   ge('n-ca').value=pp('C');
   ge('n-po').value=pp('P');
@@ -2831,7 +2831,7 @@ function editarPlt(id){
   ge('plt-factor').value=p.factor||'coctel';
   ge('plt-desc').value=p.desc||'';
   ge('plt-bodega').value=p.bodega||'';
-  const pp=(cat)=>p.platos.filter(x=>x.cat===cat).map(x=>x.cat+':'+x.nombre).join('\n');
+  const pp=(cat)=>p.platos.filter(x=>x.cat===cat).map(x=>x.nombre).join('\n');
   ge('plt-fr').value=pp('F');
   ge('plt-ca').value=pp('C');
   ge('plt-po').value=pp('P');
@@ -3166,10 +3166,10 @@ function editarEvento(id){
     if(ge('n-factor-slider')){ge('n-factor-slider').value=ev.factor_custom||getFactorEvento(ev);}
     if(ge('n-precio-venta')){ge('n-precio-venta').value=ev.precio_venta||'';}
     // Rellenar platos
-    ge('n-fr').value=ev.platos.filter(p=>p.cat==='F').map(p=>'F:'+p.nombre).join('\n');
-    ge('n-ca').value=ev.platos.filter(p=>p.cat==='C').map(p=>'C:'+p.nombre).join('\n');
-    ge('n-po').value=ev.platos.filter(p=>p.cat==='P').map(p=>'P:'+p.nombre).join('\n');
-    ge('n-pr').value=ev.platos.filter(p=>p.cat==='M').map(p=>'M:'+p.nombre).join('\n');
+    ge('n-fr').value=ev.platos.filter(p=>p.cat==='F').map(p=>p.nombre).join('\n');
+    ge('n-ca').value=ev.platos.filter(p=>p.cat==='C').map(p=>p.nombre).join('\n');
+    ge('n-po').value=ev.platos.filter(p=>p.cat==='P').map(p=>p.nombre).join('\n');
+    ge('n-pr').value=ev.platos.filter(p=>p.cat==='M').map(p=>p.nombre).join('\n');
     // Infantil
     if(ev.infantil){ge('n-ninos').value=ev.infantil.ninos||0;ge('n-precio-nino').value=ev.infantil.precio_nino||'';}
     renderAlgSel('alg-selector',ev.alergenos_menu||[]);
