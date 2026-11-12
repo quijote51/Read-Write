@@ -36,44 +36,73 @@ h1{font-size:22px;margin:4px 0 2px}
 .sin{font-size:13px;color:var(--sec);margin-top:4px}
 .aviso{font-size:13px;color:var(--sec)}
 .estado{text-align:center;padding:40px 10px;color:var(--sec)}
+
+.idiomas{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:0 0 6px}
+.idiomas button{border:1px solid var(--borde);background:var(--card);color:var(--sec);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;cursor:pointer;min-height:36px;min-width:44px}
+.idiomas button[aria-pressed="true"]{background:var(--oro);border-color:var(--oro);color:#111}
+.trad{font-size:12px;color:var(--sec);text-align:center;margin-top:6px}
 footer{text-align:center;font-size:11px;color:var(--sec);padding:18px 0 8px}
 </style>
 </head>
 <body>
-<main id="app"><div class="estado">Cargando la carta…</div></main>
+<main id="app"><div class="estado">…</div></main>
 <script>
 /* Carta pública de alérgenos (la que abre el comensal con el QR). Sin cuenta: pide UNA carta publicada a
    carta_publica(id) (supabase/cartas-publicas.sql). Solo trae nombres de platos y sus alérgenos. */
 const SUPA_URL='https://gxkxslkdqgwovgxcuzkr.supabase.co', SUPA_KEY='sb_publishable_xAUprOgWQi0HhYms69zUhA_yiTwDYPK';
 const ALERGENOS=[
-  {id:'gluten',icon:'🌾',label:'Gluten'},{id:'crustaceos',icon:'🦐',label:'Crustáceos'},
-  {id:'huevo',icon:'🥚',label:'Huevo'},{id:'pescado',icon:'🐟',label:'Pescado'},
-  {id:'cacahuetes',icon:'🥜',label:'Cacahuetes'},{id:'soja',icon:'🫘',label:'Soja'},
-  {id:'lacteo',icon:'🥛',label:'Lácteos'},{id:'frutos_secos',icon:'🌰',label:'Frutos secos'},
-  {id:'apio',icon:'🌿',label:'Apio'},{id:'mostaza',icon:'🟡',label:'Mostaza'},
-  {id:'sesamo',icon:'🌱',label:'Sésamo'},{id:'sulfitos',icon:'🍷',label:'Sulfitos'},
-  {id:'altramuces',icon:'🫛',label:'Altramuces'},{id:'moluscos',icon:'🦪',label:'Moluscos'}
+  {id:'gluten',icon:'🌾',l:{es:'Gluten',en:'Gluten',fr:'Gluten',de:'Gluten',it:'Glutine'}},
+  {id:'crustaceos',icon:'🦐',l:{es:'Crustáceos',en:'Crustaceans',fr:'Crustacés',de:'Krebstiere',it:'Crostacei'}},
+  {id:'huevo',icon:'🥚',l:{es:'Huevo',en:'Eggs',fr:'Œufs',de:'Eier',it:'Uova'}},
+  {id:'pescado',icon:'🐟',l:{es:'Pescado',en:'Fish',fr:'Poisson',de:'Fisch',it:'Pesce'}},
+  {id:'cacahuetes',icon:'🥜',l:{es:'Cacahuetes',en:'Peanuts',fr:'Arachides',de:'Erdnüsse',it:'Arachidi'}},
+  {id:'soja',icon:'🫘',l:{es:'Soja',en:'Soy',fr:'Soja',de:'Soja',it:'Soia'}},
+  {id:'lacteo',icon:'🥛',l:{es:'Lácteos',en:'Milk',fr:'Lait',de:'Milch',it:'Latte'}},
+  {id:'frutos_secos',icon:'🌰',l:{es:'Frutos secos',en:'Tree nuts',fr:'Fruits à coque',de:'Schalenfrüchte',it:'Frutta a guscio'}},
+  {id:'apio',icon:'🌿',l:{es:'Apio',en:'Celery',fr:'Céleri',de:'Sellerie',it:'Sedano'}},
+  {id:'mostaza',icon:'🟡',l:{es:'Mostaza',en:'Mustard',fr:'Moutarde',de:'Senf',it:'Senape'}},
+  {id:'sesamo',icon:'🌱',l:{es:'Sésamo',en:'Sesame',fr:'Sésame',de:'Sesam',it:'Sesamo'}},
+  {id:'sulfitos',icon:'🍷',l:{es:'Sulfitos',en:'Sulphites',fr:'Sulfites',de:'Sulfite',it:'Solfiti'}},
+  {id:'altramuces',icon:'🫛',l:{es:'Altramuces',en:'Lupin',fr:'Lupin',de:'Lupinen',it:'Lupini'}},
+  {id:'moluscos',icon:'🦪',l:{es:'Moluscos',en:'Molluscs',fr:'Mollusques',de:'Weichtiere',it:'Molluschi'}}
 ];
+// Textos de la página en cada idioma (alérgenos con su nombre oficial del Reglamento 1169/2011).
+// Los nombres de los platos y las notas se ven como los escribió el hotel.
+const IDIOMAS={es:'ES',en:'EN',fr:'FR',de:'DE',it:'IT'};
+const T={
+  es:{loc:'es-ES',cargando:'Cargando la carta…',falta:'Falta el código de la carta. Escanee de nuevo el QR.',error:'No se ha podido cargar la carta. Compruebe la conexión e inténtelo de nuevo.',retirada:'Esta carta ya no está disponible. Pregunte al personal por los alérgenos.',carta:'Carta',titulo:'Alérgenos',act:'Alérgenos actualizados el {f}',filtro:'Tengo alergia o intolerancia a…',resumen:'{a} de {t} platos no llevan lo que ha marcado.',sinDatoRes:' {n} sin confirmar: pregunte al personal.',duda:'Consultar',si:'Sin lo marcado',no:'Contiene',sinAlg:'Alérgenos sin confirmar: pregunte al personal.',trad:'',aviso:'Información según el Reglamento (UE) 1169/2011. Las elaboraciones se preparan en una cocina donde se usan los 14 alérgenos y puede haber trazas. Si tiene una alergia, <b>avise siempre al personal</b> antes de pedir.',tel:'Teléfono'},
+  en:{loc:'en-GB',cargando:'Loading the menu…',falta:'The menu code is missing. Please scan the QR code again.',error:'The menu could not be loaded. Please check your connection and try again.',retirada:'This menu is no longer available. Please ask our staff about allergens.',carta:'Menu',titulo:'Allergens',act:'Allergens updated on {f}',filtro:'I am allergic or intolerant to…',resumen:'{a} of {t} dishes do not contain what you selected.',sinDatoRes:' {n} not confirmed: please ask our staff.',duda:'Ask staff',si:'Free from selection',no:'Contains',sinAlg:'Allergens not confirmed: please ask our staff.',trad:'Dish names are shown in Spanish.',aviso:'Information in accordance with Regulation (EU) No 1169/2011. Our dishes are prepared in a kitchen where all 14 allergens are used, so traces may be present. If you have an allergy, <b>always tell our staff</b> before ordering.',tel:'Phone'},
+  fr:{loc:'fr-FR',cargando:'Chargement de la carte…',falta:'Le code de la carte est manquant. Veuillez scanner à nouveau le QR code.',error:'Impossible de charger la carte. Vérifiez votre connexion et réessayez.',retirada:'Cette carte n’est plus disponible. Demandez les allergènes au personnel.',carta:'Carte',titulo:'Allergènes',act:'Allergènes mis à jour le {f}',filtro:'Je suis allergique ou intolérant à…',resumen:'{a} plats sur {t} ne contiennent pas ce que vous avez sélectionné.',sinDatoRes:' {n} non confirmés : demandez au personnel.',duda:'Demander',si:'Sans votre sélection',no:'Contient',sinAlg:'Allergènes non confirmés : demandez au personnel.',trad:'Les noms des plats sont en espagnol.',aviso:'Informations conformes au Règlement (UE) n° 1169/2011. Nos plats sont préparés dans une cuisine où les 14 allergènes sont utilisés : des traces sont possibles. En cas d’allergie, <b>prévenez toujours le personnel</b> avant de commander.',tel:'Téléphone'},
+  de:{loc:'de-DE',cargando:'Speisekarte wird geladen…',falta:'Der Code der Karte fehlt. Bitte scannen Sie den QR-Code erneut.',error:'Die Karte konnte nicht geladen werden. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.',retirada:'Diese Karte ist nicht mehr verfügbar. Bitte fragen Sie unser Personal nach Allergenen.',carta:'Speisekarte',titulo:'Allergene',act:'Allergene aktualisiert am {f}',filtro:'Ich habe eine Allergie oder Unverträglichkeit gegen…',resumen:'{a} von {t} Gerichten enthalten nicht, was Sie ausgewählt haben.',sinDatoRes:' {n} nicht bestätigt: Bitte fragen Sie das Personal.',duda:'Nachfragen',si:'Ohne Ihre Auswahl',no:'Enthält',sinAlg:'Allergene nicht bestätigt: Bitte fragen Sie das Personal.',trad:'Die Namen der Gerichte sind auf Spanisch.',aviso:'Angaben gemäß Verordnung (EU) Nr. 1169/2011. Unsere Speisen werden in einer Küche zubereitet, in der alle 14 Allergene verwendet werden; Spuren sind möglich. Wenn Sie eine Allergie haben, <b>informieren Sie bitte immer unser Personal</b>, bevor Sie bestellen.',tel:'Telefon'},
+  it:{loc:'it-IT',cargando:'Caricamento del menù…',falta:'Manca il codice del menù. Scansioni di nuovo il codice QR.',error:'Impossibile caricare il menù. Controlli la connessione e riprovi.',retirada:'Questo menù non è più disponibile. Chieda al personale gli allergeni.',carta:'Menù',titulo:'Allergeni',act:'Allergeni aggiornati il {f}',filtro:'Ho un’allergia o intolleranza a…',resumen:'{a} piatti su {t} non contengono ciò che ha selezionato.',sinDatoRes:' {n} non confermati: chieda al personale.',duda:'Chiedere',si:'Senza la sua selezione',no:'Contiene',sinAlg:'Allergeni non confermati: chieda al personale.',trad:'I nomi dei piatti sono in spagnolo.',aviso:'Informazioni ai sensi del Regolamento (UE) n. 1169/2011. I piatti sono preparati in una cucina dove si utilizzano tutti i 14 allergeni: possono esserci tracce. Se ha un’allergia, <b>avvisi sempre il personale</b> prima di ordinare.',tel:'Telefono'}
+};
+// Idioma: el elegido (?l= o guardado en el móvil); si no, el del móvil; si no, español
+let lang=(()=>{ const q=new URLSearchParams(location.search).get('l'); if(T[q]) return q;
+  try{ const g=localStorage.getItem('carta_idioma'); if(T[g]) return g; }catch(e){}
+  const n=(navigator.languages||[navigator.language||'es']).map(x=>String(x).slice(0,2).toLowerCase()).find(x=>T[x]); return n||'es'; })();
+const tx=(k,v)=>String(T[lang][k]).replace(/\{(\w)\}/g,(_,x)=>v&&v[x]!=null?v[x]:'');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const alg=id=>ALERGENOS.find(a=>a.id===id)||{id,icon:'⚠️',label:id};
+const alg=id=>{ const a=ALERGENOS.find(a=>a.id===id); return a?{id,icon:a.icon,label:a.l[lang]||a.l.es}:{id,icon:'⚠️',label:id}; };
+const barra=()=>`<nav class="idiomas" aria-label="Idioma / Language">${Object.keys(IDIOMAS).map(k=>`<button data-l="${k}" lang="${k}" aria-pressed="${k===lang}">${IDIOMAS[k]}</button>`).join('')}</nav>`;
 const app=document.getElementById('app');
 let carta=null; const elegidos=new Set();
 
-function estado(t){ app.innerHTML=`<div class="estado">${t}</div>`; }
+let ultimoEstado='cargando';
+function estado(k){ ultimoEstado=k; document.documentElement.lang=lang; app.innerHTML=barra()+`<div class="estado">${tx(k)}</div>`; }
 async function cargar(){
   const id=new URLSearchParams(location.search).get('c');
-  if(!id) return estado('Falta el código de la carta. Escanee de nuevo el QR.');
+  if(!id) return estado('falta');
   try{
     const r=await fetch(SUPA_URL+'/rest/v1/rpc/carta_publica',{method:'POST',headers:{'apikey':SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_id:id})});
     if(!r.ok) throw new Error(r.status);
     carta=await r.json();
-  }catch(e){ return estado('No se ha podido cargar la carta. Compruebe la conexión e inténtelo de nuevo.'); }
-  if(!carta) return estado('Esta carta ya no está disponible. Pregunte al personal por los alérgenos.');
+  }catch(e){ return estado('error'); }
+  if(!carta) return estado('retirada');
   pintar();
 }
 function pintar(){
   const c=carta.contenido||{}, platos=c.platos||[];
-  document.title='Alérgenos · '+(carta.titulo||'Carta');
+  document.title=tx('titulo')+' · '+(carta.titulo||tx('carta')); document.documentElement.lang=lang;
   const usados=ALERGENOS.filter(a=>platos.some(p=>(p.alg||[]).includes(a.id)));
   // Un plato sin alérgenos apuntados puede ser que no estén apuntados: nunca se le dice al comensal que no lleva.
   const sinDato=p=>!(p.alg||[]).length;
@@ -81,20 +110,23 @@ function pintar(){
   const cats=[]; platos.forEach(p=>{ const k=p.cat||''; let g=cats.find(x=>x.k===k); if(!g){ g={k,ps:[]}; cats.push(g); } g.ps.push(p); });
   const nAptos=platos.filter(apto).length, nSinDato=platos.filter(sinDato).length;
   const logo=/^https:\/\/gxkxslkdqgwovgxcuzkr\.supabase\.co\/storage\/v1\/object\/public\/fotos\/[\w\/.-]+$/.test(c.logo||'')?c.logo:'';
-  app.innerHTML=`<header>${logo?`<img src="${logo}" alt="" style="max-height:64px;max-width:200px;object-fit:contain;display:block;margin:0 auto 8px;background:#fff;border-radius:8px;padding:4px">`:''}${c.hotel?`<div class="hotel">${esc(c.hotel)}${c.ciudad?' · '+esc(c.ciudad):''}</div>`:''}
-    <h1>${esc(carta.titulo||'Carta')}</h1><div class="fecha">Alérgenos actualizados el ${new Date(carta.actualizado).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</div></header>
+  app.innerHTML=barra()+`<header>${logo?`<img src="${logo}" alt="" style="max-height:64px;max-width:200px;object-fit:contain;display:block;margin:0 auto 8px;background:#fff;border-radius:8px;padding:4px">`:''}${c.hotel?`<div class="hotel">${esc(c.hotel)}${c.ciudad?' · '+esc(c.ciudad):''}</div>`:''}
+    <h1>${esc(carta.titulo||tx('carta'))}</h1><div class="fecha">${esc(tx('act',{f:new Date(carta.actualizado).toLocaleDateString(T[lang].loc,{day:'numeric',month:'long',year:'numeric'})}))}</div>${tx('trad')?`<div class="trad">${esc(tx('trad'))}</div>`:''}</header>
     ${c.nota?`<div class="nota">${esc(c.nota)}</div>`:''}
-    ${usados.length?`<div class="filtro"><b>Tengo alergia o intolerancia a…</b><div class="chips">${usados.map(a=>`<button class="chip" data-a="${a.id}" aria-pressed="${elegidos.has(a.id)}">${a.icon} ${esc(a.label)}</button>`).join('')}</div>
-      ${elegidos.size?`<div class="resumen">${nAptos} de ${platos.length} platos no llevan lo que ha marcado.${nSinDato?` ${nSinDato} sin confirmar: pregunte al personal.`:''}</div>`:''}</div>`:''}
+    ${usados.length?`<div class="filtro"><b>${esc(tx('filtro'))}</b><div class="chips">${usados.map(a=>`<button class="chip" data-a="${a.id}" aria-pressed="${elegidos.has(a.id)}">${a.icon} ${esc(a.label)}</button>`).join('')}</div>
+      ${elegidos.size?`<div class="resumen">${esc(tx('resumen',{a:nAptos,t:platos.length}))}${nSinDato?esc(tx('sinDatoRes',{n:nSinDato})):''}</div>`:''}</div>`:''}
     ${cats.map(g=>`<section class="cat">${g.k?`<h2>${esc(g.k)}</h2>`:''}${g.ps.map(p=>{
       const a=p.alg||[], ok=apto(p), duda=sinDato(p);
-      return `<div class="plato${elegidos.size&&!ok&&!duda?' oculto':''}"><div class="pn"><span>${esc(p.nombre)}</span>${elegidos.size?`<span class="est ${duda?'duda':ok?'si':'no'}">${duda?'Consultar':ok?'Sin lo marcado':'Contiene'}</span>`:''}</div>
-        ${a.length?`<div class="algs">${a.map(x=>{ const d=alg(x); return `<span class="alg${elegidos.has(x)?' marca':''}">${d.icon} ${esc(d.label)}</span>`; }).join('')}</div>`:'<div class="sin">Alérgenos sin confirmar: pregunte al personal.</div>'}</div>`;
+      return `<div class="plato${elegidos.size&&!ok&&!duda?' oculto':''}"><div class="pn"><span>${esc(p.nombre)}</span>${elegidos.size?`<span class="est ${duda?'duda':ok?'si':'no'}">${esc(duda?tx('duda'):ok?tx('si'):tx('no'))}</span>`:''}</div>
+        ${a.length?`<div class="algs">${a.map(x=>{ const d=alg(x); return `<span class="alg${elegidos.has(x)?' marca':''}">${d.icon} ${esc(d.label)}</span>`; }).join('')}</div>`:`<div class="sin">${esc(tx('sinAlg'))}</div>`}</div>`;
     }).join('')}</section>`).join('')}
-    <div class="aviso">Información según el Reglamento (UE) 1169/2011. Las elaboraciones se preparan en una cocina donde se usan los 14 alérgenos y puede haber trazas. Si tiene una alergia, <b>avise siempre al personal</b> antes de pedir.${c.tel?` Teléfono: ${esc(c.tel)}.`:''}</div>
+    <div class="aviso">${tx('aviso')}${c.tel?` ${esc(tx('tel'))}: ${esc(c.tel)}.`:''}</div>
     <footer>Oído Cocina</footer>`;
 }
-app.addEventListener('click',e=>{ const b=e.target.closest('[data-a]'); if(!b) return; const a=b.dataset.a; elegidos.has(a)?elegidos.delete(a):elegidos.add(a); pintar(); });
+app.addEventListener('click',e=>{ const l=e.target.closest('[data-l]');
+  if(l){ lang=l.dataset.l; try{ localStorage.setItem('carta_idioma',lang); }catch(x){} return carta?pintar():estado(ultimoEstado); }
+  const b=e.target.closest('[data-a]'); if(!b) return; const a=b.dataset.a; elegidos.has(a)?elegidos.delete(a):elegidos.add(a); pintar(); });
+estado('cargando');
 cargar();
 </script>
 </body>
