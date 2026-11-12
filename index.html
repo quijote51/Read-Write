@@ -102,7 +102,10 @@ function syncConfig(key, valor){ _programar(key, ()=>_subirConfig(key, valor)); 
 function mostrarSync(ok){
   const el = document.getElementById('sync-indicator');
   if(el){
-    el.innerHTML = ok ? '<i class="ti ti-cloud-check"></i> Sincronizado' : (_uid ? '<i class="ti ti-wifi-off"></i> Sin conexión' : '<i class="ti ti-device-mobile"></i> Solo este dispositivo');
+    const [ic, txt] = ok ? ['ti-cloud-check','Sincronizado'] : (_uid ? ['ti-wifi-off','Sin conexión'] : ['ti-device-mobile','Solo este dispositivo']);
+    // En el móvil solo se ve el icono (cabecera en una fila); el texto queda al tocarlo/pasar por encima y para lectores de pantalla
+    el.innerHTML = `<i class="ti ${ic}" aria-hidden="true"></i><span class="sync-txt"> ${txt}</span>`;
+    el.title = txt; el.setAttribute('aria-label', txt);
     el.style.color = ok ? 'rgba(255,255,255,.4)' : 'rgba(255,165,0,.7)';
   }
 }
@@ -382,6 +385,14 @@ textarea{resize:vertical;min-height:65px}
   .sub-tab,[role=tab]{min-height:40px}
   .link-btn{min-height:36px;padding:6px 4px!important}
 }
+
+/* Móvil: cabecera compacta, los botones en una sola fila bajo el nombre */
+@media (max-width:480px){
+  #main-content > header{padding:.75rem 1rem!important}
+  #sync-indicator .sync-txt{display:none}
+  #sync-indicator{font-size:16px!important;min-width:28px;justify-content:center}
+  #main-content > header > div:last-child{flex-wrap:nowrap!important;gap:5px!important}
+}
 </style>
 </head>
 <body>
@@ -413,7 +424,7 @@ textarea{resize:vertical;min-height:65px}
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:100%">
-    <span id="sync-indicator" style="font-size:11px;color:rgba(255,255,255,.55);display:inline-flex;align-items:center;gap:4px;white-space:nowrap"><i class="ti ti-cloud"></i> Conectando...</span>
+    <span id="sync-indicator" role="status" title="Conectando…" aria-label="Conectando…" style="font-size:11px;color:rgba(255,255,255,.55);display:inline-flex;align-items:center;gap:4px;white-space:nowrap"><i class="ti ti-cloud" aria-hidden="true"></i><span class="sync-txt"> Conectando...</span></span>
     <button onclick="abrirSelectorRol()" id="rol-btn" aria-label="Cambiar rol" aria-haspopup="dialog" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,.75);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px;transition:background 150ms ease">
       <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down" style="font-size:11px;opacity:.6"></i>
     </button>
@@ -3498,7 +3509,9 @@ function calcCosteEvento(ev){
     const costeRacion = rec ? calcCosteReceta(rec, 1) : 0;
     const costePlato = costeRacion * raciones;
     totalCoste += costePlato;
-    platosConCoste.push({...plato, costeRacion, costePlato, raciones, tieneReceta: !!rec});
+    // Ingredientes sin precio: el coste de ese plato sale más bajo de lo real
+    const sinPrecio = rec ? rec.ingredientes.filter(i => !(getPrecioIng(i.nombre, i.ud) > 0)).map(i => i.nombre) : [];
+    platosConCoste.push({...plato, costeRacion, costePlato, raciones, tieneReceta: !!rec, sinPrecio});
   });
   return {totalCoste, platosConCoste};
 }
@@ -3601,7 +3614,8 @@ function renderEscEvento(){
     const catInfo = CATS.find(c=>c.key===catKey);
     tablaHTML += `<tr><td colspan="4" class="cat-hdr" style="border-left:3px solid ${catInfo.color}">${catInfo.label}</td></tr>`;
     items.forEach(p => {
-      const noReceta = !p.tieneReceta ? `<span style="font-size:11px;color:var(--text-tertiary);margin-left:4px">(sin receta)</span>` : '';
+      const noReceta = !p.tieneReceta ? `<span style="font-size:11px;color:var(--text-tertiary);margin-left:4px">(sin receta)</span>`
+        : p.sinPrecio.length ? `<span style="font-size:11px;color:var(--warn-text);margin-left:4px">(faltan precios)</span>` : '';
       tablaHTML += `<tr>
         <td style="font-weight:500">${escH(p.nombre)}${noReceta}</td>
         <td style="text-align:right;color:var(--text-secondary)">${p.raciones}</td>
@@ -3619,10 +3633,17 @@ function renderEscEvento(){
   const sinReceta = platosConCoste.filter(p=>!p.tieneReceta);
   const avisoHTML = sinReceta.length ? `<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px">
     <div style="font-size:13px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${sinReceta.length} plato(s) sin receta vinculada — su coste no está incluido en el cálculo:</div>
-    <div style="font-size:12px;margin-top:4px;color:var(--text-secondary)">${sinReceta.map(p=>p.nombre).join(' · ')}</div>
+    <div style="font-size:12px;margin-top:4px;color:var(--text-secondary)">${sinReceta.map(p=>escH(p.nombre)).join(' · ')}</div>
   </div>` : '';
 
-  cont.innerHTML = precioVentaHTML + statsHTML + avisoHTML + tablaHTML;
+  const faltanPrecio = platosConCoste.filter(p=>p.tieneReceta&&p.sinPrecio.length);
+  const ingsSin = [...new Set(faltanPrecio.flatMap(p=>p.sinPrecio))];
+  const avisoPrecios = faltanPrecio.length ? `<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px">
+    <div style="font-size:13px;color:var(--warn-text)"><i class="ti ti-alert-triangle"></i> ${faltanPrecio.length} plato(s) con ingredientes sin precio — el coste real es más alto. Ponlos en «Escandallo» → «Precios»:</div>
+    <div style="font-size:12px;margin-top:4px;color:var(--text-secondary)">${ingsSin.slice(0,12).map(escH).join(' · ')}${ingsSin.length>12?` y ${ingsSin.length-12} más`:''}</div>
+  </div>` : '';
+
+  cont.innerHTML = precioVentaHTML + statsHTML + avisoHTML + avisoPrecios + tablaHTML;
 }
 
 function guardarPrecioVenta(evId, valor){
