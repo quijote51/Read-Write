@@ -25,6 +25,7 @@
 <script src="desperdicio.js"></script>
 <script src="cartas.js"></script>
 <script src="avisos.js"></script>
+<script src="buscador.js"></script>
 <script src="rendimiento.js"></script>
 <script src="fichaje.js"></script>
 <script src="hojas.js"></script>
@@ -402,7 +403,7 @@ textarea{resize:vertical;min-height:65px}
       <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.07em;margin-top:1px;text-transform:uppercase" id="header-hotel-nombre">Oído Cocina</div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:6px">
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:100%">
     <span id="sync-indicator" style="font-size:11px;color:rgba(255,255,255,.55);display:inline-flex;align-items:center;gap:4px;white-space:nowrap"><i class="ti ti-cloud"></i> Conectando...</span>
     <button onclick="abrirSelectorRol()" id="rol-btn" aria-label="Cambiar rol" aria-haspopup="dialog" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,.75);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px;transition:background 150ms ease">
       <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down" style="font-size:11px;opacity:.6"></i>
