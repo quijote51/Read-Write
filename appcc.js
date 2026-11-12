@@ -186,7 +186,7 @@ function vReg(){
   return `<div class="card"><div class="ap-form">
     <label>Mes<select id="ap-mes">${meses.map(m=>`<option value="${m}" ${m===mes?'selected':''}>${m.split('-').reverse().join('/')}</option>`).join('')}</select></label>
     <label>Tipo<select id="ap-filtro"><option value="todos">Todos</option>${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${k===filtro?'selected':''}>${v}</option>`).join('')}</select></label>
-  </div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn-sec" data-ap="csv">Descargar CSV</button><button class="btn-sec" data-ap="impreg"><i class="ti ti-printer"></i> Imprimir</button></div>
+  </div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn-sec" data-ap="csv">Descargar CSV</button><button class="btn-sec" data-ap="impreg"><i class="ti ti-printer"></i> Imprimir</button>${typeof window.apHojasAbrir==='function'?'<button class="btn btn-p" data-ap="hojas"><i class="ti ti-signature"></i> Hojas firmadas</button>':''}</div>
   <p class="ap-ayuda">${l.length} registro${l.length===1?'':'s'}. Los registros no se borran: si uno está mal, anúlalo y explica por qué.</p></div>
   <div class="card ap-tabla-w"><table class="ap-tabla"><thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th><th>Quién</th><th></th></tr></thead><tbody>
   ${l.map(r=>`<tr class="${r.anulado?'ap-anul':''}"><td>${dmy(diaK(r.f))} ${hm(r.f)}</td><td>${TIPOS[r.t]||r.t}</td><td>${detalle(r)}${r.anulado?`<br><small>Anulado por ${esc(r.anulado.por||'—')}: ${esc(r.anulado.motivo)}</small>`:''}</td><td>${esc(r.por||'—')}</td><td>${r.anulado?'':`<button class="btn-sec ap-sm" data-ap="anular" data-id="${esc(r.id)}">Anular</button>`}</td></tr>`).join('')||'<tr><td colspan="5" class="ap-vacio">Sin registros.</td></tr>'}
@@ -281,6 +281,7 @@ function accion(a,b){
   }
   if(a==='csv')return csv();
   if(a==='impreg')return imprimirRegistros();
+  if(a==='hojas'&&typeof window.apHojasAbrir==='function')return window.apHojasAbrir(mes);
   if(a==='addeq'){A().equipos.push({id:uid(),n:'Equipo nuevo',min:0,max:4});tocaAjustes();return pintar()}
   if(a==='addzo'){A().zonas.push({id:uid(),n:'Zona nueva',frec:'diaria'});tocaAjustes();return pintar()}
   if(a==='quitaeq'){A().equipos.splice(+b.dataset.i,1);tocaAjustes();return pintar()}
