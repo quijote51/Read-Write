@@ -125,6 +125,7 @@ function vRecep(){
   const provs=(typeof proveedores!=='undefined'&&Array.isArray(proveedores)?proveedores:[]).map(p=>p.nombre||p.n).filter(Boolean);
   const hoy=vivos().filter(r=>r.t==='recep'&&diaK(r.f)===hoyK()).reverse();
   return `<div class="card"><b>Recepción de mercancía</b><p class="ap-ayuda">Refrigerado hasta 4 °C, congelado −18 °C o menos. Revisa envase, etiqueta y caducidad.</p>
+  <p class="ap-ayuda">Recibe: <b>${nombreOk(yo())?esc(yo()):'— escribe tu nombre arriba, en «Quién registra»'}</b></p>
   <div class="ap-form">
     <label>Proveedor<input id="ap-r-prov" list="ap-provs" type="text"></label><datalist id="ap-provs">${provs.map(p=>`<option value="${esc(p)}">`).join('')}</datalist>
     <label>Producto<input id="ap-r-prod" type="text"></label>
@@ -134,7 +135,7 @@ function vRecep(){
     <label>Estado<select id="ap-r-ok"><option value="1">Aceptado</option><option value="0">Rechazado o con incidencia</option></select></label>
     <label class="ap-ancho">Observaciones<input id="ap-r-nota" type="text" placeholder="Obligatorio si hay incidencia"></label>
   </div><button class="btn btn-p" data-ap="recep" style="margin-top:8px">Guardar recepción</button></div>
-  <div class="card"><b>Hoy</b>${hoy.length?hoy.map(r=>`<div class="ap-fila"><div class="ap-n"><b>${esc(r.prod)}</b><small>${hm(r.f)} · ${esc(r.prov||'—')}${r.temp!=null?' · '+fmtT(r.temp):''}${r.lote?' · lote '+esc(r.lote):''}${r.nota?' · '+esc(r.nota):''}</small></div><span class="ap-chip ${r.ok?'ok':'pend'}">${r.ok?'Aceptado':'Incidencia'}</span></div>`).join(''):'<p class="ap-vacio">Nada recibido todavía.</p>'}</div>`;
+  <div class="card"><b>Hoy</b>${hoy.length?hoy.map(r=>`<div class="ap-fila"><div class="ap-n"><b>${esc(r.prod)}</b><small>${hm(r.f)} · ${esc(r.prov||'—')}${r.temp!=null?' · '+fmtT(r.temp):''}${r.lote?' · lote '+esc(r.lote):''}${r.nota?' · '+esc(r.nota):''}<br>Recibió: ${esc(r.por||'—')}</small></div><span class="ap-chip ${r.ok?'ok':'pend'}">${r.ok?'Aceptado':'Incidencia'}</span></div>`).join(''):'<p class="ap-vacio">Nada recibido todavía.</p>'}</div>`;
 }
 
 /* ── Vista: Etiquetas ── */
@@ -188,14 +189,14 @@ function vReg(){
     <label>Tipo<select id="ap-filtro"><option value="todos">Todos</option>${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${k===filtro?'selected':''}>${v}</option>`).join('')}</select></label>
   </div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn-sec" data-ap="csv">Descargar CSV</button><button class="btn-sec" data-ap="impreg"><i class="ti ti-printer"></i> Imprimir</button>${typeof window.apHojasAbrir==='function'?'<button class="btn btn-p" data-ap="hojas"><i class="ti ti-signature"></i> Hojas firmadas</button>':''}</div>
   <p class="ap-ayuda">${l.length} registro${l.length===1?'':'s'}. Los registros no se borran: si uno está mal, anúlalo y explica por qué.</p></div>
-  <div class="card ap-tabla-w"><table class="ap-tabla"><thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th><th>Quién</th><th></th></tr></thead><tbody>
+  <div class="card ap-tabla-w"><table class="ap-tabla"><thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th><th>Hecho por</th><th></th></tr></thead><tbody>
   ${l.map(r=>`<tr class="${r.anulado?'ap-anul':''}"><td>${dmy(diaK(r.f))} ${hm(r.f)}</td><td>${TIPOS[r.t]||r.t}</td><td>${detalle(r)}${r.anulado?`<br><small>Anulado por ${esc(r.anulado.por||'—')}: ${esc(r.anulado.motivo)}</small>`:''}</td><td>${esc(r.por||'—')}</td><td>${r.anulado?'':`<button class="btn-sec ap-sm" data-ap="anular" data-id="${esc(r.id)}">Anular</button>`}</td></tr>`).join('')||'<tr><td colspan="5" class="ap-vacio">Sin registros.</td></tr>'}
   </tbody></table></div>`;
 }
 function textoPlano(r){return detalle(r).replace(/<br>/g,' ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'")}
 function csv(){
   const q=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
-  const filas=[['Fecha','Hora','Tipo','Detalle','Quién','Anulado','Motivo anulación']].concat(delMes().reverse().map(r=>[dmy(diaK(r.f)),hm(r.f),TIPOS[r.t]||r.t,textoPlano(r),r.por||'',r.anulado?'Sí':'',r.anulado?r.anulado.motivo:'']));
+  const filas=[['Fecha','Hora','Tipo','Detalle','Hecho por (recibió, limpió, anotó)','Anulado','Motivo anulación']].concat(delMes().reverse().map(r=>[dmy(diaK(r.f)),hm(r.f),TIPOS[r.t]||r.t,textoPlano(r),r.por||'',r.anulado?'Sí':'',r.anulado?r.anulado.motivo:'']));
   const blob=new Blob(['﻿'+filas.map(f=>f.map(q).join(';')).join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`appcc-${mes}${filtro==='todos'?'':'-'+filtro}.csv`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
 }
@@ -203,7 +204,7 @@ function imprimirRegistros(){
   const l=delMes().reverse();
   const doc=`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>APPCC ${mes}</title><style>body{font-family:system-ui,Arial,sans-serif;font-size:10pt;margin:12mm}h1{font-size:14pt;margin:0 0 4px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ccc;padding:3px 4px;text-align:left;vertical-align:top}th{font-size:9pt;text-transform:uppercase;color:#444}.an{color:#888;text-decoration:line-through}</style></head><body>
   <h1>Registros APPCC · ${mes.split('-').reverse().join('/')}${filtro==='todos'?'':' · '+TIPOS[filtro]}</h1><p>${l.length} registros. Impreso el ${dmy(hoyK())} a las ${hm(new Date().toISOString())}.</p>
-  <table><thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th><th>Quién</th></tr></thead><tbody>${l.map(r=>`<tr class="${r.anulado?'an':''}"><td>${dmy(diaK(r.f))} ${hm(r.f)}</td><td>${TIPOS[r.t]||r.t}</td><td>${esc(textoPlano(r))}${r.anulado?' (anulado: '+esc(r.anulado.motivo)+')':''}</td><td>${esc(r.por||'')}</td></tr>`).join('')}</tbody></table></body></html>`;
+  <table><thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th><th>Hecho por</th></tr></thead><tbody>${l.map(r=>`<tr class="${r.anulado?'an':''}"><td>${dmy(diaK(r.f))} ${hm(r.f)}</td><td>${TIPOS[r.t]||r.t}</td><td>${esc(textoPlano(r))}${r.anulado?' (anulado: '+esc(r.anulado.motivo)+')':''}</td><td>${esc(r.por||'')}</td></tr>`).join('')}</tbody></table></body></html>`;
   const f=document.createElement('iframe'); f.setAttribute('aria-hidden','true'); f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';
   document.body.appendChild(f); const d=f.contentWindow.document; d.open(); d.write(doc); d.close();
   setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){} setTimeout(()=>f.remove(),60000)},250);
@@ -239,7 +240,9 @@ function pintar(){
   msg='';
 }
 function aviso(t){msg=t;pintar()}
-function necesitaNombre(){if(yo())return false;aviso('!Escribe tu nombre en «Quién registra» para que quede constancia.');setTimeout(()=>{const i=ge('ap-yo');if(i)i.focus()},0);return true}
+// Un nombre de verdad (con letras): «30» o «4» no dicen quién lo hizo
+const nombreOk=n=>/[a-záéíóúüñ]{2,}/i.test(String(n||''));
+function necesitaNombre(){if(nombreOk(yo()))return false;aviso(yo()?'!«'+yo()+'» no es un nombre. Escribe tu nombre en «Quién registra» para que quede quién lo hizo.':'!Escribe tu nombre en «Quién registra» para que quede constancia.');setTimeout(()=>{const i=ge('ap-yo');if(i)i.focus()},0);return true}
 
 function accion(a,b){
   const id=b.dataset.id;
@@ -300,7 +303,7 @@ window.initAPPCC=function(){
     });
     root.addEventListener('change',e=>{
       const t=e.target;
-      if(t.id==='ap-yo'){try{localStorage.setItem('seda_appcc_yo',t.value.trim())}catch(_){}return pintar()}
+      if(t.id==='ap-yo'){const v=t.value.trim();try{localStorage.setItem('seda_appcc_yo',v)}catch(_){}if(v&&!nombreOk(v))return aviso('!«'+v+'» no es un nombre: escribe tu nombre (por ejemplo «Ana López»).');return pintar()}
       if(t.id==='ap-mes'){mes=t.value;return pintar()}
       if(t.id==='ap-filtro'){filtro=t.value;return pintar()}
       if(t.dataset.eq!=null){const e2=A().equipos[+t.dataset.eq];if(!e2)return;if(t.dataset.k==='n')e2.n=t.value.trim()||e2.n;else{const n=num(t.value);if(n!==null)e2[t.dataset.k]=n}return tocaAjustes()}
