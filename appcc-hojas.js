@@ -47,6 +47,17 @@ function tabla(tipo, mes){
     const notas = reg.filter(r => r.t === 'temp' && r.fuera).map(r => `${diaK(r.f).slice(8)}/${pad(m)} ${r.eqn || r.eq}: ${fmtT(r.v)} °C — ${r.nota || 'sin nota'} (${r.por || '—'})`);
     return {titulo: 'Registro de temperaturas', head, cortas, filas, notas, pie: fuera ? '(!) Fuera de rango: ver acciones correctoras abajo.' : '', personas: personas(reg.filter(r => r.t === 'temp'))};
   }
+  if(tipo === 'recep'){
+    // Una fila por mercancía recibida, con quién la recibió (nombre completo)
+    const head = ['Fecha', 'Hora', 'Proveedor', 'Producto', 'Temp. °C', 'Lote', 'Caducidad', 'Estado', 'Observaciones', 'Recibió'];
+    const l = reg.filter(r => r.t === 'recep').sort((a, b) => a.f.localeCompare(b.f));
+    l.forEach(r => {
+      const d = new Date(r.f);
+      filas.push([`${pad(d.getDate())}/${pad(d.getMonth() + 1)}`, `${pad(d.getHours())}:${pad(d.getMinutes())}`, r.prov || '', r.prod || '',
+        r.temp != null ? fmtT(r.temp) : '', r.lote || '', r.cad ? r.cad.split('-').reverse().join('/') : '', r.ok ? 'Aceptado' : 'Incidencia (!)', r.nota || '', r.por || '']);
+    });
+    return {titulo: 'Registro de recepción de mercancía', head, cortas: head, filas, notas: [], pie: l.some(r => !r.ok) ? '(!) Incidencia: rechazado o aceptado con incidencia, ver observaciones.' : '', personas: '', porFila: true};
+  }
   const zonas = datos().zonas || [];
   const head = ['Día', ...zonas.map(z => `${z.n} (${z.frec === 'semanal' ? 'semanal' : 'diaria'})`), 'Registró'];
   for(let d = 1; d <= dias; d++){
@@ -74,7 +85,7 @@ function htmlHoja(t, nombre, firma){
   </style></head><body>
   <div class="cab"><div><h1>${esc(t.titulo)} · ${esc(mesTxt(st.mes))}</h1><div class="sub">${esc([h.nombre, h.ciudad].filter(Boolean).join(' · '))}</div></div>${logo}</div>
   <table><thead><tr>${t.head.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
-  <tbody>${t.filas.map(f => `<tr>${f.map(c => `<td class="${/\(!\)/.test(c) ? 'fuera' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+  <tbody>${t.filas.map(f => `<tr>${f.map(c => `<td class="${/\(!\)/.test(c) ? 'fuera' : ''}"${t.porFila ? ' style="text-align:left"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>
   ${t.pie ? `<p class="notas">${esc(t.pie)}</p>` : ''}
   ${t.notas.length ? `<ul class="notas">${t.notas.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
   ${t.personas ? `<p class="notas">${esc(t.personas)}</p>` : ''}
@@ -115,7 +126,7 @@ async function pdf(){
     doc.setFontSize(13); doc.text(`${t.titulo} · ${mesTxt(st.mes)}`, 10, 12);
     doc.setFontSize(9); doc.text([h.nombre, h.ciudad].filter(Boolean).join(' · '), 10, 17);
     doc.autoTable({head: [t.head], body: t.filas, startY: 20, theme: 'grid', margin: {left: 8, right: 8},
-      styles: {fontSize: t.head.length > 12 ? 5.5 : 7, cellPadding: .8, halign: 'center', overflow: 'linebreak'},
+      styles: {fontSize: t.head.length > 12 ? 5.5 : 7, cellPadding: .8, halign: t.porFila ? 'left' : 'center', overflow: 'linebreak'},
       headStyles: {fillColor: [235, 235, 235], textColor: 20, fontSize: t.head.length > 12 ? 5 : 6.5},
       didParseCell: c => { if(c.section === 'body' && /\(!\)/.test(String(c.cell.raw))){ c.cell.styles.textColor = [180, 0, 0]; c.cell.styles.fontStyle = 'bold'; } }});
     let yy = doc.lastAutoTable.finalY + 5;
@@ -127,7 +138,7 @@ async function pdf(){
     doc.text('Responsable: ' + nombre, 10, yy + 18);
     doc.addImage(st.firma, /^data:image\/png/.test(st.firma) ? 'PNG' : 'JPEG', 100, yy, 60, 20); doc.line(100, yy + 21, 160, yy + 21); doc.text('Firma', 100, yy + 25);
     doc.text('Fecha: ' + new Date().toLocaleDateString('es-ES'), 190, yy + 18);
-    const nom = `${st.tipo === 'temp' ? 'temperaturas' : 'limpieza'}-${st.mes}.pdf`;
+    const nom = `${{temp: 'temperaturas', limp: 'limpieza', recep: 'recepcion'}[st.tipo]}-${st.mes}.pdf`;
     const blob = doc.output('blob'), file = new File([blob], nom, {type: 'application/pdf'});
     if(navigator.canShare && navigator.canShare({files: [file]})){
       try{ await navigator.share({files: [file], title: `${t.titulo} · ${mesTxt(st.mes)}`}); msg('Archivo listo para enviar.', true); }
@@ -160,7 +171,9 @@ function msg(t, ok){ const e = ge('ah-msg'); if(e){ e.className = 'hz-aviso ' + 
 
 function resumen(){
   const t = tabla(st.tipo, st.mes), con = t.filas.filter(f => f.slice(1, -1).some(Boolean)).length;
-  const e = ge('ah-res'); if(e) e.textContent = `${t.filas.length} días · ${con} con registros${t.notas.length ? ` · ${t.notas.length} fuera de rango` : ''}.`;
+  const e = ge('ah-res'); if(!e) return;
+  if(t.porFila){ const inc = t.filas.filter(f => /\(!\)/.test(f[7])).length; e.textContent = `${t.filas.length} recepción${t.filas.length === 1 ? '' : 'es'} este mes${inc ? ` · ${inc} con incidencia` : ''}.`; return; }
+  e.textContent = `${t.filas.length} días · ${con} con registros${t.notas.length ? ` · ${t.notas.length} fuera de rango` : ''}.`;
 }
 
 window.apHojasAbrir = function(mes){
@@ -180,14 +193,14 @@ window.apHojasAbrir = function(mes){
       if(a === 'ultima' && prevFirma()) ge('ah-firma')._poner(prevFirma().img);
       if(a === 'imprimir') imprimir();
       if(a === 'pdf') pdf();
-      if(a === 'temp' || a === 'limp'){ st.tipo = a; m.querySelectorAll('[data-ah="temp"],[data-ah="limp"]').forEach(x => x.setAttribute('aria-pressed', x.dataset.ah === a)); resumen(); }
+      if(a === 'temp' || a === 'limp' || a === 'recep'){ st.tipo = a; m.querySelectorAll('[data-ah="temp"],[data-ah="limp"],[data-ah="recep"]').forEach(x => x.setAttribute('aria-pressed', x.dataset.ah === a)); resumen(); }
     });
     m.addEventListener('change', e => { if(e.target.id === 'ah-mes'){ st.mes = e.target.value; resumen(); } });
     m.addEventListener('keydown', e => { if(e.key === 'Escape') cerrar(); });
   }
   m.innerHTML = `<div class="ah-caja"><div class="ah-cab"><b><i class="ti ti-signature"></i> Hojas firmadas</b><button class="ah-x" data-ah="cerrar" aria-label="Cerrar">✕</button></div>
     <div class="ah-cuerpo">
-      <div class="ah-tipos" role="group" aria-label="Hoja"><button data-ah="temp" aria-pressed="${st.tipo === 'temp'}">Temperaturas</button><button data-ah="limp" aria-pressed="${st.tipo === 'limp'}">Limpieza</button></div>
+      <div class="ah-tipos" role="group" aria-label="Hoja"><button data-ah="temp" aria-pressed="${st.tipo === 'temp'}">Temperaturas</button><button data-ah="limp" aria-pressed="${st.tipo === 'limp'}">Limpieza</button><button data-ah="recep" aria-pressed="${st.tipo === 'recep'}">Recepción</button></div>
       <label class="ah-l">Mes<select id="ah-mes">${meses.map(k => `<option value="${k}" ${k === st.mes ? 'selected' : ''}>${esc(mesTxt(k))}</option>`).join('')}</select></label>
       <p class="ah-ayuda" id="ah-res"></p>
       <label class="ah-l">Responsable (quien revisa y firma)<input id="ah-nombre" type="text" autocomplete="name" value="${esc(prev.nombre || yo)}" placeholder="Nombre y apellido"></label>
@@ -209,7 +222,7 @@ const CSS = `#ah-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0
 .ah-cab{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:.5px solid var(--border)}
 .ah-x{background:none;border:0;font-size:16px;cursor:pointer;color:var(--text-secondary);min-width:40px;min-height:40px}
 .ah-cuerpo{padding:12px 14px 16px;display:flex;flex-direction:column;gap:8px}
-.ah-tipos{display:flex;gap:6px}.ah-tipos button{flex:1;min-height:42px;border-radius:8px;border:1px solid var(--border-md,#999);background:var(--bg-secondary);color:var(--text-primary);font:inherit;font-weight:600;cursor:pointer}
+.ah-tipos{display:flex;gap:6px;flex-wrap:wrap}.ah-tipos button{flex:1;min-height:42px;border-radius:8px;border:1px solid var(--border-md,#999);background:var(--bg-secondary);color:var(--text-primary);font:inherit;font-weight:600;cursor:pointer}
 .ah-tipos button[aria-pressed="true"]{background:var(--text-primary);color:var(--bg-primary);border-color:var(--text-primary)}
 .ah-l{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-secondary)}.ah-l small{font-weight:600}
 #ah-firma{width:100%;height:130px;background:#fff;border:1px dashed var(--border-md,#999);border-radius:8px;touch-action:none;cursor:crosshair}
