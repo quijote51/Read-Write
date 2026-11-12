@@ -102,7 +102,10 @@ function syncConfig(key, valor){ _programar(key, ()=>_subirConfig(key, valor)); 
 function mostrarSync(ok){
   const el = document.getElementById('sync-indicator');
   if(el){
-    el.innerHTML = ok ? '<i class="ti ti-cloud-check"></i> Sincronizado' : (_uid ? '<i class="ti ti-wifi-off"></i> Sin conexión' : '<i class="ti ti-device-mobile"></i> Solo este dispositivo');
+    const [ic, txt] = ok ? ['ti-cloud-check','Sincronizado'] : (_uid ? ['ti-wifi-off','Sin conexión'] : ['ti-device-mobile','Solo este dispositivo']);
+    // En el móvil solo se ve el icono (cabecera en una fila); el texto queda al tocarlo/pasar por encima y para lectores de pantalla
+    el.innerHTML = `<i class="ti ${ic}" aria-hidden="true"></i><span class="sync-txt"> ${txt}</span>`;
+    el.title = txt; el.setAttribute('aria-label', txt);
     el.style.color = ok ? 'rgba(255,255,255,.4)' : 'rgba(255,165,0,.7)';
   }
 }
@@ -382,6 +385,14 @@ textarea{resize:vertical;min-height:65px}
   .sub-tab,[role=tab]{min-height:40px}
   .link-btn{min-height:36px;padding:6px 4px!important}
 }
+
+/* Móvil: cabecera compacta, los botones en una sola fila bajo el nombre */
+@media (max-width:480px){
+  #main-content > header{padding:.75rem 1rem!important}
+  #sync-indicator .sync-txt{display:none}
+  #sync-indicator{font-size:16px!important;min-width:28px;justify-content:center}
+  #main-content > header > div:last-child{flex-wrap:nowrap!important;gap:5px!important}
+}
 </style>
 </head>
 <body>
@@ -413,7 +424,7 @@ textarea{resize:vertical;min-height:65px}
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:100%">
-    <span id="sync-indicator" style="font-size:11px;color:rgba(255,255,255,.55);display:inline-flex;align-items:center;gap:4px;white-space:nowrap"><i class="ti ti-cloud"></i> Conectando...</span>
+    <span id="sync-indicator" role="status" title="Conectando…" aria-label="Conectando…" style="font-size:11px;color:rgba(255,255,255,.55);display:inline-flex;align-items:center;gap:4px;white-space:nowrap"><i class="ti ti-cloud" aria-hidden="true"></i><span class="sync-txt"> Conectando...</span></span>
     <button onclick="abrirSelectorRol()" id="rol-btn" aria-label="Cambiar rol" aria-haspopup="dialog" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;color:rgba(255,255,255,.75);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px;transition:background 150ms ease">
       <span id="rol-icon-header"><i class="ti ti-user"></i></span><span id="rol-nombre-header">Seleccionar rol</span><i class="ti ti-chevron-down" style="font-size:11px;opacity:.6"></i>
     </button>
