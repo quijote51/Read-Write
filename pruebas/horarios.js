@@ -104,6 +104,40 @@ const trabaja = t => t && !/LIBRE|VACACIONES|BAJA/i.test(t) && /\d/.test(t);
   ok(S.sb.hzNormaliza({}).bloqueos.length === 0 && Array.isArray(S.sb.hzNormaliza({vac: null}).vac), 'hzNormaliza: rellena lo que falta (bloqueos, vac…)');
 }
 
+
+// ── 2b. Fusión dato a dato con referencia (casos de pérdida de datos entre móviles) ──
+{ const S = entorno(), sb = S.sb;
+  vm.runInContext(fs.readFileSync(path.join(RAIZ, 'config-nube.js'), 'utf8'), sb, {filename: 'config-nube.js'});
+  const E = sb.hzElige, clon = o => JSON.parse(JSON.stringify(o));
+  const ref = datos(); ref.ts = 1000; ref.wts = {}; ref.vac = [{e: 'Ana', t: 'extra', i: '2026-08-01', f: '2026-08-10', n: ''}];
+  const fijar = () => sb.localStorage.setItem('seda_cfgbase_seda_horarios', JSON.stringify(ref));
+  fijar();
+  // 1) Dos móviles cambian turnos de PERSONAS distintas de la misma semana
+  const m1 = clon(ref), m2 = clon(ref); m1.ts = 3000; m2.ts = 2000;
+  m1.wts = {'2026-11-16': 3000}; m2.wts = {'2026-11-16': 2000};
+  m1.semanas['2026-11-16'].Ana[0] = 'LIBRE'; m2.semanas['2026-11-16'].Darío[1] = 'VACACIONES';
+  let r = E(m1, m2);
+  ok(r.semanas['2026-11-16'].Ana[0] === 'LIBRE' && r.semanas['2026-11-16'].Darío[1] === 'VACACIONES', 'sincronización: dos cambios en la misma semana (personas distintas) se conservan los dos');
+  // 2) Vacaciones añadidas en cada móvil: se suman
+  m1.vac.push({e: 'Darío', t: 'extra', i: '2026-09-01', f: '2026-09-05', n: ''}); m2.vac.push({e: 'Rubén', t: 'extra', i: '2026-10-01', f: '2026-10-05', n: ''});
+  r = E(m1, m2);
+  ok(r.vac.length === 3, 'sincronización: vacaciones añadidas en dos móviles se suman (' + r.vac.length + ')');
+  // 3) Una vacación borrada en un móvil no vuelve desde el otro
+  const m3 = clon(ref), m4 = clon(ref); m3.ts = 3000; m4.ts = 2000; m3.vac = []; m4.equipo[0].tel = '600';
+  r = E(m3, m4);
+  ok(r.vac.length === 0, 'sincronización: una vacación borrada no resucita');
+  r = E(m4, m3);
+  ok(r.vac.length === 0, 'sincronización: igual si el móvil que borró es el más antiguo');
+  // 4) Un cambio en equipo en un móvil y vacaciones en el otro
+  const m5 = clon(ref), m6 = clon(ref); m5.ts = 3000; m6.ts = 2000; m5.equipo.push({n: 'Nuevo', rol: 'Cocinero', g: 'Cocineros'}); m6.vac.push({e: 'Ana', t: 'extra', i: '2026-12-01', f: '2026-12-03', n: ''});
+  r = E(m6, m5);
+  ok(r.equipo.some(x => x.n === 'Nuevo') && r.vac.length === 2, 'sincronización: alta de persona en un móvil y vacaciones en otro se conservan');
+  // 5) Sin referencia sigue valiendo lo de siempre (gana el más reciente)
+  sb.localStorage.removeItem('seda_cfgbase_seda_horarios');
+  r = E(m1, m2);
+  ok(r.vac.length === 2 && r.ts === 3000, 'sincronización: sin referencia gana el conjunto más reciente');
+}
+
 // ── 3. Pantallas ──
 { const S = entorno({yo: 'Ana'}), F = S.F, T = S.T;
   T.fijar({semana: S.fecha(lun16), tab: 'plantilla'});
