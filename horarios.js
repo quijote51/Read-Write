@@ -233,11 +233,30 @@ function vAnioVac(y){
     if(clave&&cur&&cur.clave===clave&&cur.fin===iso(sumar(d,-1)))cur.fin=k;
     else{cur=clave?{clave,n,ini:k,fin:k}:null;if(cur)tramos2.push(cur)}}
   const fe=k=>{const d=fd(k);return d.getDate()+' '+MES[d.getMonth()]};
-  const lista=tramos2.length?tramos2.map(t=>`<div class="hz-an-co ${t.n.length>=3?'bad':'warn'}"><b>${t.ini===t.fin?fe(t.ini):fe(t.ini)+' – '+fe(t.fin)}</b> · ${t.n.length} fuera a la vez<br><small>${t.n.map(esc).join(', ')}</small></div>`).join(''):'<div class="hz-vacio">Nadie coincide de vacaciones este año.</div>';
+  const nDias=(a,b)=>Math.round((fd(b)-fd(a))/864e5)+1;
+  const rango=(a,b)=>a===b?fe(a):fe(a)+' – '+fe(b);
+  // Cuentas del año: días con alguien fuera, días sin nadie, días con coincidencia, máximo a la vez; huecos sin nadie; y quién coincide con quién
+  let conAlguien=0,sinNadie=0,conChoque=0,maximo=0,diaMax='';
+  const huecos=[],pares={};let hueco=null;
+  for(let d=fd(ini);d<=fd(fin);d=sumar(d,1)){
+    const k=iso(d),n=nom(k).slice().sort();
+    if(n.length){conAlguien++;if(n.length>maximo){maximo=n.length;diaMax=k}}else sinNadie++;
+    if(n.length>=2){conChoque++;for(let a=0;a<n.length;a++)for(let b=a+1;b<n.length;b++){const p=n[a]+'|'+n[b];(pares[p]=pares[p]||[]).push(k)}}
+    if(!n.length){if(hueco&&hueco.fin===iso(sumar(d,-1)))hueco.fin=k;else{hueco={ini:k,fin:k};huecos.push(hueco)}}}
+  // Días seguidos de un par -> tramos (para decir «Ana y David coinciden del 1 al 10 ago»)
+  const tramosPar=ks=>{const r=[];ks.forEach(k=>{const u=r[r.length-1];if(u&&u.fin===iso(sumar(fd(k),-1)))u.fin=k;else r.push({ini:k,fin:k})});return r};
+  const personas={};Object.keys(pares).forEach(p=>{const[a,b]=p.split('|');[[a,b],[b,a]].forEach(([x,y2])=>{(personas[x]=personas[x]||{}) [y2]=pares[p]})});
+  const diasDe=x=>{const s=new Set();Object.values(personas[x]).forEach(ks=>ks.forEach(k=>s.add(k)));return s.size};
+  const lista=tramos2.length?tramos2.map(t=>`<div class="hz-an-co ${t.n.length>=3?'bad':'warn'}"><b>${rango(t.ini,t.fin)}</b> · ${nDias(t.ini,t.fin)} día${nDias(t.ini,t.fin)===1?'':'s'} · ${t.n.length} fuera a la vez<br><small>${t.n.map(esc).join(', ')}</small></div>`).join(''):'<div class="hz-vacio">Nadie coincide de vacaciones este año.</div>';
+  const quien=Object.keys(personas).sort((a,b)=>diasDe(b)-diasDe(a)).map(x=>`<details class="hz-an-per"><summary><b>${esc(x)}</b> · coincide ${diasDe(x)} día${diasDe(x)===1?'':'s'} con ${Object.keys(personas[x]).length} persona${Object.keys(personas[x]).length===1?'':'s'}</summary>${Object.keys(personas[x]).sort((a,b)=>personas[x][b].length-personas[x][a].length).map(o=>`<div class="hz-an-par"><b>${esc(o)}</b> · ${personas[x][o].length} día${personas[x][o].length===1?'':'s'}<br><small>${tramosPar(personas[x][o]).map(t=>rango(t.ini,t.fin)).join(' · ')}</small></div>`).join('')}</details>`).join('');
+  const libres=huecos.length?huecos.map(t=>`<div class="hz-an-hu${nDias(t.ini,t.fin)>=14?' largo':''}"><b>${rango(t.ini,t.fin)}</b> · ${nDias(t.ini,t.fin)} día${nDias(t.ini,t.fin)===1?'':'s'}</div>`).join(''):'<div class="hz-vacio">Siempre hay alguien de vacaciones.</div>';
   const sel=diaSel&&diaSel.slice(0,4)==y?`<div class="hz-an-sel"><b>${fe(diaSel)}:</b> ${nom(diaSel).length?nom(diaSel).map(esc).join(', ')+' (fuera)':'nadie fuera'}</div>`:'';
   return `<div class="card hz-an"><b>Todo el año: quién está fuera cada día</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Cada casilla es un día. Toca una para ver quién está fuera.</p>
     ${cab}${meses}<div class="hz-an-ley"><span class="hz-an-c n1"></span>1 <span class="hz-an-c n2"></span>2 <span class="hz-an-c n3"></span>3 o más <small>personas fuera (sin bajas maternales)</small></div>${sel}
-    <div class="hz-an-lista"><b>Dónde coinciden</b>${lista}</div></div>`}
+    <div class="hz-an-res"><div><b>${conAlguien}</b><small>días con alguien fuera</small></div><div><b>${sinNadie}</b><small>días sin nadie fuera</small></div><div><b>${conChoque}</b><small>días con coincidencia${maximo>=2?` (hasta ${maximo} a la vez, el ${fe(diaMax)})`:''}</small></div></div>
+    <div class="hz-an-lista"><b>Dónde coinciden</b>${lista}</div>
+    ${quien?`<div class="hz-an-lista"><b>Quién coincide con quién</b><p style="font-size:12px;color:var(--text-secondary);margin:2px 0 6px">Toca un nombre para ver con quién y qué días.</p>${quien}</div>`:''}
+    <div class="hz-an-lista"><b>Fechas sin nadie fuera</b><p style="font-size:12px;color:var(--text-secondary);margin:2px 0 6px">Huecos del año en los que nadie tiene vacaciones (en azul oscuro los de 14 días o más: los mejores para repartir).</p>${libres}</div></div>`}
 function vVac(){
   const y=anio,eqY=H().equipo.filter(e=>(!e.desde||e.desde.slice(0,4)<=y)&&(!e.hasta||e.hasta.slice(0,4)>=y));
   let h=`<div class="hz-bar"><button class="btn-sec" data-a="aant" aria-label="Año anterior">←</button><div class="hz-sem">${y}</div><button class="btn-sec" data-a="asig" aria-label="Año siguiente">→</button></div>`;

@@ -144,3 +144,14 @@ div.hz-dfila,div.hz-dchip{cursor:default}
 .hz-an-lista{margin-top:12px;padding-top:10px;border-top:.5px solid var(--border)}
 .hz-an-co{border-left:3px solid #fde047;background:var(--bg-secondary);border-radius:8px;padding:6px 10px;margin-top:6px;font-size:13px}
 .hz-an-co.bad{border-left-color:#f87171}.hz-an-co small{color:var(--text-secondary);font-size:12px}
+
+/* Detalle de coincidencias y huecos */
+.hz-an-res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0 4px}
+.hz-an-res>div{background:var(--bg-secondary);border-radius:10px;padding:8px 8px;display:flex;flex-direction:column;gap:2px}
+.hz-an-res b{font-size:20px;font-variant-numeric:tabular-nums}.hz-an-res small{font-size:11px;color:var(--text-secondary);line-height:1.25}
+.hz-an-per{background:var(--bg-secondary);border-radius:10px;margin-top:6px;padding:0 10px}
+.hz-an-per summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;list-style:none}.hz-an-per summary::-webkit-details-marker{display:none}
+.hz-an-per summary::after{content:"+";margin-left:auto;color:var(--text-secondary);font-size:18px}.hz-an-per[open] summary::after{content:"–"}
+.hz-an-par{padding:6px 0;border-top:.5px solid var(--border);font-size:13px}.hz-an-par small{color:var(--text-secondary);font-size:12px}
+.hz-an-hu{border-left:3px solid var(--border-md);background:var(--bg-secondary);border-radius:8px;padding:6px 10px;margin-top:6px;font-size:13px}
+.hz-an-hu.largo{border-left-color:#60a5fa}.hz-an-hu.largo b{color:#60a5fa}
