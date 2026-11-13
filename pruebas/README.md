@@ -12,6 +12,9 @@ done
 ```
 Cada prueba imprime ✔ / ✘ y «TODO BIEN» o el número de fallos. Pasarlas todas antes de cada PR que toque la sincronización.
 
+## Service worker (sin navegador)
+`node pruebas/sw-shell.js` comprueba que todo lo de `SHELL` existe, que todo lo que cargan las páginas está en `SHELL` y que `CACHE` ha subido de versión si cambia algún archivo de la app respecto a `origin/main`. Pasarla antes de cada PR.
+
 ## Reglas de la base de datos (PostgreSQL local)
 Hay PostgreSQL 16 en el contenedor. Para probar un SQL de reglas antes de dárselo al usuario: crear un cluster
 (`initdb` como usuario `postgres`), una base con roles `anon`/`authenticated`, esquema `auth` (tabla `users` y
