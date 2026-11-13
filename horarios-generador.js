@@ -74,11 +74,12 @@ function penal(sol,pers,R){
     if(q.fin&&R.finde[i])p+=4}
   return p}
 function generarSemana(k,seed){
-  const pers=equipoSem(k),lun=fd(k),prevK=iso(sumar(lun,-7)),prev=H().semanas[prevK]||{};
+  const pers=equipoSem(k);if(!pers.length)return{pers,sol:null,pen:Infinity};
+  const lun=fd(k),prevK=iso(sumar(lun,-7)),prev=H().semanas[prevK]||{};
   const rp=(typeof ajustes!=='undefined'&&ajustes&&Number(ajustes.raciones_por_persona))||80;
   const R={sinDesayuno:[],hayDesayuno:[],ev:[],finde:[],pref:pers.map(e=>menuDe(e).pref)};
   const forz=pers.map(e=>[0,1,2,3,4,5,6].map(d=>forzado(e,iso(sumar(lun,d)))));
-  const evs=(typeof eventos!=='undefined'?eventos:[]);
+  const evs=(typeof eventos!=='undefined'?eventos:[]).filter(Boolean);
   for(let d=0;d<7;d++){
     const f=iso(sumar(lun,d));
     const dsf=pers.filter((e,i)=>menuDe(e).t.some(x=>tramos(x).length&&iniDe(tramos(x))<=7)&&!menuDe(e).noDes&&!forz[i][d]);

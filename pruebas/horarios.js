@@ -138,6 +138,24 @@ const trabaja = t => t && !/LIBRE|VACACIONES|BAJA/i.test(t) && /\d/.test(t);
   ok(r.vac.length === 2 && r.ts === 3000, 'sincronización: sin referencia gana el conjunto más reciente');
 }
 
+// ── 2c. Datos raros: no tumban ninguna pantalla ──
+{ const d = datos();
+  d.vac.push({e: 'Ana', t: 'extra', i: null, f: null}, {e: 'Ana', t: 'extra', i: '', f: '2026-08-10'}, null);
+  d.bloqueos.push({i: undefined, f: '2026-08-01', n: 'x'});
+  d.equipo.push(null, {rol: 'sin nombre'});
+  d.semanas['2026-11-16'].Ana[2] = 5; d.semanas['2026-11-23'] = null; d.semanas['2026-11-30'] = {Darío: 'no es lista'};
+  const S = entorno({d}), F = S.F, T = S.T, H = S.H();
+  ok(H.vac.every(v => /^\d{4}/.test(v.i)) && H.equipo.every(e => e.n), 'datos raros: se descartan vacaciones sin fechas, personas sin nombre y entradas vacías');
+  ok(typeof H.semanas['2026-11-16'].Ana[2] === 'string' && !H.semanas['2026-11-23'], 'datos raros: un turno que no es texto pasa a vacío y una semana vacía se quita');
+  S.sb.eventos.push(null);
+  let err = '';
+  ['plantilla', 'mi', 'horas', 'cambios', 'ahora', 'eventos', 'vacaciones'].forEach(tab => { try { T.fijar({semana: S.fecha(lun16), tab}); S.pantalla(); } catch(e) { err += tab + ': ' + e.message + ' '; } });
+  ok(!err, 'datos raros: ninguna pantalla da error' + (err ? ' (' + err + ')' : ''));
+  S.sb.eventos.length = 0; S.H().equipo.length = 0;
+  let g = 'ok'; try { F.generar('2026-11-30', 1, 1); } catch(e) { g = e.message; }
+  ok(g === 'ok', 'datos raros: generar con el equipo vacío no da error (' + g + ')');
+}
+
 // ── 3. Pantallas ──
 { const S = entorno({yo: 'Ana'}), F = S.F, T = S.T;
   T.fijar({semana: S.fecha(lun16), tab: 'plantilla'});
