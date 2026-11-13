@@ -208,10 +208,41 @@ function vPersonas(t){
   return h}
 
 function diasEn(i,f,y){const a=new Date(Math.max(fd(i),fd(y+'-01-01'))),b=new Date(Math.min(fd(f),fd(y+'-12-31')));return b<a?0:Math.round((b-a)/864e5)+1}
+/* ---- Todo el año de un vistazo: quién está de vacaciones cada día y dónde coinciden ----
+   Una fila por mes y una casilla por día; el color es cuántas personas están fuera ese día (1 azul, 2 amarillo, 3 o más rojo).
+   Las bajas maternales no cuentan (duran todo el año y taparían el resto). Tocar un día muestra quién está fuera. */
+let diaSel='';
+function vAnioVac(y){
+  const eqN=new Set(H().equipo.filter(e=>(!e.desde||e.desde.slice(0,4)<=y)&&(!e.hasta||e.hasta.slice(0,4)>=y)).map(e=>e.n));
+  const fuera={},ini=y+'-01-01',fin=y+'-12-31';
+  H().vac.filter(v=>v.t!=='maternal'&&eqN.has(v.e)&&v.f>=ini&&v.i<=fin).forEach(v=>{
+    for(let d=fd(v.i<ini?ini:v.i),f=fd(v.f>fin?fin:v.f);d<=f;d=sumar(d,1)){const k=iso(d);(fuera[k]=fuera[k]||[]);if(!fuera[k].includes(v.e))fuera[k].push(v.e)}});
+  const hoyK=iso(new Date()),nom=k=>k?(fuera[k]||[]):[];
+  const cab=`<div class="hz-an-fila hz-an-cab" aria-hidden="true"><b></b><div class="hz-an-dias">${Array.from({length:31},(_,j)=>`<i>${[1,5,10,15,20,25,30].includes(j+1)?j+1:''}</i>`).join('')}</div></div>`;
+  const meses=Array.from({length:12},(_,m)=>{
+    const nd=new Date(y,m+1,0).getDate();
+    const cel=Array.from({length:31},(_,j)=>{
+      if(j>=nd)return '<span class="hz-an-no"></span>';
+      const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(j+1).padStart(2,'0'),n=nom(k);
+      return `<button type="button" class="hz-an-c n${Math.min(n.length,3)}${k===hoyK?' hoy':''}${k===diaSel?' sel':''}" data-vd="${k}" aria-label="${j+1} ${MES[m]}: ${n.length?esc(n.join(', ')):'nadie fuera'}" title="${n.length?esc(n.join(', ')):'nadie fuera'}"></button>`}).join('');
+    return `<div class="hz-an-fila"><b>${MES[m]}</b><div class="hz-an-dias">${cel}</div></div>`}).join('');
+  // Coincidencias: tramos seguidos de días con 2 o más personas fuera a la vez (se corta cuando cambia quién está fuera)
+  const tramos2=[];let cur=null;
+  for(let d=fd(ini);d<=fd(fin);d=sumar(d,1)){
+    const k=iso(d),n=nom(k).slice().sort(),clave=n.length>=2?n.join('+'):'';
+    if(clave&&cur&&cur.clave===clave&&cur.fin===iso(sumar(d,-1)))cur.fin=k;
+    else{cur=clave?{clave,n,ini:k,fin:k}:null;if(cur)tramos2.push(cur)}}
+  const fe=k=>{const d=fd(k);return d.getDate()+' '+MES[d.getMonth()]};
+  const lista=tramos2.length?tramos2.map(t=>`<div class="hz-an-co ${t.n.length>=3?'bad':'warn'}"><b>${t.ini===t.fin?fe(t.ini):fe(t.ini)+' – '+fe(t.fin)}</b> · ${t.n.length} fuera a la vez<br><small>${t.n.map(esc).join(', ')}</small></div>`).join(''):'<div class="hz-vacio">Nadie coincide de vacaciones este año.</div>';
+  const sel=diaSel&&diaSel.slice(0,4)==y?`<div class="hz-an-sel"><b>${fe(diaSel)}:</b> ${nom(diaSel).length?nom(diaSel).map(esc).join(', ')+' (fuera)':'nadie fuera'}</div>`:'';
+  return `<div class="card hz-an"><b>Todo el año: quién está fuera cada día</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Cada casilla es un día. Toca una para ver quién está fuera.</p>
+    ${cab}${meses}<div class="hz-an-ley"><span class="hz-an-c n1"></span>1 <span class="hz-an-c n2"></span>2 <span class="hz-an-c n3"></span>3 o más <small>personas fuera (sin bajas maternales)</small></div>${sel}
+    <div class="hz-an-lista"><b>Dónde coinciden</b>${lista}</div></div>`}
 function vVac(){
   const y=anio,eqY=H().equipo.filter(e=>(!e.desde||e.desde.slice(0,4)<=y)&&(!e.hasta||e.hasta.slice(0,4)>=y));
   let h=`<div class="hz-bar"><button class="btn-sec" data-a="aant" aria-label="Año anterior">←</button><div class="hz-sem">${y}</div><button class="btn-sec" data-a="asig" aria-label="Año siguiente">→</button></div>`;
   if(msg)h+=`<div class="hz-aviso warn">${msg}</div>`;
+  h+=vAnioVac(y);
   h+=`<div class="hz-cols">`;
   eqY.forEach(e=>{const ps=H().vac.filter(v=>v.e===e.n&&v.i.slice(0,4)<=y&&v.f.slice(0,4)>=y);
     const usados=ps.filter(v=>v.t!=='maternal').reduce((s,v)=>s+diasEn(v.i,v.f,y),0),res=VAC_ANUAL-usados,mat=ps.some(v=>v.t==='maternal');
@@ -510,6 +541,7 @@ document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
   const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}
   const c=e.target.closest('.hz-cel,.hz-dfila,.hz-dchip');if(c){if(SOLO()||!c.dataset.e)return;edit={k:iso(semana),e:c.dataset.e,i:+c.dataset.i};pintar();const x=document.getElementById('hz-turno');if(x)x.focus();return}
+  const vd=e.target.closest('[data-vd]');if(vd){diaSel=diaSel===vd.dataset.vd?'':vd.dataset.vd;pintar();return}
   const y=e.target.closest('[data-yo]');if(y){try{localStorage.setItem('hz_yo',y.dataset.yo)}catch(er){}pintar();return}
   const q=e.target.closest('[data-q]');if(q){document.getElementById('hz-turno').value=q.dataset.q;return}
   const a=e.target.closest('[data-a]')?.dataset.a;
