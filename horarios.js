@@ -107,13 +107,45 @@ function avisos(k){
 /* ---- vistas ---- */
 function barraIn(){const f=sumar(semana,6);return `<button class="btn-sec" data-a="ant" aria-label="Semana anterior">←</button><div class="hz-sem">${corto(semana)} – ${corto(f)}</div><button class="btn-sec" data-a="sig" aria-label="Semana siguiente">→</button><button class="btn-sec" data-a="hoy">Esta semana</button>`}
 function barra(){return `<div class="hz-bar">${barraIn()}</div>`}
+/* Vista de móvil: una tarjeta por día. Quien trabaja va en filas (por hora de entrada) y el resto (libre, vacaciones, baja) en chips pequeños.
+   En pantallas anchas se ve la tabla de siempre; en estrechas (≤ 700 px) solo esta (CSS en horarios.css). */
+const ORDEN_ESTADO={libre:1,vac:2,baja:3,vacio:4};
+const ETQ_ESTADO={libre:'Libre',vac:'Vacaciones',baja:'Baja',vacio:'Sin turno'};
+function vDias(k,eq,vacia,ed){
+  const s=H().semanas[k]||{},hoyIso=iso(new Date());let h='<div class="hz-dvista">';
+  for(let i=0;i<7;i++){
+    const d=sumar(semana,i),esHoy=iso(d)===hoyIso,c=cobertura(k,i);
+    const lista=eq.map(e=>{const t=(s[e.n]||[])[i]||'';let est=tipo(t);if(est==='trab'&&e.g===0)est='jefe';return{e,t,est,ini:tramos(t).length?Math.min(...tramos(t).map(x=>x[0])):99}});
+    const trab=lista.filter(x=>x.est==='trab'||x.est==='jefe').sort((a,b)=>a.ini-b.ini),otros=lista.filter(x=>x.est!=='trab'&&x.est!=='jefe').sort((a,b)=>ORDEN_ESTADO[a.est]-ORDEN_ESTADO[b.est]);
+    const attr=x=>SOLO()?'':` data-e="${esc(x.e.n)}" data-i="${i}"`,tag=SOLO()?'div':'button',tp=SOLO()?'':' type="button"';
+    const sel=x=>edit&&edit.k===k&&edit.e===x.e.n&&edit.i===i?' sel':'';
+    h+=`<section class="hz-dia${esHoy?' hoy':''}" aria-label="${DL[i]} ${d.getDate()}">
+      <div class="hz-dh"><b>${DIAS[i]} ${d.getDate()}</b><small>${MES[d.getMonth()]}${esHoy?' · hoy':''}</small><span class="hz-cobp ${vacia?'':c>=MIN_COB?'ok':c===2?'warn':'bad'}" title="Personas en cocina">${vacia?'–':c+' en cocina'}</span></div>`;
+    trab.forEach(x=>{h+=`<${tag}${tp} class="hz-dfila ${x.est}${sel(x)}"${attr(x)} aria-label="${esc(x.e.n)}, ${DL[i]}"><span class="hz-dn"><b>${esc(x.e.n)}</b><small>${esc(x.e.rol)}</small></span><span class="hz-dt">${x.t.split('\n').map(z=>`<span>${esc(z)}</span>`).join('')}</span></${tag}>`});
+    if(otros.length)h+=`<div class="hz-dotros">${otros.map(x=>`<${tag}${tp} class="hz-dchip ${x.est}${sel(x)}"${attr(x)} aria-label="${esc(x.e.n)}, ${DL[i]}: ${ETQ_ESTADO[x.est]}">${esc(x.e.n)} <i>${x.est==='vacio'?(SOLO()?'–':'+'):ETQ_ESTADO[x.est]}</i></${tag}>`).join('')}</div>`;
+    if(ed&&edit&&edit.k===k&&edit.i===i)h+=ed;
+    h+=`</section>`}
+  return h+'</div>'}
+function editorHtml(k){
+  if(SOLO()||!edit||edit.k!==k)return '';
+  {const t=fila(k,edit.e)[edit.i],d=sumar(semana,edit.i);
+    // «Igual que ayer» (el domingo anterior si es lunes) e «Igual que hace una semana»: copian solo el turno de esta persona
+    const ayer=edit.i>0?(fila(k,edit.e)[edit.i-1]||''):((H().semanas[iso(sumar(fd(k),-7))]||{})[edit.e]||[])[6]||'';
+    const sPas=((H().semanas[iso(sumar(fd(k),-7))]||{})[edit.e]||[])[edit.i]||'';
+    const copias=[['Igual que ayer',ayer],['Igual que hace 1 semana',sPas]].filter(([,v])=>v);
+    return `<div class="hz-editor"><b>${esc(edit.e)} · ${DL[edit.i]} ${d.getDate()} ${MES[d.getMonth()]}</b>
+    <label for="hz-turno" style="font-size:12px;color:var(--text-secondary)">Turno (un bloque por línea; el partido son dos líneas)</label>
+    <textarea id="hz-turno" rows="2" placeholder="08:00-16:00">${esc(t)}</textarea>
+    <div class="hz-chips">${copias.map(([n,v])=>`<button class="btn-sec hz-sm hz-copia" data-q="${esc(v)}" title="${esc(v.replace('\n',' + '))}">${n}</button>`).join('')}${[['Libre','LIBRE'],['Vacaciones','VACACIONES'],['Baja','BAJA MATERNAL'],['06:30-14:30','06:30-14:30'],['08:00-16:00','08:00-16:00'],['12:00-20:00','12:00-20:00'],['14:30-22:30','14:30-22:30'],['16:00-00:00','16:00-00:00'],['Partido','12:00-16:00\n20:00-00:00']].map(([n,v])=>`<button class="btn-sec hz-sm" data-q="${esc(v)}">${n}</button>`).join('')}</div>
+    <div class="hz-bar"><button class="btn btn-p" data-a="gturno">Guardar</button><button class="btn-sec" data-a="cturno">Cancelar</button><button class="btn-sec" data-a="bturno">Borrar celda</button></div></div>`}
+  return ''}
 function vPlantilla(){
   const k=iso(semana),hoy=iso(new Date()),vacia=sinTurnos(k),eq=equipoSem(k);
   const prev=Object.keys(H().semanas).filter(x=>x<k&&!sinTurnos(x)).sort().pop();
-  let h=`<div class="hz-bar">${barraIn()}<span style="flex:1"></span> ${vacia&&prev&&!SOLO()?`<button class="btn btn-p" data-a="copiar" data-p="${prev}">Copiar semana del ${corto(fd(prev))}</button>`:''}</div>`;
+  let h=`<div class="hz-bar">${barraIn()}<span style="flex:1"></span> ${prev&&!SOLO()?(vacia?`<button class="btn btn-p" data-a="copiar" data-p="${prev}">Copiar semana del ${corto(fd(prev))}</button>`:`<button class="btn-sec hz-sm" data-a="copiar" data-p="${prev}" title="Sustituye esta semana por la del ${corto(fd(prev))}">Repetir semana anterior</button>`):''}</div>`;
   if(vacia)h+=`<div class="hz-aviso warn">Esta semana no tiene turnos. Toca una celda para escribirlos${prev?' o copia la última semana con datos':''}.</div>`;
   else if(!SOLO()){const av=avisos(k);h+=av.length?`<div class="hz-aviso warn"><b>${av.length} aviso${av.length===1?'':'s'}</b><ul>${av.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:`<div class="hz-aviso ok">Sin avisos: cobertura, descansos y horas dentro de las reglas.</div>`}
-  h+=`<div class="hz-tabla"><table><thead><tr><th class="nom">Equipo</th>${DIAS.map((n,i)=>`<th class="${iso(sumar(semana,i))===hoy?'hoy':''}">${n}<br>${sumar(semana,i).getDate()}</th>`).join('')}<th>h/sem</th></tr></thead><tbody>`;
+  h+=`<div class="hz-tabla hz-plan"><table><thead><tr><th class="nom">Equipo</th>${DIAS.map((n,i)=>`<th class="${iso(sumar(semana,i))===hoy?'hoy':''}">${n}<br>${sumar(semana,i).getDate()}</th>`).join('')}<th>h/sem</th></tr></thead><tbody>`;
   GRUPOS.forEach((g,gi)=>{const m=eq.filter(e=>e.g===gi);if(!m.length)return;h+=`<tr class="grp"><td colspan="9">${g}</td></tr>`;
     m.forEach(e=>{const a=fila(k,e.n),tot=a.reduce((x,t)=>x+horas(t),0);
       h+=`<tr><td class="nom"><b>${esc(e.n)}</b><small>${esc(e.rol)}</small></td>${a.map((t,i)=>{let c=tipo(t);if(c==='trab'&&e.g===0)c='jefe';
@@ -121,12 +153,9 @@ function vPlantilla(){
         const cont=c==='vacio'?(SOLO()?'':'+'):t.split('\n').map(s=>`<span>${esc(s)}</span>`).join('');
         return SOLO()?`<td><div class="hz-cel ${c}" style="cursor:default">${cont}</div></td>`:`<td><button class="hz-cel ${c}${sel}" data-e="${esc(e.n)}" data-i="${i}" aria-label="${esc(e.n)}, ${DL[i]}">${cont}</button></td>`}).join('')}<td class="h ${tot>MAX_H?'alta':''}">${tot?fmtH(tot):'–'}</td></tr>`})});
   h+=`<tr class="cob"><td class="nom">Cobertura</td>${[0,1,2,3,4,5,6].map(i=>{const c=cobertura(k,i);return`<td><span class="hz-cobp ${vacia?'':c>=MIN_COB?'ok':c===2?'warn':'bad'}">${vacia?'–':c}</span></td>`}).join('')}<td></td></tr></tbody></table></div>`;
-  if(!SOLO()&&edit&&edit.k===k){const t=fila(k,edit.e)[edit.i],d=sumar(semana,edit.i);
-    h+=`<div class="hz-editor"><b>${esc(edit.e)} · ${DL[edit.i]} ${d.getDate()} ${MES[d.getMonth()]}</b>
-    <label for="hz-turno" style="font-size:12px;color:var(--text-secondary)">Turno (un bloque por línea; el partido son dos líneas)</label>
-    <textarea id="hz-turno" rows="2" placeholder="08:00-16:00">${esc(t)}</textarea>
-    <div class="hz-chips">${[['Libre','LIBRE'],['Vacaciones','VACACIONES'],['Baja','BAJA MATERNAL'],['06:30-14:30','06:30-14:30'],['08:00-16:00','08:00-16:00'],['12:00-20:00','12:00-20:00'],['14:30-22:30','14:30-22:30'],['16:00-00:00','16:00-00:00'],['Partido','12:00-16:00\n20:00-00:00']].map(([n,v])=>`<button class="btn-sec hz-sm" data-q="${esc(v)}">${n}</button>`).join('')}</div>
-    <div class="hz-bar"><button class="btn btn-p" data-a="gturno">Guardar</button><button class="btn-sec" data-a="cturno">Cancelar</button><button class="btn-sec" data-a="bturno">Borrar celda</button></div></div>`}
+  const movil=window.matchMedia&&window.matchMedia('(max-width:700px)').matches,ed=editorHtml(k);
+  h+=vDias(k,eq,vacia,movil?ed:'');
+  if(!movil)h+=ed;
   return h+(SOLO()?'':waPanel(k)+panelGenerar())}
 
 function vAhora(){
@@ -331,6 +360,21 @@ async function aprobarCambio(c){
   cmsg=av.length?`Aplicado al horario. Ojo: ${av.join('; ')}`:'Aplicado al horario.'}
 
 /* ---- Mi semana ---- */
+// Tarjeta grande con lo siguiente que le toca a esa persona (hoy si aún no ha acabado, o el próximo día con turno, hasta 14 días)
+function proximoTurno(me){
+  const ahora=new Date(),hr=ahora.getHours()+ahora.getMinutes()/60;
+  for(let n=0;n<14;n++){
+    const d=sumar(new Date(ahora.getFullYear(),ahora.getMonth(),ahora.getDate()),n),k=iso(lunes(d)),i=(d.getDay()+6)%7;
+    if(sinTurnos(k))continue;
+    const t=((H().semanas[k]||{})[me]||[])[i]||'',tr=tramos(t);
+    if(!tr.length)continue;
+    if(n===0&&!tr.some(([,f])=>f>hr))continue; // el turno de hoy ya acabó
+    const ini=Math.min(...tr.map(x=>x[0])),dentro=n===0&&tr.some(([a,f])=>hr>=a&&hr<f);
+    const cuando=n===0?'Hoy':n===1?'Mañana':cap(DL[i])+' '+d.getDate();
+    const sub=n===0?(dentro?'En turno ahora':'Entras en '+fmtH(ini-hr)+' h'):cap(DL[i])+' '+d.getDate()+' '+MES[d.getMonth()];
+    const jefe=(H().equipo.find(e=>e.n===me)||{}).g===0;
+    return `<div class="hz-prox${n===0?' hoy':''}"><small>Tu próximo turno</small><b>${cuando}</b><div class="hz-dt ${jefe?'jefe':'trab'}">${t.split('\n').map(z=>`<span>${esc(z)}</span>`).join('')}</div><small>${sub}</small></div>`}
+  return `<div class="hz-prox"><small>Tu próximo turno</small><b>Sin turnos en los próximos 14 días</b></div>`}
 function yo(){try{return localStorage.getItem('hz_yo')||''}catch(e){return''}}
 function vMi(){
   const hoy=new Date(),k0=iso(lunes(hoy)),k1=iso(sumar(lunes(hoy),7)),me=yo();
@@ -343,7 +387,7 @@ function vMi(){
     const filas=a.map((t,i)=>{const d=sumar(fd(k),i),h=horas(t);tot+=h;const c=tipo(t),esHoy=iso(d)===hoyI;
       return`<div class="hz-fila" style="${esHoy?'background:var(--bg-tertiary);margin:0 -8px;padding:8px;border-radius:8px':''}"><span><b>${DIAS[i]} ${d.getDate()}</b> <small>${MES[d.getMonth()]}${esHoy?' · hoy':''}</small></span><span class="hz-pill ${c==='trab'?'trab':c==='vacio'?'libre':c}" style="white-space:pre-line;text-align:right">${esc(t?t.replace('\n',' + '):'—')}${h?` · ${fmtH(h)} h`:''}</span></div>`}).join('');
     return`<div class="card"><div class="hz-fila" style="border:0;padding:0 0 4px"><b>${tit}</b><small>${fmtH(tot)} h</small></div>${filas}</div>`};
-  return `<div class="hz-bar" style="justify-content:space-between"><b style="font-size:16px">${esc(me)}</b><button class="btn-sec hz-sm" data-yo="">No soy yo</button></div>`+sem(k0,'Esta semana · '+corto(fd(k0))+' – '+corto(sumar(fd(k0),6)))+sem(k1,'Semana siguiente · '+corto(fd(k1))+' – '+corto(sumar(fd(k1),6)))}
+  return `<div class="hz-bar" style="justify-content:space-between"><b style="font-size:16px">${esc(me)}</b><button class="btn-sec hz-sm" data-yo="">No soy yo</button></div>`+proximoTurno(me)+sem(k0,'Esta semana · '+corto(fd(k0))+' – '+corto(sumar(fd(k0),6)))+sem(k1,'Semana siguiente · '+corto(fd(k1))+' – '+corto(sumar(fd(k1),6)))}
 
 /* ---- Texto para WhatsApp ---- */
 const DC=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
@@ -397,6 +441,7 @@ function pintar(){
   r.innerHTML=`<div class="hz-tabs" role="tablist">${tabsVisibles().map(([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`).join('')}</div>`+(window.HZ_APARTE?'':`<div style="text-align:right;margin:-6px 0 8px;font-size:12px"><a href="/horarios.html" target="_blank" rel="noopener" style="color:var(--text-secondary)">Abrir como app aparte ↗</a></div>`)+f();
 }
 window.initHorarios=function(){pintar()};
+if(window.matchMedia)window.matchMedia("(max-width:700px)").addEventListener("change",()=>{try{if(root())pintar()}catch(e){}});
 
 /* ---- vacaciones -> horario ---- */
 const tocadas=[];
@@ -413,7 +458,7 @@ function aplicarVac(v,poner){
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
   const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}
-  const c=e.target.closest('.hz-cel');if(c){if(SOLO())return;edit={k:iso(semana),e:c.dataset.e,i:+c.dataset.i};pintar();const x=document.getElementById('hz-turno');if(x)x.focus();return}
+  const c=e.target.closest('.hz-cel,.hz-dfila,.hz-dchip');if(c){if(SOLO()||!c.dataset.e)return;edit={k:iso(semana),e:c.dataset.e,i:+c.dataset.i};pintar();const x=document.getElementById('hz-turno');if(x)x.focus();return}
   const y=e.target.closest('[data-yo]');if(y){try{localStorage.setItem('hz_yo',y.dataset.yo)}catch(er){}pintar();return}
   const q=e.target.closest('[data-q]');if(q){document.getElementById('hz-turno').value=q.dataset.q;return}
   const a=e.target.closest('[data-a]')?.dataset.a;
@@ -428,7 +473,9 @@ document.addEventListener('click',e=>{
   if(a==='ant'){semana=sumar(semana,-7);edit=null;pintar()}else if(a==='sig'){semana=sumar(semana,7);edit=null;pintar()}
   else if(a==='hoy'){semana=lunes(new Date());edit=null;pintar()}
   else if(a==='aant'){anio--;pintar()}else if(a==='asig'){anio++;pintar()}
-  else if(a==='copiar'){const p=e.target.closest('[data-p]').dataset.p,k=iso(semana);H().semanas[k]={};equipoSem(k).forEach(m=>{H().semanas[k][m.n]=[...fila(p,m.n)]});guardar(k);pintar()}
+  else if(a==='copiar'){const p=e.target.closest('[data-p]').dataset.p,k=iso(semana);
+    if(!sinTurnos(k)&&!confirm('Esta semana ya tiene turnos. ¿Sustituirlos por los de la semana del '+corto(fd(p))+'?'))return;
+    H().semanas[k]={};equipoSem(k).forEach(m=>{H().semanas[k][m.n]=[...fila(p,m.n)]});guardar(k);pintar()}
   else if(a==='gturno'){fila(edit.k,edit.e)[edit.i]=document.getElementById('hz-turno').value.trim();guardar(edit.k);edit=null;pintar()}
   else if(a==='bturno'){fila(edit.k,edit.e)[edit.i]='';guardar(edit.k);edit=null;pintar()}
   else if(a==='cturno'){edit=null;pintar()}
