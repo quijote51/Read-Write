@@ -243,6 +243,14 @@ const trabaja = t => t && !/LIBRE|VACACIONES|BAJA/i.test(t) && /\d/.test(t);
   F.deshacerGen();
   ok(F.sinTurnos('2026-11-30'), 'generar: «Deshacer» deja la semana vacía');
 }
+// Mismo resultado que antes de acelerar el generador (3 semillas × 4 semanas) y en poco tiempo
+{ const S = entorno(), F = S.F, H = S.H, crypto = require('crypto'); let txt = ''; const t0 = Date.now();
+  [1, 2, 3].forEach(sd => { F.generar('2026-11-30', 4, sd); txt += JSON.stringify(H().semanas); F.deshacerGen(); });
+  const ms = Date.now() - t0, hash = crypto.createHash('md5').update(txt).digest('hex').slice(0, 10);
+  console.log('   (generar 12 semanas: ' + ms + ' ms, huella ' + hash + ')');
+  ok(hash === '9ad96eab52', 'generar: da exactamente las mismas semanas que antes de acelerarlo');
+  ok(ms < 10000, 'generar: 12 semanas en menos de 10 s (' + ms + ' ms)');
+}
 
 // ── 6. Modo solo lectura (cocina y sala) ──
 { const S = entorno({solo: true, yo: 'Ana'}); S.T.fijar({semana: S.fecha(lun16), tab: 'plantilla'});
