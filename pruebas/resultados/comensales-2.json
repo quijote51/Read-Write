@@ -1,0 +1,77 @@
+{
+ "inicio_utc": "00:56:10",
+ "fin_utc": "00:57:20",
+ "escenario": "comensales",
+ "usuarios_max": 30,
+ "duracion_s": 70,
+ "motivo_fin": "tiempo cumplido",
+ "peticiones": 412,
+ "errores": 0,
+ "descarga_MB": 3,
+ "por_tipo": [
+  {
+   "tipo": "carta.html",
+   "n": 206,
+   "errores": 0,
+   "estados": "200",
+   "p50": 41,
+   "p95": 58,
+   "p99": 110,
+   "max": 206
+  },
+  {
+   "tipo": "rpc/carta_publica",
+   "n": 206,
+   "errores": 0,
+   "estados": "200",
+   "p50": 72,
+   "p95": 94,
+   "p99": 180,
+   "max": 201
+  }
+ ],
+ "linea_de_tiempo": [
+  {
+   "desde_s": 0,
+   "rps": 3.6,
+   "p95_ms": 137,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 10,
+   "rps": 7.4,
+   "p95_ms": 94,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 20,
+   "rps": 7.4,
+   "p95_ms": 81,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 30,
+   "rps": 7.4,
+   "p95_ms": 81,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 40,
+   "rps": 7.9,
+   "p95_ms": 86,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 50,
+   "rps": 7.3,
+   "p95_ms": 77,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 60,
+   "rps": 0.2,
+   "p95_ms": 74,
+   "err_pct": 0
+  }
+ ]
+}

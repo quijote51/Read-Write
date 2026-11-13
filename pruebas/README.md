@@ -12,6 +12,9 @@ done
 ```
 Cada prueba imprime ✔ / ✘ y «TODO BIEN» o el número de fallos. Pasarlas todas antes de cada PR que toque la sincronización.
 
+## Prueba de carga (13/11/2026)
+`node pruebas/carga.js comensales|equipo --vus N --seg S` simula tráfico real contra la app publicada del Seda (solo lee; topes y freno de emergencia; destinos fijos en el script). Resultados del 13/11 en `pruebas/resultados/`: hasta 80 invitados con QR y 150 móviles del equipo sin errores; picos de ~350 y ~500 peticiones/s sin errores. No simula nada que necesite cuenta (sincronizar, fichar): eso se midió en la base de datos con 51 hoteles falsos dentro de una transacción que se deshace sola.
+
 ## Service worker (sin navegador)
 `node pruebas/sw-shell.js` comprueba que todo lo de `SHELL` existe, que todo lo que cargan las páginas está en `SHELL` y que `CACHE` ha subido de versión si cambia algún archivo de la app respecto a `origin/main`. Pasarla antes de cada PR.
 
