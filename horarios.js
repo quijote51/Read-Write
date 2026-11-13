@@ -141,6 +141,35 @@ function editorHtml(k){
     <div class="hz-chips">${copias.map(([n,v])=>`<button class="btn-sec hz-sm hz-copia" data-q="${esc(v)}" title="${esc(v.replace('\n',' + '))}">${n}</button>`).join('')}${[['Libre','LIBRE'],['Vacaciones','VACACIONES'],['Baja','BAJA MATERNAL'],['06:30-14:30','06:30-14:30'],['08:00-16:00','08:00-16:00'],['12:00-20:00','12:00-20:00'],['14:30-22:30','14:30-22:30'],['16:00-00:00','16:00-00:00'],['Partido','12:00-16:00\n20:00-00:00']].map(([n,v])=>`<button class="btn-sec hz-sm" data-q="${esc(v)}">${n}</button>`).join('')}</div>
     <div class="hz-bar"><button class="btn btn-p" data-a="gturno">Guardar</button><button class="btn-sec" data-a="cturno">Cancelar</button><button class="btn-sec" data-a="bturno">Borrar celda</button></div></div>`}
   return ''}
+/* ---- Cobertura por horas: cuántas personas de cocina hay a cada hora (6:00–24:00) y qué evento cae en cada hora ----
+   Colores de cada hora: 1 persona naranja, 2 amarillo, 3 o más verde (la hora de un evento lleva un marco dorado).
+   Debajo, una línea por evento de la semana con quién hay a su hora (misma ventana que htmlHorarioEvento) y aviso si falta gente. */
+const CH_0=6,CH_1=24;
+function eventosSemana(k){
+  const ev=(typeof eventos!=='undefined'&&Array.isArray(eventos))?eventos:[],r=[[],[],[],[],[],[],[]];
+  ev.forEach(e=>{if(!e||!e.fecha)return;const d=fd(e.fecha);if(isNaN(d)||iso(lunes(d))!==k)return;r[(d.getDay()+6)%7].push(e)});
+  r.forEach(a=>a.sort((x,y)=>String(x.hora||'').localeCompare(String(y.hora||''))));return r}
+function vCobHoras(k){
+  const evs=eventosSemana(k),hoyI=iso(new Date()),rp=(typeof ajustes!=='undefined'&&ajustes&&Number(ajustes.raciones_por_persona))||80;
+  const horasCab=Array.from({length:CH_1-CH_0},(_,j)=>`<i>${(CH_0+j)%3===0?CH_0+j:''}</i>`).join('');
+  let h=`<div class="card hz-ch"><b>Cobertura por horas</b><p class="hz-ch-ay">Cuántas personas de cocina hay a cada hora. El marco dorado es la hora de un evento.</p>
+    <div class="hz-ch-fila hz-ch-esc" aria-hidden="true"><span></span><div class="hz-ch-celdas">${horasCab}</div></div>`;
+  let lineas='';
+  for(let i=0;i<7;i++){
+    const gente=personasDia(k,i).filter(p=>p.g<=3),d=sumar(fd(k),i),horasEv=new Set(evs[i].map(e=>e.hora?Math.floor(pHM(e.hora)):-1));
+    const celdas=Array.from({length:CH_1-CH_0},(_,j)=>{const hr=CH_0+j,n=gente.filter(p=>tramos(p.t).some(([a,b])=>a<hr+1&&b>hr)).length,ev=horasEv.has(hr);
+      return `<span class="n${Math.min(n,3)}${ev?' ev':''}" title="${hr}:00 · ${n} en cocina${ev?' · evento':''}">${n||''}</span>`}).join('');
+    h+=`<div class="hz-ch-fila${iso(d)===hoyI?' hoy':''}"><b>${DIAS[i]} ${d.getDate()}</b><div class="hz-ch-celdas">${celdas}</div></div>`;
+    evs[i].forEach(e=>{
+      const hh=e.hora?pHM(e.hora):null,pax=Number(e.pax)||0;
+      const alli=hh==null?gente:gente.filter(p=>tramos(p.t).some(([a,b])=>(b>hh-1&&a<hh+1.5)||(b>hh+23&&a<hh+25.5)));
+      let cls='ok',txt=`${alli.length} en cocina${alli.length?' ('+alli.map(p=>esc(p.n)).join(', ')+')':''}`;
+      if(!alli.length){cls='bad';txt='nadie en turno a esa hora'}
+      else if(pax/alli.length>rp){cls='warn';txt+=` · ${Math.round(pax/alli.length)} pax por persona: refuerza`}
+      else if(alli.length<MIN_COB){cls='warn';txt+=` · menos de ${MIN_COB}`}
+      lineas+=`<div class="hz-ch-ev ${cls}"><b>${DIAS[i]} ${d.getDate()}${e.hora?' · '+esc(e.hora):''}</b> ${esc(e.nombre)}${pax?' · '+pax+' pax':''}<br><small>${txt}</small></div>`});
+  }
+  return h+`<div class="hz-ch-leyenda"><span class="n1">1</span><span class="n2">2</span><span class="n3">3+</span><small>personas de cocina</small></div>${lineas?`<div class="hz-ch-evs">${lineas}</div>`:''}</div>`}
 function vPlantilla(){
   const k=iso(semana),hoy=iso(new Date()),vacia=sinTurnos(k),eq=equipoSem(k);
   const prev=Object.keys(H().semanas).filter(x=>x<k&&!sinTurnos(x)).sort().pop();
@@ -158,6 +187,7 @@ function vPlantilla(){
   const movil=window.matchMedia&&window.matchMedia('(max-width:700px)').matches,ed=editorHtml(k);
   h+=vDias(k,eq,vacia,movil?ed:'');
   if(!movil)h+=ed;
+  if(!vacia)h+=vCobHoras(k);
   return h+(SOLO()?'':waPanel(k)+panelGenerar())}
 
 function vAhora(){
