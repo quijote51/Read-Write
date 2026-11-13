@@ -8,6 +8,8 @@
 const K=window.hzKit;
 const {H,fd,iso,lunes,sumar,corto,fmtH,cap,esc,pHM,tramos,horas,tipo,trabaja,equipoSem,fila,sinTurnos,personasDia,cobertura,enHora,guardar,avisos,pintar,SOLO,root,yo,DIAS,DL,MES,MESL,GRUPOS,MIN_COB,MAX_H,MIN_DESC,VAC_ANUAL}=K;
 const activo=e=>K.activo(e);
+// Las bajas (maternal o de otro tipo) no son vacaciones: no gastan días ni cuentan como coincidencia
+const esBaja=v=>v.t==='maternal'||v.t==='baja';
 function diasEn(i,f,y){const a=new Date(Math.max(fd(i),fd(y+'-01-01'))),b=new Date(Math.min(fd(f),fd(y+'-12-31')));return b<a?0:Math.round((b-a)/864e5)+1}
 /* ---- Todo el año de un vistazo: quién está de vacaciones cada día y dónde coinciden ----
    Una fila por mes y una casilla por día; el color es cuántas personas están fuera ese día (1 azul, 2 amarillo, 3 o más rojo).
@@ -16,7 +18,7 @@ let diaSel='';
 function vAnioVac(y){
   const eqN=new Set(H().equipo.filter(e=>(!e.desde||e.desde.slice(0,4)<=y)&&(!e.hasta||e.hasta.slice(0,4)>=y)).map(e=>e.n));
   const fuera={},ini=y+'-01-01',fin=y+'-12-31';
-  H().vac.filter(v=>v.t!=='maternal'&&eqN.has(v.e)&&v.f>=ini&&v.i<=fin).forEach(v=>{
+  H().vac.filter(v=>!esBaja(v)&&eqN.has(v.e)&&v.f>=ini&&v.i<=fin).forEach(v=>{
     for(let d=fd(v.i<ini?ini:v.i),f=fd(v.f>fin?fin:v.f);d<=f;d=sumar(d,1)){const k=iso(d);(fuera[k]=fuera[k]||[]);if(!fuera[k].includes(v.e))fuera[k].push(v.e)}});
   const hoyK=iso(new Date()),nom=k=>k?(fuera[k]||[]):[];
   // Fechas en las que nadie puede coger vacaciones (las apunta el jefe: «Feria», «Semana Santa», «este mes»…)
@@ -57,7 +59,7 @@ function vAnioVac(y){
   const sel=diaSel&&diaSel.slice(0,4)==y?`<div class="hz-an-sel"><b>${fe(diaSel)}:</b> ${nom(diaSel).length?nom(diaSel).map(esc).join(', ')+' (fuera)':'nadie fuera'}${bq[diaSel]?`<br><span class="hz-an-blq">Sin vacaciones: ${bq[diaSel].map(esc).join(', ')}</span>`:''}</div>`:'';
   // Fechas sin vacaciones: lista (con «Quitar»), choques con vacaciones ya apuntadas y formulario para añadir
   const bloqs=(H().bloqueos||[]).map((b,ix)=>({b,ix})).filter(x=>x.b.f>=ini&&x.b.i<=fin).sort((a,c)=>a.b.i<c.b.i?-1:1);
-  const choques=[];H().vac.filter(v=>v.t!=='maternal'&&eqN.has(v.e)).forEach(v=>(H().bloqueos||[]).forEach(b=>{const a=v.i>b.i?v.i:b.i,c=v.f<b.f?v.f:b.f;if(a<=c&&c>=ini&&a<=fin)choques.push({e:v.e,ini:a,fin:c,n:b.n||'sin motivo'})}));
+  const choques=[];H().vac.filter(v=>!esBaja(v)&&eqN.has(v.e)).forEach(v=>(H().bloqueos||[]).forEach(b=>{const a=v.i>b.i?v.i:b.i,c=v.f<b.f?v.f:b.f;if(a<=c&&c>=ini&&a<=fin)choques.push({e:v.e,ini:a,fin:c,n:b.n||'sin motivo'})}));
   const hoyD=new Date(),mesIni=m=>iso(new Date(hoyD.getFullYear(),hoyD.getMonth()+m,1)),mesFin=m=>iso(new Date(hoyD.getFullYear(),hoyD.getMonth()+m+1,0));
   const blqHtml=`<div class="hz-an-lista"><b>Fechas en las que nadie puede coger vacaciones</b><p style="font-size:12px;color:var(--text-secondary);margin:2px 0 6px">Apunta un mes o unas fechas (feria, Semana Santa, eventos grandes…). Salen en violeta en el calendario y avisan al apuntar unas vacaciones que caigan dentro.</p>
     ${bloqs.length?bloqs.map(({b,ix})=>`<div class="hz-an-bl"><span><b>${rango(b.i,b.f)}</b> · ${nDias(b.i,b.f)} día${nDias(b.i,b.f)===1?'':'s'}<br><small>${esc(b.n||'sin motivo')}</small></span><button type="button" class="btn-sec hz-sm" data-bdel="${ix}" aria-label="Quitar ${esc(b.n||'')}">Quitar</button></div>`).join(''):'<div class="hz-vacio">Todavía no hay fechas sin vacaciones.</div>'}
@@ -77,18 +79,18 @@ function vVac(){
   h+=vAnioVac(y);
   h+=`<div class="hz-cols">`;
   eqY.forEach(e=>{const ps=H().vac.filter(v=>v.e===e.n&&v.i.slice(0,4)<=y&&v.f.slice(0,4)>=y);
-    const usados=ps.filter(v=>v.t!=='maternal').reduce((s,v)=>s+diasEn(v.i,v.f,y),0),res=VAC_ANUAL-usados,mat=ps.some(v=>v.t==='maternal');
+    const usados=ps.filter(v=>!esBaja(v)).reduce((s,v)=>s+diasEn(v.i,v.f,y),0),res=VAC_ANUAL-usados,mat=ps.some(esBaja);
     const col=res>10?'#5dcaa5':res>=5?'#ef9f27':'#e24b4a';
-    const meses=Array.from({length:12},(_,m)=>{const a=new Date(y,m,1),b=new Date(y,m+1,0);const p=ps.find(v=>fd(v.i)<=b&&fd(v.f)>=a);return`<span class="${p?({verano:'v',invierno:'i',extra:'x',maternal:'m'}[p.t]):''}" title="${MES[m]}"></span>`}).join('');
+    const meses=Array.from({length:12},(_,m)=>{const a=new Date(y,m,1),b=new Date(y,m+1,0);const p=ps.find(v=>fd(v.i)<=b&&fd(v.f)>=a);return`<span class="${p?({verano:'v',invierno:'i',extra:'x',maternal:'m',baja:'m'}[p.t]):''}" title="${MES[m]}"></span>`}).join('');
     h+=`<div class="card"><div class="hz-fila" style="border:0;padding:0"><b>${esc(e.n)}</b><small>${mat&&!usados?'Baja':`${res} de ${VAC_ANUAL} días`}</small></div>${mat&&!usados?'':`<div class="hz-saldo"><i style="width:${Math.max(0,Math.min(100,usados/VAC_ANUAL*100))}%;background:${col}"></i></div>`}<div class="hz-meses">${meses}</div>
     ${ps.map(v=>`<div class="hz-fila"><span><small>${esc(v.t)} · ${corto(fd(v.i))} – ${corto(fd(v.f))}${v.n?' · '+esc(v.n):''}</small></span><span style="display:flex;gap:6px;align-items:center"><small>${diasEn(v.i,v.f,y)} d</small><button class="btn-sec hz-sm" data-vdel="${H().vac.indexOf(v)}">Quitar</button></span></div>`).join('')}</div>`});
-  h+=`</div><form class="card" id="hz-f-vac"><b>Añadir periodo</b> <small style="color:var(--text-secondary)">(rellena el horario con VACACIONES y avisa si baja la cobertura)</small><div class="hz-form"><label>Empleado<select id="hz-ve">${H().equipo.filter(activo).map(e=>`<option>${esc(e.n)}</option>`).join('')}</select></label><label>Tipo<select id="hz-vt"><option value="verano">verano</option><option value="invierno">invierno</option><option value="extra">extra</option><option value="maternal">maternal</option></select></label><label>Desde<input type="date" id="hz-vi" required></label><label>Hasta<input type="date" id="hz-vf" required></label><label>Nota<input id="hz-vn"></label></div><button class="btn btn-p" type="submit">Añadir</button></form>`;
+  h+=`</div><form class="card" id="hz-f-vac"><b>Añadir periodo</b> <small style="color:var(--text-secondary)">(rellena el horario con VACACIONES o BAJA y avisa si baja la cobertura; las bajas no gastan días de vacaciones)</small><div class="hz-form"><label>Empleado<select id="hz-ve">${H().equipo.filter(activo).map(e=>`<option>${esc(e.n)}</option>`).join('')}</select></label><label>Tipo<select id="hz-vt"><option value="verano">verano</option><option value="invierno">invierno</option><option value="extra">extra</option><option value="baja">baja</option><option value="maternal">baja maternal</option></select></label><label>Desde<input type="date" id="hz-vi" required></label><label>Hasta<input type="date" id="hz-vf" required></label><label>Nota o motivo de la baja<input id="hz-vn"></label></div><button class="btn btn-p" type="submit">Añadir</button></form>`;
   return h}
 
 /* ---- vacaciones -> horario ---- */
 const tocadas=[];
 function aplicarVac(v,poner){
-  const txt=v.t==='maternal'?'BAJA MATERNAL':'VACACIONES',falta=[];tocadas.length=0;
+  const txt=v.t==='maternal'?'BAJA MATERNAL':v.t==='baja'?'BAJA':'VACACIONES',falta=[];tocadas.length=0;
   for(let d=fd(v.i),f=fd(v.f);d<=f;d=sumar(d,1)){
     const k=iso(lunes(d)),i=(d.getDay()+6)%7,a=fila(k,v.e);if(!tocadas.includes(k))tocadas.push(k);
     if(poner)a[i]=txt;else if(/VACACIONES|BAJA/i.test(a[i]))a[i]='';

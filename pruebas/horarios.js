@@ -156,6 +156,22 @@ const trabaja = t => t && !/LIBRE|VACACIONES|BAJA/i.test(t) && /\d/.test(t);
   ok(g === 'ok', 'datos raros: generar con el equipo vacío no da error (' + g + ')');
 }
 
+// ── 2d. Bajas normales (con motivo) distintas de la baja maternal ──
+{ const S = entorno(), F = S.F, T = S.T, H = S.H();
+  ok(F.tipo('BAJA') === 'bajan' && F.tipo('BAJA MATERNAL') === 'baja', 'bajas: «BAJA» es una baja normal y «BAJA MATERNAL» sigue siendo la de siempre');
+  const v = {e: 'Ana', t: 'baja', i: '2026-11-17', f: '2026-11-19', n: 'gripe'};
+  H.vac.push(v); F.aplicarVac(v, true);
+  const a = H.semanas['2026-11-16'].Ana;
+  ok(a[1] === 'BAJA' && a[2] === 'BAJA' && a[3] === 'BAJA' && a[0] !== 'BAJA', 'bajas: aplicarVac pone BAJA solo en los días del periodo');
+  T.fijar({semana: S.fecha(lun16), tab: 'plantilla'});
+  ok(/hz-cel bajan|bajan/.test(S.pantalla()), 'bajas: se pintan con su propio color en Plantilla');
+  T.fijar({tab: 'vacaciones'});
+  const p = S.pantalla();
+  ok(/gripe/.test(p) && /<option value="baja">baja<\/option>/.test(p), 'bajas: el motivo se ve en Vacaciones y se puede elegir «baja» al añadir');
+  F.aplicarVac(v, false);
+  ok(!H.semanas['2026-11-16'].Ana.some(x => x === 'BAJA'), 'bajas: al quitar el periodo se limpian los días');
+}
+
 // ── 3. Pantallas ──
 { const S = entorno({yo: 'Ana'}), F = S.F, T = S.T;
   T.fijar({semana: S.fecha(lun16), tab: 'plantilla'});

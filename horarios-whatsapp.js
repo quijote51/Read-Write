@@ -34,7 +34,7 @@ const fHM=ts=>{const d=new Date(ts);return `${d.getDate()}/${d.getMonth()+1} ${S
 function waPanel(k){
   if(sinTurnos(k))return'';
   const env=(H().enviado||{})[k]||{};
-  const filas=equipoSem(k).filter(e=>fila(k,e.n).some(t=>!['vacio','baja'].includes(tipo(t)))).map(e=>{
+  const filas=equipoSem(k).filter(e=>fila(k,e.n).some(t=>!['vacio','baja','bajan'].includes(tipo(t)))).map(e=>{
     const x=env[e.n],igual=x&&x.h===hashT(textoPersona(k,e));
     const est=!x?'<small>Sin enviar</small>':igual?`<small class="hz-ok">✓ Enviado ${fHM(x.ts)}</small>`:`<small class="hz-cambio">Cambió desde el envío (${fHM(x.ts)}) · reenviar</small>`;
     return `<div class="hz-fila hz-envio"><span><b>${esc(e.n)}</b>${e.tel?'':' <small>· sin móvil</small>'}<br>${est}</span><button class="btn-sec" data-a="wasend" data-n="${esc(e.n)}" aria-label="Enviar su horario a ${esc(e.n)} por WhatsApp">${x?'Reenviar':'Enviar'}</button></div>`}).join('');

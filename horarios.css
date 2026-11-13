@@ -20,8 +20,8 @@
 .hz-cel:hover{filter:brightness(1.06);transform:translateY(-1px)}
 /* Colores vivos con letra NEGRA (contraste ≥ 7 en todos): verde = turno, azul = jefe de cocina, amarillo = libre, rojo = vacaciones, rosa = baja, violeta = extra */
 .hz-cel.trab{--c:#4ade80}.hz-cel.jefe{--c:#60a5fa}.hz-cel.libre{--c:#fde047}
-.hz-cel.vac{--c:#f87171}.hz-cel.baja{--c:#f472b6}.hz-cel.extra{--c:#a78bfa}
-.hz-cel.libre,.hz-cel.vac,.hz-cel.baja{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.hz-cel.vac{--c:#f87171}.hz-cel.baja{--c:#f472b6}.hz-cel.bajan{--c:#fb923c}.hz-cel.extra{--c:#a78bfa}
+.hz-cel.libre,.hz-cel.vac,.hz-cel.baja,.hz-cel.bajan{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
 .hz-cel.vacio{background:transparent;background-image:none;box-shadow:none;color:var(--text-tertiary);border:1px dashed var(--border-md)}.hz-cel.vacio:hover{filter:none;transform:none;border-color:var(--gold)}.hz-cel.sel{outline:2px solid var(--gold);outline-offset:1px}
 .hz-tabla td.h{font-weight:600;font-variant-numeric:tabular-nums}.hz-tabla td.h.alta{color:var(--danger-text)}
 .hz-tabla tr.cob td{font-weight:600;border-bottom:0}
@@ -33,7 +33,7 @@
 .hz-fila{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:.5px solid var(--border)}
 .hz-fila:last-child{border-bottom:0}.hz-fila small{color:var(--text-secondary)}
 .hz-pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;color:#0b0b0b;box-shadow:0 1px 2px rgba(0,0,0,.3)}
-.hz-pill.trab{background:#4ade80}.hz-pill.jefe{background:#60a5fa}.hz-pill.libre{background:#fde047}.hz-pill.vac{background:#f87171}.hz-pill.baja{background:#f472b6}.hz-pill.extra{background:#a78bfa}
+.hz-pill.trab{background:#4ade80}.hz-pill.jefe{background:#60a5fa}.hz-pill.libre{background:#fde047}.hz-pill.vac{background:#f87171}.hz-pill.baja{background:#f472b6}.hz-pill.bajan{background:#fb923c}.hz-pill.extra{background:#a78bfa}
 .hz-vacio{color:var(--text-secondary);padding:12px 0;font-size:13px}
 .hz-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
 .hz-form label,.hz-dias label,.hz-eq label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text-secondary)}
@@ -87,7 +87,7 @@
 .hz-dotros{display:flex;flex-wrap:wrap;gap:6px}
 .hz-dchip{--c:#fde047;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:0;border-radius:99px;background:var(--c);color:#0b0b0b;font:700 13px inherit;font-family:inherit;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.35)}
 .hz-dchip i{font-style:normal;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;opacity:.8}
-.hz-dchip.libre{--c:#fde047}.hz-dchip.vac{--c:#f87171}.hz-dchip.baja{--c:#f472b6}
+.hz-dchip.libre{--c:#fde047}.hz-dchip.vac{--c:#f87171}.hz-dchip.baja{--c:#f472b6}.hz-dchip.bajan{--c:#fb923c}
 .hz-dchip.vacio{background:transparent;color:var(--text-secondary);border:1px dashed var(--border-md);box-shadow:none}
 .hz-dfila.sel,.hz-dchip.sel{outline:2px solid var(--gold);outline-offset:1px}
 .hz-dfila:focus-visible,.hz-dchip:focus-visible,.hz-cel:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
