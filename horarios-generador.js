@@ -26,6 +26,8 @@ function rng(seed){let a=seed>>>0;return()=>{a+=0x6D2B79F5;let t=a;t=Math.imul(t
 function forzado(e,fechaIso){
   const v=H().vac.find(x=>x.e===e.n&&x.i<=fechaIso&&x.f>=fechaIso);
   return v?(v.t==='maternal'?'BAJA MATERNAL':'VACACIONES'):null}
+// tramos con memoria: los mismos turnos se leen miles de veces
+const _trM=new Map();function tramosM(x){let r=_trM.get(x);if(r===undefined){r=tramos(x);_trM.set(x,r)}return r}
 function candidatos(e,forz,finPrev,R){
   const menu=menuDe(e),F=[0,1,2,3,4,5,6].filter(d=>!forz[d]),out=[];
   const pares=[];for(let d=0;d<6;d++)if(!forz[d]&&!forz[d+1])pares.push([d,d+1]);
@@ -37,37 +39,44 @@ function candidatos(e,forz,finPrev,R){
     const dfs=(ix)=>{
       if(ix===trab.length){
         const t=Array(7).fill('');for(let d=0;d<7;d++)t[d]=forz[d]||(libres.includes(d)||!trab.includes(d)?'LIBRE':sh[d]);
-        out.push({t,tr:t.map(tramos),libre:t.map(x=>x==='LIBRE'),des:t.map(x=>x&&x!=='LIBRE'&&tramos(x).length&&iniDe(tramos(x))<=7)});return}
+        out.push({t,tr:t.map(tramosM),libre:t.map(x=>x==='LIBRE'),des:t.map(x=>x&&x!=='LIBRE'&&tramosM(x).length&&iniDe(tramosM(x))<=7)});return}
       const d=trab[ix];
       for(const x of menu.t){
-        const tr=tramos(x);
+        const tr=tramosM(x);
         if(menu.noDes&&iniDe(tr)<=7&&!R.sinDesayuno[d])continue;
-        const prev=d===0?finPrev:(sh[d-1]&&trab.includes(d-1)?finDe(tramos(sh[d-1])):null);
+        const prev=d===0?finPrev:(sh[d-1]&&trab.includes(d-1)?finDe(tramosM(sh[d-1])):null);
         if(prev!=null&&iniDe(tr)+24-prev<MIN_DESC)continue;
         sh[d]=x;dfs(ix+1);sh[d]=null}
     };
     dfs(0)});
   return out}
+// Datos de cada candidato que penal() necesita, calculados una sola vez (antes se rehacían en cada una de las miles de pruebas)
+function pre(c){
+  if(c.p)return c.p;
+  const cn=[],med=[],noc=[],des=[],act=[];
+  for(let d=0;d<7;d++){const tr=c.tr[d],hay=tr.length>0;cn[d]=hay;med[d]=hay&&solapa(tr,12,16)>=3;noc[d]=hay&&solapa(tr,20,24)>=3;des[d]=hay&&iniDe(tr)<=7;
+    const x=c.t[d];if(x&&x!=='LIBRE'&&!/VACACIONES|BAJA/.test(x))act.push(x)}
+  return c.p={cn,med,noc,des,act,tipos:new Set(act).size,fin:!!(c.libre[5]||c.libre[6])}}
 function penal(sol,pers,R){
-  let p=0;
+  let p=0;const n=sol.length,P=sol.map(pre);
   for(let d=0;d<7;d++){
     let cov=0,lib=0,mediodia=false,noche=false,desayuno=false;
-    sol.forEach((c,i)=>{const tr=c.tr[d];if(tr.length){cov++;if(pers[i].g<=1){if(solapa(tr,12,16)>=3)mediodia=true;if(solapa(tr,20,24)>=3)noche=true}if(iniDe(tr)<=7)desayuno=true}if(c.libre[d])lib++});
+    for(let i=0;i<n;i++){const q=P[i];if(q.cn[d]){cov++;if(pers[i].g<=1){if(q.med[d])mediodia=true;if(q.noc[d])noche=true}if(q.des[d])desayuno=true}if(sol[i].libre[d])lib++}
     if(cov<MIN_COB)p+=100*(MIN_COB-cov);
     if(d>=5&&lib>1)p+=100*(lib-1);
     if(lib>2)p+=10*(lib-2);
     if(!mediodia)p+=80;if(!noche)p+=80;if(!desayuno&&R.hayDesayuno[d])p+=80;
     R.ev[d].forEach(ev=>{const pres=sol.filter((c,i)=>pers[i].g<=3&&cubre(c.tr[d],ev.h)).length;if(pres<ev.nec)p+=60*(ev.nec-pres)});
   }
-  sol.forEach((c,i)=>{
-    const tipos=new Set(c.t.filter(x=>x&&x!=='LIBRE'&&!/VACACIONES|BAJA/.test(x)));if(tipos.size>2)p+=tipos.size-2;
-    const m=menuDe(pers[i]);if(m.pref)p+=2*c.t.filter(x=>x&&x!=='LIBRE'&&!/VACACIONES|BAJA/.test(x)&&x!==m.pref).length;
-    if((c.libre[5]||c.libre[6])&&R.finde[i])p+=4});
+  for(let i=0;i<n;i++){const q=P[i];
+    if(q.tipos>2)p+=q.tipos-2;
+    const pf=R.pref[i];if(pf){let k=0;for(const x of q.act)if(x!==pf)k++;p+=2*k}
+    if(q.fin&&R.finde[i])p+=4}
   return p}
 function generarSemana(k,seed){
   const pers=equipoSem(k),lun=fd(k),prevK=iso(sumar(lun,-7)),prev=H().semanas[prevK]||{};
   const rp=(typeof ajustes!=='undefined'&&ajustes&&Number(ajustes.raciones_por_persona))||80;
-  const R={sinDesayuno:[],hayDesayuno:[],ev:[],finde:[]};
+  const R={sinDesayuno:[],hayDesayuno:[],ev:[],finde:[],pref:pers.map(e=>menuDe(e).pref)};
   const forz=pers.map(e=>[0,1,2,3,4,5,6].map(d=>forzado(e,iso(sumar(lun,d)))));
   const evs=(typeof eventos!=='undefined'?eventos:[]);
   for(let d=0;d<7;d++){
