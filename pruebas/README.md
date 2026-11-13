@@ -27,3 +27,6 @@ qué ve y qué puede cambiar cada cuenta.
 
 `albaran-ocr.js` lee una foto de verdad con Tesseract: necesita `npm i tesseract.js@5.1.1 @tesseract.js-data/spa@1.0.0` en una carpeta y su ruta en `OCR_NM` (por defecto, la del scratchpad).
 `cartas.js` sirve el generador de QR desde una copia local: `npm i qrcode-generator@1.4.4` en una carpeta y su ruta en `QR_NM`.
+
+## Horarios sin navegador (14/11/2026)
+`node pruebas/horarios.js` (solo Node 18+, sin servidor, sin Playwright ni dependencias): carga los `horarios*.js` que cargan `index.html` en un contexto de Node con un `document` falso y la fecha fija en el viernes 13/11/2026, con datos como los del Seda. Comprueba cálculos (turnos, horas, avisos, cobertura), fusión con la nube (`hzElige`), pantallas (Plantilla, Mi semana, Vacaciones del año, cobertura por horas…), botones y formularios (editar turno, repetir semana, WhatsApp, fechas sin vacaciones, equipo), generador de semanas y modo solo lectura. Para vigilar que un cambio de código no altera lo que se ve: `--golden-escribir f.json` guarda una huella de 28 pantallas y `--golden f.json` la compara.
