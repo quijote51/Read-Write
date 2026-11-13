@@ -626,4 +626,9 @@ document.addEventListener('submit',e=>{
   else if(id==='hz-f-eq'){const n=$('hz-en').value.trim();if(H().equipo.some(p=>p.n.toLowerCase()===n.toLowerCase())){msg=`Ya hay alguien llamado ${esc(n)} en el equipo.`;pintar();return}msg='';
     H().equipo.push({n,rol:$('hz-er').value.trim(),g:+$('hz-eg').value,desde:$('hz-ed').value,hasta:''});guardar();pintar()}
 });
+// Solo para las pruebas (pruebas/horarios.js): fijar el estado de la pantalla y llamar a las vistas y cálculos sin navegador
+window.hzPruebas={
+  fijar(o){if('tab' in o)tab=o.tab;if('semana' in o)semana=o.semana;if('anio' in o)anio=o.anio;if('edit' in o)edit=o.edit;if('msg' in o)msg=o.msg},
+  estado(){return {tab,semana,anio,edit,msg}},
+  fn:{vPlantilla,vMi,vAhora,vHoras,vEquipo,vEventos,vCambios,vCobHoras,vVac,vAnioVac,vPersonas,textoPersona,textoSemana,waLink,hashT,avisos,tramos,horas,tipo,cobertura,personasDia,equipoSem,sinTurnos,generar,deshacerGen,diasEn,proximoTurno,horasMes,eventosSemana,aplicarVac}};
 })();
