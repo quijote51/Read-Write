@@ -38,7 +38,7 @@
 .hz-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
 .hz-form label,.hz-dias label,.hz-eq label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text-secondary)}
 .hz-dias{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:6px;margin:8px 0}
-.hz-eq{display:grid;grid-template-columns:90px 1fr 1fr 130px 130px;gap:8px;align-items:end;padding:8px 0;border-bottom:.5px solid var(--border)}
+.hz-eq{display:grid;grid-template-columns:90px 1fr 1fr 1fr 130px 130px;gap:8px;align-items:end;padding:8px 0;border-bottom:.5px solid var(--border)}
 @media(max-width:700px){.hz-eq{grid-template-columns:1fr 1fr}}
 .hz-saldo{height:8px;border-radius:99px;background:var(--bg-tertiary);overflow:hidden;margin-top:4px}.hz-saldo i{display:block;height:100%}
 .hz-meses{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;margin:6px 0}.hz-meses span{height:14px;border-radius:3px;background:var(--bg-tertiary)}
@@ -103,3 +103,9 @@ div.hz-dfila,div.hz-dchip{cursor:default}
   .hz-dia .hz-editor{margin:4px 0 0;border-radius:12px}.hz-editor textarea{font-size:16px}
 }
 @media(prefers-reduced-motion:reduce){.hz-cel,.hz-dfila{transition:none}.hz-cel:hover{transform:none}}
+
+/* Envío por WhatsApp a cada persona */
+.hz-envio .btn-sec{min-height:44px;min-width:92px}
+.hz-envio small{color:var(--text-secondary);font-size:12px}
+.hz-envio small.hz-ok{color:#4ade80;font-weight:600}
+.hz-envio small.hz-cambio{color:#fde047;font-weight:600}

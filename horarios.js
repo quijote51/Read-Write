@@ -17,6 +17,8 @@ function hzElige(l,c){
   const base=(l.ts||0)>(c.ts||0)?l:c, otro=base===l?c:l, r=hzClon(base);
   for(const k in otro.semanas){const tb=(base.wts||{})[k]||0,to=(otro.wts||{})[k]||0;
     if(!(k in r.semanas)||to>tb){r.semanas[k]=hzClon(otro.semanas[k]);r.wts[k]=to}}
+  // Lo ya enviado por WhatsApp también se junta: por persona gana el envío más reciente
+  r.enviado=r.enviado||{};for(const k in (otro.enviado||{})){r.enviado[k]=r.enviado[k]||{};for(const n in otro.enviado[k]){const a=r.enviado[k][n],b=otro.enviado[k][n];if(!a||(b.ts||0)>(a.ts||0))r.enviado[k][n]=b}}
   r.ts=Math.max(l.ts||0,c.ts||0); return r}
 function hzSync(nube){
   horarios=hzElige(horarios,nube);
@@ -194,7 +196,7 @@ const activo=e=>!e.hasta||e.hasta>=iso(new Date());
 function vEquipo(){
   const op=g=>GRUPOS.map((n,i)=>`<option value="${i}"${i===g?' selected':''}>${n}</option>`).join('');
   let h=(msg?`<div class="hz-aviso warn">${msg}</div>`:'')+`<div class="card"><b>Equipo</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Pon la fecha «hasta» a quien se va y «desde» a quien entra: cada uno conserva su historial y solo aparece en las semanas que le corresponden.</p>`;
-  h+=H().equipo.map((e,i)=>({e,i})).filter(x=>activo(x.e)).map(({e,i})=>`<div class="hz-eq"><b>${esc(e.n)}</b><input data-eq="${i}" data-f="rol" value="${esc(e.rol)}" aria-label="Puesto"><select data-eq="${i}" data-f="g" aria-label="Grupo">${op(e.g)}</select><label>Desde<input type="date" data-eq="${i}" data-f="desde" value="${e.desde||''}"></label><label>Hasta<input type="date" data-eq="${i}" data-f="hasta" value="${e.hasta||''}"></label></div>`).join('');
+  h+=H().equipo.map((e,i)=>({e,i})).filter(x=>activo(x.e)).map(({e,i})=>`<div class="hz-eq"><b>${esc(e.n)}</b><input data-eq="${i}" data-f="rol" value="${esc(e.rol)}" aria-label="Puesto"><input data-eq="${i}" data-f="tel" type="tel" inputmode="tel" value="${esc(e.tel||'')}" placeholder="Móvil (WhatsApp)" aria-label="Móvil para WhatsApp"><select data-eq="${i}" data-f="g" aria-label="Grupo">${op(e.g)}</select><label>Desde<input type="date" data-eq="${i}" data-f="desde" value="${e.desde||''}"></label><label>Hasta<input type="date" data-eq="${i}" data-f="hasta" value="${e.hasta||''}"></label></div>`).join('');
   const baja=H().equipo.map((e,i)=>({e,i})).filter(x=>!activo(x.e));
   if(baja.length)h+=`<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;color:var(--text-secondary)">Ya no están (${baja.length}) · se conserva su historial</summary>`+baja.map(({e,i})=>`<div class="hz-eq"><b>${esc(e.n)}</b><input data-eq="${i}" data-f="rol" value="${esc(e.rol)}" aria-label="Puesto"><select data-eq="${i}" data-f="g" aria-label="Grupo">${op(e.g)}</select><label>Desde<input type="date" data-eq="${i}" data-f="desde" value="${e.desde||''}"></label><label>Hasta<input type="date" data-eq="${i}" data-f="hasta" value="${e.hasta||''}"></label></div>`).join('')+`</details>`;
   h+=`</div><form class="card" id="hz-f-eq"><b>Añadir persona</b><div class="hz-form"><label>Nombre<input id="hz-en" required></label><label>Puesto<input id="hz-er" required></label><label>Grupo<select id="hz-eg">${op(3)}</select></label><label>Desde<input type="date" id="hz-ed"></label></div><button class="btn btn-p" type="submit">Añadir</button></form>`;
@@ -398,9 +400,28 @@ function textoSemana(k){
   equipoSem(k).forEach(e=>{const a=fila(k,e.n);if(a.every(x=>!x))return;o+=`\n*${e.n}*: `+a.map((t,i)=>`${DC[i]} ${corta(t)}`).join(' · ')});
   return o}
 let waAbierto=false;
+// Texto personal (solo los turnos de esa persona) y enlace de WhatsApp a su móvil; si no hay móvil, WhatsApp deja elegir el contacto
+function textoPersona(k,e){
+  const a=fila(k,e.n),tot=a.reduce((x,t)=>x+horas(t),0);
+  let o=`Hola ${e.n}, este es tu horario de cocina de la semana del ${corto(fd(k))} al ${corto(sumar(fd(k),6))}:\n`;
+  a.forEach((t,i)=>{o+=`\n*${DC[i]} ${sumar(fd(k),i).getDate()}*: ${corta(t)}`});
+  if(tot)o+=`\n\nTotal: ${fmtH(tot)} h`;
+  return o+'\n\nSi algo no te encaja, avísame.'}
+const hashT=t=>{let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return h};
+function waLink(tel,txt){let d=String(tel||'').replace(/[^\d]/g,'');if(d.length===9&&/^[679]/.test(d))d='34'+d;return 'https://wa.me/'+d+'?text='+encodeURIComponent(txt)}
+// Marca como enviado (con la huella del texto, para avisar si el horario cambia después). No toca las semanas, solo el registro de envíos.
+function marcarEnviado(k,n,txt){
+  const E=H().enviado=H().enviado||{};(E[k]=E[k]||{})[n]={ts:Date.now(),h:hashT(txt)};H().ts=Date.now();
+  try{localStorage.setItem(HZ_KEY,JSON.stringify(horarios))}catch(e){} try{syncConfig(HZ_KEY,horarios)}catch(e){}}
+const fHM=ts=>{const d=new Date(ts);return `${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
 function waPanel(k){
   if(sinTurnos(k))return'';
-  return `<div class="card"><div class="hz-bar" style="margin:0"><b>Horario para WhatsApp</b><span style="flex:1"></span><button class="btn-sec" data-a="wa">${waAbierto?'Ocultar':'Ver y copiar'}</button></div>${waAbierto?`<textarea id="hz-wa" rows="10" readonly style="margin-top:10px;font-size:12px">${esc(textoSemana(k))}</textarea><div class="hz-bar" style="margin:8px 0 0"><button class="btn btn-p" data-a="wacopiar">Copiar texto</button><span id="hz-wa-msg" style="font-size:12px;color:var(--text-secondary)"></span></div>`:''}</div>`}
+  const env=(H().enviado||{})[k]||{};
+  const filas=equipoSem(k).filter(e=>fila(k,e.n).some(t=>!['vacio','baja'].includes(tipo(t)))).map(e=>{
+    const x=env[e.n],igual=x&&x.h===hashT(textoPersona(k,e));
+    const est=!x?'<small>Sin enviar</small>':igual?`<small class="hz-ok">✓ Enviado ${fHM(x.ts)}</small>`:`<small class="hz-cambio">Cambió desde el envío (${fHM(x.ts)}) · reenviar</small>`;
+    return `<div class="hz-fila hz-envio"><span><b>${esc(e.n)}</b>${e.tel?'':' <small>· sin móvil</small>'}<br>${est}</span><button class="btn-sec" data-a="wasend" data-n="${esc(e.n)}" aria-label="Enviar su horario a ${esc(e.n)} por WhatsApp">${x?'Reenviar':'Enviar'}</button></div>`}).join('');
+  return `<div class="card"><b>Enviar el horario a cada uno por WhatsApp</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 6px">Cada persona recibe solo sus turnos. Pon su móvil en la pestaña Equipo (sin móvil, WhatsApp te deja elegir el contacto). Se abre WhatsApp con el mensaje listo: tú pulsas enviar.</p>${filas}<div class="hz-bar" style="margin:10px 0 0"><button class="btn-sec" data-a="wa">${waAbierto?'Ocultar':'Texto de todo el equipo'}</button></div>${waAbierto?`<textarea id="hz-wa" rows="10" readonly style="margin-top:10px;font-size:12px">${esc(textoSemana(k))}</textarea><div class="hz-bar" style="margin:8px 0 0"><button class="btn btn-p" data-a="wacopiar">Copiar texto</button><span id="hz-wa-msg" style="font-size:12px;color:var(--text-secondary)"></span></div>`:''}</div>`}
 
 let ultGen=null,genMsg='';
 function primeraVacia(){let d=lunes(new Date());for(let i=0;i<60;i++){if(sinTurnos(iso(d)))return iso(d);d=sumar(d,7)}return iso(lunes(new Date()))}
@@ -479,6 +500,7 @@ document.addEventListener('click',e=>{
   else if(a==='gturno'){fila(edit.k,edit.e)[edit.i]=document.getElementById('hz-turno').value.trim();guardar(edit.k);edit=null;pintar()}
   else if(a==='bturno'){fila(edit.k,edit.e)[edit.i]='';guardar(edit.k);edit=null;pintar()}
   else if(a==='cturno'){edit=null;pintar()}
+  else if(a==='wasend'){const n=e.target.closest('[data-n]').dataset.n,k=iso(semana),p=equipoSem(k).find(x=>x.n===n);if(!p)return;const txt=textoPersona(k,p);marcarEnviado(k,n,txt);window.open(waLink(p.tel,txt),'_blank','noopener');pintar()}
   else if(a==='wa'){waAbierto=!waAbierto;pintar()}
   else if(a==='wacopiar'){const ta=document.getElementById('hz-wa'),m=document.getElementById('hz-wa-msg');ta.select();
     (navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(()=>{m.textContent='Copiado'},()=>{try{document.execCommand('copy');m.textContent='Copiado'}catch(e){m.textContent='Selecciona el texto y cópialo'}})}
