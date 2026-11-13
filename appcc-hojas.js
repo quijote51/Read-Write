@@ -116,41 +116,64 @@ function libs(){
     .then(() => cargar('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js'))
     .catch(e => { cargando = null; throw e; });
 }
-async function pdf(){
-  const nombre = ge('ah-nombre').value.trim(); if(!comprobar(nombre)) return;
-  const b = ge('ah-pdf'); b.disabled = true; b.textContent = 'Preparando…';
-  try{
-    await libs();
-    const t = tabla(st.tipo, st.mes), h = hotel();
-    const doc = new window.jspdf.jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
-    doc.setFontSize(13); doc.text(`${t.titulo} · ${mesTxt(st.mes)}`, 10, 12);
-    doc.setFontSize(9); doc.text([h.nombre, h.ciudad].filter(Boolean).join(' · '), 10, 17);
-    doc.autoTable({head: [t.head], body: t.filas, startY: 20, theme: 'grid', margin: {left: 8, right: 8},
-      styles: {fontSize: t.head.length > 12 ? 5.5 : 7, cellPadding: .8, halign: t.porFila ? 'left' : 'center', overflow: 'linebreak'},
-      headStyles: {fillColor: [235, 235, 235], textColor: 20, fontSize: t.head.length > 12 ? 5 : 6.5},
-      didParseCell: c => { if(c.section === 'body' && /\(!\)/.test(String(c.cell.raw))){ c.cell.styles.textColor = [180, 0, 0]; c.cell.styles.fontStyle = 'bold'; } }});
-    let yy = doc.lastAutoTable.finalY + 5;
-    const lineas = [t.pie, ...t.notas, t.personas].filter(Boolean);
-    doc.setFontSize(7.5);
-    lineas.forEach(l => { const p = doc.splitTextToSize(l, 275); if(yy + p.length * 3.5 > 180){ doc.addPage(); yy = 15; } doc.text(p, 10, yy); yy += p.length * 3.5; });
-    if(yy > 170){ doc.addPage(); yy = 15; }
-    doc.setFontSize(9);
-    doc.text('Responsable: ' + nombre, 10, yy + 18);
-    doc.addImage(st.firma, /^data:image\/png/.test(st.firma) ? 'PNG' : 'JPEG', 100, yy, 60, 20); doc.line(100, yy + 21, 160, yy + 21); doc.text('Firma', 100, yy + 25);
-    doc.text('Fecha: ' + new Date().toLocaleDateString('es-ES'), 190, yy + 18);
-    const nom = `${{temp: 'temperaturas', limp: 'limpieza', recep: 'recepcion'}[st.tipo]}-${st.mes}.pdf`;
-    const blob = doc.output('blob'), file = new File([blob], nom, {type: 'application/pdf'});
-    if(navigator.canShare && navigator.canShare({files: [file]})){
-      try{ await navigator.share({files: [file], title: `${t.titulo} · ${mesTxt(st.mes)}`}); msg('Archivo listo para enviar.', true); }
-      catch(e){ if(e && e.name !== 'AbortError') descargar(blob, nom); }
-    } else descargar(blob, nom);
-  }catch(e){ msg('No se ha podido crear el archivo. Comprueba la conexión (la primera vez se descarga el creador de PDF) o usa «Imprimir» → «Guardar como PDF».'); }
-  finally{ b.disabled = false; b.innerHTML = '<i class="ti ti-share"></i> Enviar archivo'; }
+const NOMBRES = {temp: 'temperaturas', limp: 'limpieza', recep: 'recepción'};
+// Crea el PDF con lo elegido en ese momento (snap): la ventana ya puede estar cerrada y la persona trabajando en otra cosa.
+// progreso y ceder vienen de la cola (cola.js); sin cola no hacen nada.
+async function crearPdf(snap, progreso = () => {}, ceder = () => Promise.resolve()){
+  progreso(5, 'Preparando el creador de PDF…');
+  await libs();
+  progreso(30, 'Armando la hoja…'); await ceder();
+  const t = tabla(snap.tipo, snap.mes), h = hotel();
+  const doc = new window.jspdf.jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
+  doc.setFontSize(13); doc.text(`${t.titulo} · ${mesTxt(snap.mes)}`, 10, 12);
+  doc.setFontSize(9); doc.text([h.nombre, h.ciudad].filter(Boolean).join(' · '), 10, 17);
+  progreso(55, 'Dibujando la tabla…'); await ceder();
+  doc.autoTable({head: [t.head], body: t.filas, startY: 20, theme: 'grid', margin: {left: 8, right: 8},
+    styles: {fontSize: t.head.length > 12 ? 5.5 : 7, cellPadding: .8, halign: t.porFila ? 'left' : 'center', overflow: 'linebreak'},
+    headStyles: {fillColor: [235, 235, 235], textColor: 20, fontSize: t.head.length > 12 ? 5 : 6.5},
+    didParseCell: c => { if(c.section === 'body' && /\(!\)/.test(String(c.cell.raw))){ c.cell.styles.textColor = [180, 0, 0]; c.cell.styles.fontStyle = 'bold'; } }});
+  progreso(80, 'Añadiendo la firma…'); await ceder();
+  let yy = doc.lastAutoTable.finalY + 5;
+  const lineas = [t.pie, ...t.notas, t.personas].filter(Boolean);
+  doc.setFontSize(7.5);
+  lineas.forEach(l => { const p = doc.splitTextToSize(l, 275); if(yy + p.length * 3.5 > 180){ doc.addPage(); yy = 15; } doc.text(p, 10, yy); yy += p.length * 3.5; });
+  if(yy > 170){ doc.addPage(); yy = 15; }
+  doc.setFontSize(9);
+  doc.text('Responsable: ' + snap.nombre, 10, yy + 18);
+  doc.addImage(snap.firma, /^data:image\/png/.test(snap.firma) ? 'PNG' : 'JPEG', 100, yy, 60, 20); doc.line(100, yy + 21, 160, yy + 21); doc.text('Firma', 100, yy + 25);
+  doc.text('Fecha: ' + new Date().toLocaleDateString('es-ES'), 190, yy + 18);
+  const nom = `${{temp: 'temperaturas', limp: 'limpieza', recep: 'recepcion'}[snap.tipo]}-${snap.mes}.pdf`;
+  progreso(95, 'Guardando el archivo…');
+  return {blob: doc.output('blob'), nom, titulo: `${t.titulo} · ${mesTxt(snap.mes)}`};
 }
-function descargar(blob, nom){
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click();
+const puedeCompartir = r => { try{ return !!(navigator.canShare && navigator.canShare({files: [new File([r.blob], r.nom, {type: 'application/pdf'})]})); }catch(e){ return false; } };
+async function compartir(r){
+  try{ await navigator.share({files: [new File([r.blob], r.nom, {type: 'application/pdf'})], title: r.titulo}); return 'Enviado desde el menú del móvil.'; }
+  catch(e){ if(e && e.name === 'AbortError') return 'Envío cancelado. Puedes volver a pulsar «Enviar».'; return descargar(r); }
+}
+function descargar(r){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(r.blob); a.download = r.nom; document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-  msg('PDF descargado: ' + nom + '. Ya puedes enviarlo por correo o WhatsApp.', true);
+  return 'PDF descargado: ' + r.nom + '. Ya puedes enviarlo por correo o WhatsApp.';
+}
+const ERR_PDF = 'No se ha podido crear el archivo. Comprueba la conexión (la primera vez se descarga el creador de PDF) o usa «Imprimir» → «Guardar como PDF».';
+function pdf(){
+  const nombre = ge('ah-nombre').value.trim(); if(!comprobar(nombre)) return;
+  const snap = {tipo: st.tipo, mes: st.mes, firma: st.firma, nombre};
+  if(typeof window.colaTarea === 'function'){
+    // En segundo plano: se cierra la ventana y se sigue trabajando; al acabar sale «Enviar» en la pastilla de abajo.
+    cerrar();
+    window.colaTarea({titulo: `Hoja de ${NOMBRES[snap.tipo]} · ${mesTxt(snap.mes)}`,
+      ejecutar: (progreso, ceder) => crearPdf(snap, progreso, ceder),
+      listo: r => ({texto: `PDF listo · ${Math.max(1, Math.round(r.blob.size / 1024))} KB`,
+        acciones: [...(puedeCompartir(r) ? [{t: 'Enviar', primaria: true, fn: compartir}] : []), {t: 'Descargar', primaria: !puedeCompartir(r), fn: descargar}]}),
+      alFallar: () => ERR_PDF});
+    return;
+  }
+  // Sin cola (no debería pasar): como antes, esperando en la ventana
+  const b = ge('ah-pdf'); b.disabled = true; b.textContent = 'Preparando…';
+  crearPdf(snap).then(async r => { msg(puedeCompartir(r) ? await compartir(r) : descargar(r), true); }).catch(() => msg(ERR_PDF))
+    .finally(() => { b.disabled = false; b.innerHTML = '<i class="ti ti-share"></i> Enviar archivo'; });
 }
 
 // ── Firma con el dedo ──
@@ -209,7 +232,7 @@ window.apHojasAbrir = function(mes){
       <div class="ah-acc"><button class="btn-sec" data-ah="borrar">Borrar firma</button>${prev.img ? '<button class="btn-sec" data-ah="ultima">Usar mi última firma</button>' : ''}</div>
       <div id="ah-msg" class="hz-aviso" hidden></div>
       <div class="ah-acc ah-fin"><button class="btn-sec" data-ah="imprimir"><i class="ti ti-printer"></i> Imprimir</button><button class="btn btn-p" id="ah-pdf" data-ah="pdf"><i class="ti ti-share"></i> Enviar archivo</button></div>
-      <p class="ah-ayuda">«Enviar archivo» crea un PDF y abre el menú del móvil para mandarlo por WhatsApp o correo. La firma solo se guarda en este aparato.</p>
+      <p class="ah-ayuda">«Enviar archivo» prepara el PDF en segundo plano: puedes seguir usando la app y, cuando esté listo, sale el botón «Enviar» abajo a la izquierda. La firma solo se guarda en este aparato.</p>
     </div></div>`;
   m.style.display = 'flex';
   lienzo(); resumen(); estadoFirma();

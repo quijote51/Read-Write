@@ -196,7 +196,7 @@ async function leerConIA(img){
     return data;
   }catch(e){return null}
 }
-async function leerFoto(file){
+async function leerFotoDirecto(file){
   if(!file||leyendo)return; if(!fotoDisponible())return aviso('!Este aparato no puede leer fotos.');
   leyendo=true; aviso('Leyendo el albarán…');
   try{
@@ -208,14 +208,57 @@ async function leerFoto(file){
       const provs=(typeof proveedores!=='undefined'&&Array.isArray(proveedores)?proveedores:[]).map(p=>p.nombre).filter(Boolean);
       data=await ocrAlbaran(img,arts(),provs,pct=>progresoFoto(`Leyendo en el móvil… ${pct} %`));
     }
-    if(data.proveedor)cab.prov=data.proveedor; if(data.numero)cab.num=data.numero; if(/^\d{4}-\d{2}-\d{2}$/.test(data.fecha||''))cab.fecha=data.fecha;
-    const coma=v=>v==null?'':String(v).replace('.',',');
-    lineas=data.lineas.map(l=>{const a=l.articulo&&artPorNombre(l.articulo);return {a:a?a.n:(l.texto||''),cant:coma(l.cantidad),imp:coma(l.importe)}});
-    if(!lineas.length){lineas=[{a:'',cant:'',imp:''}];return aviso('!No se han encontrado líneas en la foto. Prueba con más luz y el albarán recto, o apúntalo a mano.')}
-    const sinEnlace=lineas.filter(l=>l.a&&!artPorNombre(l.a)).length;
-    aviso(`Leído: ${data.lineas.length} línea${data.lineas.length===1?'':'s'}. Revisa cantidades e importes antes de guardar.${sinEnlace?` ${sinEnlace} no están en el inventario: puedes añadirlas desde su línea o borrarlas.`:''}${data.notas?' Nota: '+data.notas:''}`);
+    aplicarLeido(data);
   }catch(e){aviso('!'+(e.message||'No se ha podido leer el albarán.'))}
   finally{leyendo=false}
+}
+// Rellena «Nuevo albarán» con lo leído de la foto
+function aplicarLeido(data){
+  vista='alb';
+  if(data.proveedor)cab.prov=data.proveedor; if(data.numero)cab.num=data.numero; if(/^\d{4}-\d{2}-\d{2}$/.test(data.fecha||''))cab.fecha=data.fecha;
+  const coma=v=>v==null?'':String(v).replace('.',',');
+  lineas=data.lineas.map(l=>{const a=l.articulo&&artPorNombre(l.articulo);return {a:a?a.n:(l.texto||''),cant:coma(l.cantidad),imp:coma(l.importe)}});
+  if(!lineas.length){lineas=[{a:'',cant:'',imp:''}];return aviso('!No se han encontrado líneas en la foto. Prueba con más luz y el albarán recto, o apúntalo a mano.')}
+  const sinEnlace=lineas.filter(l=>l.a&&!artPorNombre(l.a)).length;
+  aviso(`Leído: ${data.lineas.length} línea${data.lineas.length===1?'':'s'}. Revisa cantidades e importes antes de guardar.${sinEnlace?` ${sinEnlace} no están en el inventario: puedes añadirlas desde su línea o borrarlas.`:''}${data.notas?' Nota: '+data.notas:''}`);
+}
+const intacto=()=>!cab.prov&&!cab.num&&lineas.every(l=>!l.a&&!l.cant&&!l.imp);
+// «En pantalla»: la sección de costes está abierta (en la app suelta no hay acordeón) y se ve «Albaranes»
+const enPantalla=()=>{const r=ge('co-root'),acc=ge('acc-costes');return !!(r&&r.offsetParent!==null&&vista==='alb'&&(!acc||acc.classList.contains('open')))};
+async function leerImagen(file,progreso,ceder){
+  progreso(5,'Preparando la foto…');
+  const img=await reducirImagen(await new Promise((ok,mal)=>{const r=new FileReader();r.onload=e=>ok(e.target.result);r.onerror=mal;r.readAsDataURL(file)}),1600,0.82);
+  await ceder();
+  progreso(15,'Probando la lectura con IA…');
+  let data=await leerConIA(img);
+  if(!data){
+    if(typeof ocrAlbaran!=='function')throw new Error('La lectura con foto no está disponible ahora.');
+    progreso(20,'Leyendo en el móvil… la primera vez tarda un poco más.');
+    const provs=(typeof proveedores!=='undefined'&&Array.isArray(proveedores)?proveedores:[]).map(p=>p.nombre).filter(Boolean);
+    data=await ocrAlbaran(img,arts(),provs,pct=>progreso(20+pct*0.75,'Leyendo en el móvil…'));
+  }
+  return data;
+}
+// Pasa el albarán leído al formulario (si hay uno a medias, pregunta antes de sustituirlo)
+function verLeido(data){
+  if(!intacto()&&!confirm('Ya tienes un albarán a medias. ¿Sustituirlo por el leído de la foto?'))return 'Se mantiene tu albarán actual.';
+  if(!window.CO_SUELTA&&typeof showTab==='function')showTab('costes');
+  aplicarLeido(data); return 'Rellenado en «Nuevo albarán». Revisa y guarda.';
+}
+// La foto se lee en segundo plano (cola.js): se sigue usando la app y, al acabar, se avisa
+function leerFoto(file){
+  if(!file)return; if(!fotoDisponible())return aviso('!Este aparato no puede leer fotos.');
+  if(typeof window.colaTarea!=='function')return leerFotoDirecto(file);
+  aviso('La foto se lee en segundo plano: puedes seguir usando la app. Cuando termine, te aviso abajo a la izquierda.');
+  window.colaTarea({titulo:'Leer albarán de la foto',
+    ejecutar:(progreso,ceder)=>leerImagen(file,progreso,ceder),
+    listo:data=>{
+      const n=(data.lineas||[]).length;
+      // Si seguías en «Nuevo albarán» sin tocarlo, se rellena solo, como siempre
+      if(n&&enPantalla()&&intacto()){aplicarLeido(data);return {texto:'Leído y rellenado en «Nuevo albarán» ('+n+' línea'+(n===1?'':'s')+')',acciones:[]}}
+      return {texto:n?'Leído: '+n+' línea'+(n===1?'':'s'):'No se han encontrado líneas en la foto',acciones:n?[{t:'Ver albarán',primaria:true,fn:()=>verLeido(data)}]:[]};
+    },
+    alFallar:e=>(e&&e.message)||'No se ha podido leer el albarán.'});
 }
 function totalLineas(){return lineas.reduce((s,l)=>s+(num(l.imp)||0),0)}
 
