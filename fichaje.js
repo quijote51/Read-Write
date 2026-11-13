@@ -29,7 +29,9 @@ const miNombre = () => (typeof _perfil !== 'undefined' && _perfil && _perfil.nom
 const horDatos = () => (typeof horarios !== 'undefined' && horarios) || window._fhHorarios || LS('seda_horarios') || {};
 const equipo = () => [...new Set(((horDatos().equipo) || []).map(e => e.n).filter(Boolean).concat(filas.map(f => f.persona)))].sort((a, b) => a.localeCompare(b));
 
-let filas = [], vista = 'fichar', persona = null, mes = diaK(new Date()).slice(0, 7), quien = '', msg = '', cargando = false;
+const lunesDe = d => { const x = new Date(d); x.setHours(12, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return diaK(x); };
+const sumaDias = (k, n) => { const x = new Date(k + 'T12:00'); x.setDate(x.getDate() + n); return diaK(x); };
+let filas = [], vista = 'fichar', persona = null, mes = diaK(new Date()).slice(0, 7), quien = '', msg = '', cargando = false, sem = lunesDe(new Date());
 
 // ── Cálculo: quita lo anulado y junta entrada → (pausas) → salida ──
 function validos(lista){
@@ -66,6 +68,57 @@ function turnoPrevisto(p, dia){
   return t == null ? '' : (TURNO[t] ?? String(t).replace(/\n/g, ' / '));
 }
 
+// ── Programado frente a fichado (por semana; solo jefes, dentro de «Informe») ──
+// Horas de un turno de Horarios («08:00-16:00», partido en dos líneas, o una abreviatura antigua); libre, vacaciones y baja = 0.
+function horasTurno(t){
+  t = TURNO[t] ?? t;
+  if(!t || /LIBRE|VACACIONES|BAJA|RECUPER/i.test(t)) return 0;
+  let h = 0;
+  String(t).split(/\n|\//).forEach(seg => {
+    const m = seg.match(/(\d{1,2})[:.](\d{2})\s*[-aA]\s*(\d{1,2})[:.](\d{2})/); if(!m) return;
+    const a = +m[1] + m[2] / 60; let b = +m[3] + m[4] / 60; if(b <= a) b += 24; h += b - a;
+  });
+  return h;
+}
+const hFmt = h => (Math.round(h * 10) / 10).toString().replace('.', ',');
+const DSEM = ['L', 'M', 'X', 'J', 'V', 'S', 'D'], DLARGO = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
+// Estado de cada día: ok (coincide, ±15 min) · dif (otra duración) · falta (prevista y sin fichar, o sin salida) · extra (fichó sin turno previsto) · fut/hoy (aún no se puede juzgar)
+function datosSemana(){
+  const hoy = diaK(new Date()), turnos = (horDatos().semanas || {})[sem] || {};
+  return equipo().map(n => {
+    const js = jornadas(filas, n); let prog = 0, fich = 0, hayAlgo = false;
+    const dias = [0, 1, 2, 3, 4, 5, 6].map(i => {
+      const k = sumaDias(sem, i), p = horasTurno((turnos[n] || [])[i]), jd = js.filter(j => j.dia === k);
+      const f = jd.reduce((a, j) => a + (j.min || 0), 0) / 60, sinSalida = jd.some(j => !j.salida);
+      if(p || f || jd.length) hayAlgo = true;
+      let est;
+      if(k > hoy) est = 'fut';
+      else if(k === hoy && (!jd.length || sinSalida)) est = 'hoy';
+      else if(!p && !jd.length) est = 'vacio';
+      else if(p && !jd.length) est = 'falta';
+      else if(sinSalida) est = 'falta';
+      else if(!p) est = 'extra';
+      else est = Math.abs(f - p) <= .25 ? 'ok' : 'dif';
+      if(!['fut', 'hoy', 'vacio'].includes(est)){ prog += p; fich += f; }
+      return {k, i, p, f, est, sinSalida};
+    });
+    return {n, dias, prog, fich, hayAlgo};
+  }).filter(x => x.hayAlgo);
+}
+function vSemana(){
+  const d = datosSemana(), fin = sumaDias(sem, 6), corto = k => { const [, m, dd] = k.split('-'); return `${+dd}/${+m}`; };
+  const totP = d.reduce((a, x) => a + x.prog, 0), totF = d.reduce((a, x) => a + x.fich, 0), dif = totF - totP;
+  const difTxt = x => Math.abs(x) < .05 ? 'justo' : `${x > 0 ? '+' : '−'}${hFmt(Math.abs(x))} h`;
+  const celda = x => `<span class="fs-c fs-${x.est}" title="${DLARGO[x.i]} ${corto(x.k)}: previstas ${hFmt(x.p)} h · fichadas ${hFmt(x.f)} h${x.sinSalida ? ' · sin salida' : ''}">${x.est === 'fut' || x.est === 'vacio' ? '' : x.est === 'hoy' ? '…' : x.est === 'falta' ? (x.sinSalida ? '?' : '—') : hFmt(x.f)}</span>`;
+  return `<div class="card fs-card"><b>Programado frente a fichado</b>
+    <div class="fs-bar"><button class="btn-sec fh-sm" data-fh="semant" aria-label="Semana anterior">←</button><span class="fs-sem">${corto(sem)} – ${corto(fin)}</span><button class="btn-sec fh-sm" data-fh="semsig" aria-label="Semana siguiente">→</button><button class="btn-sec fh-sm" data-fh="semhoy">Esta semana</button></div>
+    ${d.length ? `<div class="fs-fila fs-cabecera"><span></span><div class="fs-dias">${DSEM.map(l => `<i>${l}</i>`).join('')}</div></div>
+    ${d.map(x => `<div class="fs-fila"><div class="fs-n"><b>${esc(x.n)}</b><small>${hFmt(x.prog)} h previstas · ${hFmt(x.fich)} h fichadas <span class="fs-d ${Math.abs(x.fich - x.prog) < .05 ? '' : x.fich > x.prog ? 'mas' : 'menos'}">${difTxt(x.fich - x.prog)}</span></small></div><div class="fs-dias">${x.dias.map(celda).join('')}</div></div>`).join('')}
+    <div class="fs-total"><b>Equipo:</b> ${hFmt(totP)} h previstas · ${hFmt(totF)} h fichadas · <span class="fs-d ${Math.abs(dif) < .05 ? '' : dif > 0 ? 'mas' : 'menos'}">${difTxt(dif)}</span></div>
+    <div class="fs-ley"><span class="fs-l"><span class="fs-c fs-ok"></span>coincide (±15 min)</span><span class="fs-l"><span class="fs-c fs-dif"></span>otra duración</span><span class="fs-l"><span class="fs-c fs-falta"></span>sin fichar / sin salida</span><span class="fs-l"><span class="fs-c fs-extra"></span>fichó sin turno</span></div>
+    <p class="fh-ayuda">Cada casilla son las horas fichadas ese día. Solo cuentan los días ya pasados.</p>` : '<p class="fh-vacio">No hay turnos ni fichajes esta semana.</p>'}</div>`;
+}
+
 // ── Nube ──
 async function cargar(desde){
   if(!conSesion() || navigator.onLine === false) return;
@@ -77,7 +130,7 @@ async function cargar(desde){
   }catch(e){ msg = '!No se han podido leer los fichajes. ' + (/does not exist|schema cache/i.test(e.message || '') ? 'Falta activar el fichaje en Supabase.' : 'Revisa la conexión.'); }
   cargando = false;
 }
-const desdeVista = () => vista === 'informe' ? new Date(mes + '-01T00:00') : new Date(Date.now() - 2 * 864e5);
+const desdeVista = () => vista === 'informe' ? new Date(Math.min(new Date(mes + '-01T00:00'), new Date(sumaDias(sem, -1) + 'T00:00'))) : new Date(Date.now() - 2 * 864e5);
 let enviando = false;
 async function enviarPendientes(){
   if(enviando) return;
@@ -133,7 +186,7 @@ function vInforme(){
   const js = quien ? jornadas(filas, quien).filter(j => j.dia.slice(0, 7) === mes) : [];
   const total = js.reduce((a, j) => a + (j.min || 0), 0), sinSalida = js.filter(j => !j.salida).length;
   const ultimos = validos(filas).filter(f => f.persona === quien && diaK(f.hora).slice(0, 7) === mes).reverse();
-  return `<div class="card"><div class="fh-form">
+  return vSemana() + `<div class="card"><div class="fh-form">
       <label>Mes<input type="month" id="fh-mes" value="${mes}"></label>
       <label>Persona<select id="fh-quien">${eq.map(n => `<option${n === quien ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label></div>
     <div class="fh-tot"><b>${horasTxt(total)}</b> en ${js.length} jornada${js.length === 1 ? '' : 's'}${sinSalida ? ` · <span class="fh-mal">${sinSalida} sin salida</span>` : ''}</div>
@@ -197,6 +250,7 @@ async function anular(id){
   msg = 'Anulado. Queda constancia del motivo.'; await recargar();
 }
 
+window.fhPruebas = {poner(f, v){ filas = f; if(v) vista = v; pintar(); }}; // para las pruebas
 let enlazado = false, relojT = null;
 window.initFichaje = function(){
   const root = ge('fh-root'); if(!root) return;
@@ -208,6 +262,9 @@ window.initFichaje = function(){
       const b = e.target.closest('[data-fh]'); if(!b) return;
       const a = b.dataset.fh;
       if(a === 'fichar'){ b.disabled = true; fichar(b.dataset.t); }
+      else if(a === 'semant'){ sem = sumaDias(sem, -7); recargar(); }
+      else if(a === 'semsig'){ sem = sumaDias(sem, 7); recargar(); }
+      else if(a === 'semhoy'){ sem = lunesDe(new Date()); recargar(); }
       else if(a === 'imprimir') imprimirInforme(); else if(a === 'csv') csv(); else if(a === 'manual') manual(); else if(a === 'anular') anular(b.dataset.id);
     });
     root.addEventListener('change', e => {
@@ -239,6 +296,17 @@ const CSS = `#fh-root .card{margin-bottom:10px}
 .fh-tot{font-size:14px;margin:6px 0}.fh-mal{color:var(--danger-text)}
 .fh-tabla{overflow-x:auto}.fh-tabla table{width:100%;border-collapse:collapse;font-size:12px}.fh-tabla th,.fh-tabla td{padding:5px 4px;border-bottom:.5px solid var(--border);text-align:left;white-space:nowrap}.fh-tabla th{color:var(--text-secondary);font-weight:500}
 .fh-acc{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.fh-sm{padding:3px 8px;font-size:12px}
+.fs-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0}.fs-sem{font-weight:600;min-width:9ch;text-align:center;font-variant-numeric:tabular-nums}
+.fs-fila{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,46%);gap:8px;align-items:center;padding:7px 0;border-top:.5px solid var(--border)}
+.fs-cabecera{border-top:0;padding:0}.fs-cabecera .fs-dias i{font-style:normal;font-size:11px;color:var(--text-secondary);text-align:center}
+.fs-n{min-width:0}.fs-n b{display:block;font-size:14px}.fs-n small{display:block;color:var(--text-secondary);font-size:12px}
+.fs-dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.fs-c{display:inline-block;min-height:28px;border-radius:7px;background:var(--bg-tertiary);color:#0b0b0b;font:700 11px/28px inherit;font-family:inherit;text-align:center;font-variant-numeric:tabular-nums}
+.fs-l{white-space:nowrap;margin-right:12px}.fs-ley .fs-c{width:16px;min-height:14px;height:14px;line-height:14px;vertical-align:-2px;margin:0 5px 0 0}.fs-ley{font-size:12px;color:var(--text-secondary);margin-top:10px;line-height:2}
+.fs-ok{background:#4ade80}.fs-dif{background:#fde047}.fs-falta{background:#f87171}.fs-extra{background:#a78bfa}.fs-hoy{background:var(--bg-tertiary);color:var(--text-secondary)}.fs-fut,.fs-vacio{background:transparent;box-shadow:inset 0 0 0 1px var(--border)}
+.fs-d{font-weight:700;color:var(--text-secondary)}.fs-d.mas{color:#fde047}.fs-d.menos{color:#fb923c}
+.fs-total{font-size:13px;margin-top:8px;padding-top:8px;border-top:.5px solid var(--border)}
+@media(max-width:480px){.fs-fila{grid-template-columns:1fr}}
 #fh-print{display:none}
 @media print{body.fh-imprimiendo>*:not(#fh-print){display:none!important}body.fh-imprimiendo #fh-print{display:block;color:#000;font:11pt/1.4 Arial,sans-serif}
   #fh-print h1{font-size:16pt;margin:0 0 4px}#fh-print table{width:100%;border-collapse:collapse;margin:10px 0}#fh-print th,#fh-print td{border:1px solid #888;padding:4px 6px;text-align:left}
