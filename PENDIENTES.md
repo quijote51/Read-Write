@@ -1,6 +1,7 @@
 # Pendientes (actualizado el 12 de noviembre de 2026, cierre del día)
 
 ## Para seguir mañana
+- [ ] Caché por capas (13/11): tras publicar, abre la app 2 veces con internet; a partir de la siguiente publicación saldrá la barra «Hay una versión nueva · Actualizar». Si un móvil se queda con la versión vieja, ciérrale la app del todo y ábrela.
 - [ ] Pegar `supabase/rendimiento-consultas.sql` en el SQL Editor de Supabase y pulsar Run (índices y reglas más rápidas; no cambia datos ni permisos). Debe salir 0 y 14.
 - [ ] Probar con la cuenta real lo de abajo («Por probar con la cuenta real»), sobre todo el **dictado de recetas** con el micrófono del móvil y los **Primeros pasos** con los datos del Seda.
 - [ ] Que alguien que no conozca la app la ponga en marcha con «Primeros pasos» y apuntar dónde se atasca.
