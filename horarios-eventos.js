@@ -12,7 +12,7 @@ const activo=e=>K.activo(e);
    Debajo, una línea por evento de la semana con quién hay a su hora (misma ventana que htmlHorarioEvento) y aviso si falta gente. */
 const CH_0=6,CH_1=24;
 function eventosSemana(k){
-  const ev=(typeof eventos!=='undefined'&&Array.isArray(eventos))?eventos:[],r=[[],[],[],[],[],[],[]];
+  const ev=(typeof eventos!=='undefined'&&Array.isArray(eventos))?eventos.filter(Boolean):[],r=[[],[],[],[],[],[],[]];
   ev.forEach(e=>{if(!e||!e.fecha)return;const d=fd(e.fecha);if(isNaN(d)||iso(lunes(d))!==k)return;r[(d.getDay()+6)%7].push(e)});
   r.forEach(a=>a.sort((x,y)=>String(x.hora||'').localeCompare(String(y.hora||''))));return r}
 function vCobHoras(k){
@@ -43,7 +43,7 @@ function factorEv(ev){
   const t=(typeof tiposServicio!=='undefined'&&tiposServicio?tiposServicio:[]).find(x=>x.id===ev.tipo);return (t&&t.factor)||1}
 function vEventos(){
   const hoy=new Date(),a=iso(hoy),b=iso(sumar(hoy,21));
-  const evs=(typeof eventos!=='undefined'?eventos:[]).filter(e=>e.fecha>=a&&e.fecha<=b).sort((x,y)=>(x.fecha+(x.hora||'')).localeCompare(y.fecha+(y.hora||'')));
+  const evs=(typeof eventos!=='undefined'?eventos:[]).filter(e=>e&&e.fecha>=a&&e.fecha<=b).sort((x,y)=>(x.fecha+(x.hora||'')).localeCompare(y.fecha+(y.hora||'')));
   if(!evs.length)return`<div class="hz-vacio">No hay eventos en los próximos 21 días.</div>`;
   const rp=(typeof ajustes!=='undefined'&&ajustes&&Number(ajustes.raciones_por_persona))||80;
   const dias={};evs.forEach(e=>(dias[e.fecha]=dias[e.fecha]||[]).push(e));

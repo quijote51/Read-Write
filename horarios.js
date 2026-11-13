@@ -5,9 +5,16 @@ const HZ_KEY = 'seda_horarios';
 const HZ_ABR = {L:'LIBRE',V:'VACACIONES',B:'BAJA MATERNAL',P:'12:00-16:00\n20:00-00:00',a:'08:00-16:00',b:'06:30-14:30',c:'16:00-00:00',d:'14:30-22:30',e:'12:00-20:00',f:'09:00-17:00',R:'RECUPERACIÓN DÍA LIBRE TRABAJADO','-':''};
 // Horarios vacíos para empezar (los datos de cada hotel están en su nube; nada de nombres de un cliente en el código)
 function hzSeed(){ return {equipo:[],semanas:{},extras:{},practicas:{},vac:[]}; }
+// Un periodo (vacaciones o fechas sin vacaciones) solo vale con inicio y fin AAAA-MM-DD; si no, se descarta
+const hzFechasOk=o=>!!o&&typeof o==='object'&&/^\d{4}-\d{2}-\d{2}$/.test(o.i)&&/^\d{4}-\d{2}-\d{2}$/.test(o.f);
 function hzNormaliza(v){
   if(!v||typeof v!=='object') return hzSeed();
-  v.equipo=Array.isArray(v.equipo)?v.equipo:hzSeed().equipo; v.semanas=v.semanas||{}; v.extras=v.extras||{}; v.practicas=v.practicas||{}; v.vac=v.vac||[]; v.bloqueos=Array.isArray(v.bloqueos)?v.bloqueos:[]; v.ts=v.ts||0; v.wts=v.wts||{};
+  v.equipo=(Array.isArray(v.equipo)?v.equipo:hzSeed().equipo).filter(e=>e&&typeof e==='object'&&typeof e.n==='string'&&e.n);
+  v.semanas=(v.semanas&&typeof v.semanas==='object')?v.semanas:{}; v.extras=v.extras||{}; v.practicas=v.practicas||{};
+  v.vac=(Array.isArray(v.vac)?v.vac:[]).filter(hzFechasOk); v.bloqueos=(Array.isArray(v.bloqueos)?v.bloqueos:[]).filter(hzFechasOk); v.ts=v.ts||0; v.wts=v.wts||{};
+  // Un turno siempre es texto y cada persona de una semana, una lista (un dato raro no debe tumbar las pantallas)
+  for(const k in v.semanas){const s=v.semanas[k];if(!s||typeof s!=='object'){delete v.semanas[k];continue}
+    for(const n in s){if(!Array.isArray(s[n])){delete s[n];continue}s[n]=s[n].map(x=>typeof x==='string'?x:'')}}
   return v;
 }
 const hzClon=o=>JSON.parse(JSON.stringify(o));
@@ -93,7 +100,7 @@ window.htmlHorarioEvento=function(ev){
     const coc=d.gente.filter(p=>p.g<=3);
     const h=ev.hora?pHM(ev.hora):null;
     const vent=h==null?coc:coc.filter(p=>tramos(p.t).some(([a,b])=>b>h-1&&a<h+1.5||b>h+23&&a<h+25.5));
-    const pax=(typeof eventos!=='undefined'?eventos:[]).filter(e=>e.fecha===ev.fecha).reduce((s,e)=>s+(Number(e.pax)||0),0);
+    const pax=(typeof eventos!=='undefined'?eventos:[]).filter(e=>e&&e.fecha===ev.fecha).reduce((s,e)=>s+(Number(e.pax)||0),0);
     const rp=(typeof ajustes!=='undefined'&&ajustes&&Number(ajustes.raciones_por_persona))||80;
     const mal=coc.length<MIN_COB, carga=vent.length&&pax/vent.length>rp;
     const cls=mal?'b-danger':(carga||!vent.length)?'b-warn':'b-success';
