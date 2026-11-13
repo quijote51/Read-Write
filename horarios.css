@@ -16,15 +16,17 @@
 .hz-tabla th.nom,.hz-tabla td.nom{text-align:left;position:sticky;left:0;background:var(--bg-primary);z-index:1;min-width:104px;border-right:.5px solid var(--border)}
 .hz-tabla td.nom b{display:block}.hz-tabla td.nom small{color:var(--text-secondary);font-size:11px}
 .hz-tabla tr.grp td{background:var(--bg-secondary);color:var(--text-secondary);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;text-align:left}
-.hz-cel{display:flex;flex-direction:column;gap:2px;width:100%;min-height:34px;border:0;border-radius:6px;padding:4px 3px;font:700 12px inherit;font-family:inherit;cursor:pointer;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
-/* Colores llenos y letra fuerte (antes eran pastel y apenas se distinguían). Todos con contraste ≥ 4.5 frente a su letra. */
-.hz-cel.trab{background:#15803d;color:#fff}.hz-cel.jefe{background:#1d4ed8;color:#fff}.hz-cel.libre{background:#facc15;color:#422006}
-.hz-cel.vac{background:#c81e1e;color:#fff}.hz-cel.baja{background:#be185d;color:#fff}.hz-cel.extra{background:#6d28d9;color:#fff}
-.hz-cel.vacio{background:transparent;color:var(--text-tertiary);border:1px dashed var(--border-md)}.hz-cel.sel{outline:2px solid var(--gold)}
+.hz-cel{--c:#fff;display:flex;flex-direction:column;gap:2px;width:100%;min-height:40px;border:0;border-radius:10px;padding:5px 4px;font:600 12.5px/1.15 inherit;font-family:inherit;letter-spacing:-.01em;color:#0b0b0b;background:var(--c);background-image:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 60%);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 0 0 1px rgba(0,0,0,.08);cursor:pointer;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;transition:transform .12s,filter .12s}
+.hz-cel:hover{filter:brightness(1.06);transform:translateY(-1px)}
+/* Colores vivos con letra NEGRA (contraste ≥ 7 en todos): verde = turno, azul = jefe de cocina, amarillo = libre, rojo = vacaciones, rosa = baja, violeta = extra */
+.hz-cel.trab{--c:#4ade80}.hz-cel.jefe{--c:#60a5fa}.hz-cel.libre{--c:#fde047}
+.hz-cel.vac{--c:#f87171}.hz-cel.baja{--c:#f472b6}.hz-cel.extra{--c:#a78bfa}
+.hz-cel.libre,.hz-cel.vac,.hz-cel.baja{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.hz-cel.vacio{background:transparent;background-image:none;box-shadow:none;color:var(--text-tertiary);border:1px dashed var(--border-md)}.hz-cel.vacio:hover{filter:none;transform:none;border-color:var(--gold)}.hz-cel.sel{outline:2px solid var(--gold);outline-offset:1px}
 .hz-tabla td.h{font-weight:600;font-variant-numeric:tabular-nums}.hz-tabla td.h.alta{color:var(--danger-text)}
 .hz-tabla tr.cob td{font-weight:600;border-bottom:0}
-.hz-cobp{display:inline-block;min-width:28px;padding:2px 8px;border-radius:99px;font-weight:700}
-.hz-cobp.ok{background:#15803d;color:#fff}.hz-cobp.warn{background:#facc15;color:#422006}.hz-cobp.bad{background:#c81e1e;color:#fff}
+.hz-cobp{display:inline-block;min-width:28px;padding:2px 9px;border-radius:99px;font-weight:700;color:#0b0b0b;box-shadow:0 1px 2px rgba(0,0,0,.35)}
+.hz-cobp.ok{background:#4ade80}.hz-cobp.warn{background:#fde047}.hz-cobp.bad{background:#f87171}
 .hz-editor{background:var(--bg-primary);border:1px solid var(--gold);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
 .hz-chips{display:flex;flex-wrap:wrap;gap:6px}
 .hz-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:10px}
