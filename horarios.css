@@ -129,3 +129,18 @@ div.hz-dfila,div.hz-dchip{cursor:default}
 .hz-ch-ev small{color:var(--text-secondary);font-size:12px}
 .hz-ch-ev.warn{border-left-color:#fde047}.hz-ch-ev.bad{border-left-color:#f87171}
 .hz-ch-ev.warn small{color:#fde047}.hz-ch-ev.bad small{color:#f87171;font-weight:600}
+
+/* Todo el año: quién está fuera cada día */
+.hz-an-fila{display:grid;grid-template-columns:30px minmax(0,1fr);gap:6px;align-items:center;margin:2px 0}
+.hz-an-fila>b{font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase}
+.hz-an-dias{display:grid;grid-template-columns:repeat(31,minmax(0,1fr));gap:1.5px}
+.hz-an-cab i{font-style:normal;font-size:9px;color:var(--text-secondary);height:auto;overflow:visible;white-space:nowrap}
+.hz-an-c{display:block;min-width:0;width:100%;height:16px;padding:0;border:0;border-radius:3px;background:var(--bg-tertiary);cursor:pointer}
+.hz-an-c.n1{background:#60a5fa}.hz-an-c.n2{background:#fde047}.hz-an-c.n3{background:#f87171}
+.hz-an-c.hoy{box-shadow:0 0 0 1.5px var(--gold)}.hz-an-c.sel{outline:2px solid var(--text-primary);outline-offset:1px}
+.hz-an-no{height:16px}
+.hz-an-ley{display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:12px;margin:10px 0 0}.hz-an-ley .hz-an-c{display:inline-block;width:16px;height:14px;cursor:default}.hz-an-ley small{color:var(--text-secondary)}
+.hz-an-sel{margin-top:8px;padding:8px 10px;background:var(--bg-secondary);border-radius:10px;font-size:13px}
+.hz-an-lista{margin-top:12px;padding-top:10px;border-top:.5px solid var(--border)}
+.hz-an-co{border-left:3px solid #fde047;background:var(--bg-secondary);border-radius:8px;padding:6px 10px;margin-top:6px;font-size:13px}
+.hz-an-co.bad{border-left-color:#f87171}.hz-an-co small{color:var(--text-secondary);font-size:12px}
