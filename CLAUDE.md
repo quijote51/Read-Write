@@ -11,6 +11,8 @@ App web (PWA) para la gestión de la cocina y los eventos de hoteles y restauran
 - Fase 3 (`supabase/fase3-clientes.sql`): `hoteles` lleva `nombre`, `ciudad`, `modulos` (base, costes, seguridad, equipo) y `plataforma` (el Seda). `modulo_activo()` entra en `puede_config`. Códigos de cliente en `codigos_cliente` (solo la plataforma); `unirse()` acepta también un código de cliente y crea su hotel. `clientes()`, `cambiar_modulos()` y `guardar_hotel()`.
 - **Nada de «Seda» fijo en el código ni en los datos de ejemplo**: el nombre y los datos de cada cliente salen de sus Ajustes (`marca.js`).
 - La clave de Supabase que hay en el código es la publicable: es normal que esté ahí.
+- **No indexar:** la app es privada. Todas las páginas llevan `<meta name="robots" content="noindex, nofollow">`, `vercel.json` manda la cabecera `X-Robots-Tag` y `robots.txt` no bloquea el rastreo (para que los buscadores vean el «noindex»). Cada página nueva lleva también la etiqueta.
+- Rendimiento: índices por `hotel_id` en todas las tablas y reglas de acceso con `(select mi_hotel())` / `(select auth.uid())` (`supabase/rendimiento-consultas.sql`). Las reglas nuevas, escribirlas ya así.
 
 ## Archivos
 | Archivo | Qué es |
@@ -46,7 +48,7 @@ App web (PWA) para la gestión de la cocina y los eventos de hoteles y restauran
 | `fotos.js` | Reduce las fotos (900 px, JPEG) y, con sesión, las sube al almacén `fotos` de Supabase Storage (`fotos/<cuenta>/recetas|vajilla/…`, `supabase/fotos-almacen.sql`); en los datos solo queda el enlace. `fotoGuardar` borra la anterior. Sin sesión o si falla, la foto va dentro como antes y `reducirFotosGuardadas` la pasa al almacén en la siguiente carga. |
 | `instalar.js` | Aviso «Instalar» en todas las apps: botón dorado cuando Android lo permite (`beforeinstallprompt`) y, si no, instrucciones (iPhone: Compartir; Android: abrir en Chrome → ⋮). No sale si ya está instalada o se cerró. |
 | `app-base.js` + `app-base.css` | Base común de las apps sueltas: sesión, carga de eventos, recetas y proveedores, `syncConfig`, `recetaDePlato` y estilos. |
-| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v58`) y añadir a `SHELL` cada archivo nuevo. Cada app suelta nueva va también en la lista `clave` de navegación.** Archivos propios: red primero (si no, la página nueva se mezcla con un .js viejo guardado); CDN: caché primero. |
+| `sw.js` | Service worker. **Subir `CACHE` (ahora `oido-cocina-v59`) y añadir a `SHELL` cada archivo nuevo. Cada app suelta nueva va también en la lista `clave` de navegación.** Archivos propios: red primero (si no, la página nueva se mezcla con un .js viejo guardado); CDN: caché primero. |
 | `manifest-*.json` + `*-192/512/maskable/apple-180/favicon-32.png` | Una app instalable por módulo. Iconos dorados (#c9a84c) sobre fondo #1a1a1a. |
 | `supabase/*.sql` | Referencia, todos aplicados (fase 2 y fase 3 el 3/11/2026). |
 | `PENDIENTES.md` | Lista de tareas pendientes. **Leerla al empezar.** |
