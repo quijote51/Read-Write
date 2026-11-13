@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+# Oído Cocina es una app privada: todas las páginas llevan «noindex» (etiqueta y cabecera X-Robots-Tag).
+# No se bloquea el rastreo aquí para que los buscadores puedan ver ese «noindex» y no las muestren.

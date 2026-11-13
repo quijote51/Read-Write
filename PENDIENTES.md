@@ -1,6 +1,7 @@
 # Pendientes (actualizado el 12 de noviembre de 2026, cierre del día)
 
 ## Para seguir mañana
+- [ ] Pegar `supabase/rendimiento-consultas.sql` en el SQL Editor de Supabase y pulsar Run (índices y reglas más rápidas; no cambia datos ni permisos). Debe salir 0 y 14.
 - [ ] Probar con la cuenta real lo de abajo («Por probar con la cuenta real»), sobre todo el **dictado de recetas** con el micrófono del móvil y los **Primeros pasos** con los datos del Seda.
 - [ ] Que alguien que no conozca la app la ponga en marcha con «Primeros pasos» y apuntar dónde se atasca.
 - [ ] Ideas pendientes de decidir: foto de la receta (gratis para fichas impresas; con IA de pago para letra a mano), hotel de pruebas para enseñar la app, cliente piloto.
