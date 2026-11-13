@@ -11,12 +11,32 @@ function hzNormaliza(v){
   return v;
 }
 const hzClon=o=>JSON.parse(JSON.stringify(o));
-/* Combina lo local con lo de la nube: gana el conjunto más reciente (ts) y, semana a semana, la semana editada más tarde (wts). */
+/* Combina lo local con lo de la nube. Si se conoce cómo estaba la nube la última vez (cfgBase), se junta DATO A DATO:
+   cada persona dentro de cada semana, y las listas (equipo, vacaciones, bloqueos) por elemento, respetando lo que cada lado
+   borró. Sin esa referencia: gana el conjunto más reciente (ts) y, semana a semana, la semana editada más tarde (wts). */
+const HZ_CLAVE={equipo:o=>o&&o.n,vac:o=>o&&[o.e,o.t,o.i,o.f].join('|'),bloqueos:o=>o&&[o.i,o.f,o.n].join('|')};
+function hzListas(b,m,n,clave,pref){
+  // b = cómo estaba, m = lado preferido, n = el otro. Se quita lo que cualquiera de los dos borró y se suma lo añadido.
+  const kb=new Set((b||[]).map(clave)),km=new Set(m.map(clave)),kn=new Set(n.map(clave));
+  const hay=Array.isArray(b);
+  const res=[];const visto=new Set();
+  const poner=(o,k)=>{if(visto.has(k))return;visto.add(k);res.push(o)};
+  m.forEach(o=>{const k=clave(o);if(hay&&kb.has(k)&&!kn.has(k))return;poner(o,k)});
+  n.forEach(o=>{const k=clave(o);if(hay&&kb.has(k)&&!km.has(k))return;poner(o,k)});
+  return res}
 function hzElige(l,c){
   l=hzNormaliza(hzClon(l)); if(!c) return l; c=hzNormaliza(hzClon(c));
   const base=(l.ts||0)>(c.ts||0)?l:c, otro=base===l?c:l, r=hzClon(base);
+  let ref=null;try{if(typeof cfgBase==='function'){const g=cfgBase(HZ_KEY);if(g&&typeof g==='object')ref=hzNormaliza(hzClon(g))}}catch(e){}
   for(const k in otro.semanas){const tb=(base.wts||{})[k]||0,to=(otro.wts||{})[k]||0;
-    if(!(k in r.semanas)||to>tb){r.semanas[k]=hzClon(otro.semanas[k]);r.wts[k]=to}}
+    if(!(k in r.semanas)){r.semanas[k]=hzClon(otro.semanas[k]);r.wts[k]=to;continue}
+    if(ref&&typeof cfgMezcla==='function'&&ref.semanas[k]&&JSON.stringify(r.semanas[k])!==JSON.stringify(otro.semanas[k])){
+      try{r.semanas[k]=cfgMezcla(ref.semanas[k],base.semanas[k],otro.semanas[k],[],[]);r.wts[k]=Math.max(tb,to);continue}catch(e){}}
+    if(to>tb){r.semanas[k]=hzClon(otro.semanas[k]);r.wts[k]=to}}
+  if(ref){
+    for(const f in HZ_CLAVE)r[f]=hzListas(ref[f],base[f]||[],otro[f]||[],HZ_CLAVE[f]);
+    ['extras','practicas'].forEach(f=>{if(typeof cfgMezcla==='function'){try{r[f]=cfgMezcla(ref[f],base[f],otro[f],[],[])}catch(e){}}})}
+  else{r.bloqueos=Array.isArray(r.bloqueos)?r.bloqueos:[];if(!r.bloqueos.length&&Array.isArray(otro.bloqueos)&&otro.bloqueos.length)r.bloqueos=hzClon(otro.bloqueos)}
   // Lo ya enviado por WhatsApp también se junta: por persona gana el envío más reciente
   r.bloqueos=Array.isArray(r.bloqueos)?r.bloqueos:[];if(!r.bloqueos.length&&Array.isArray(otro.bloqueos)&&otro.bloqueos.length)r.bloqueos=hzClon(otro.bloqueos);
   r.enviado=r.enviado||{};for(const k in (otro.enviado||{})){r.enviado[k]=r.enviado[k]||{};for(const n in otro.enviado[k]){const a=r.enviado[k][n],b=otro.enviado[k][n];if(!a||(b.ts||0)>(a.ts||0))r.enviado[k][n]=b}}
