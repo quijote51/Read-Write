@@ -16,14 +16,15 @@
 .hz-tabla th.nom,.hz-tabla td.nom{text-align:left;position:sticky;left:0;background:var(--bg-primary);z-index:1;min-width:104px;border-right:.5px solid var(--border)}
 .hz-tabla td.nom b{display:block}.hz-tabla td.nom small{color:var(--text-secondary);font-size:11px}
 .hz-tabla tr.grp td{background:var(--bg-secondary);color:var(--text-secondary);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;text-align:left}
-.hz-cel{display:flex;flex-direction:column;gap:2px;width:100%;min-height:34px;border:0;border-radius:6px;padding:4px 3px;font:500 11px inherit;font-family:inherit;cursor:pointer;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
-.hz-cel.trab{background:#e1f5ee;color:#085041}.hz-cel.jefe{background:#e6f1fb;color:#0c447c}.hz-cel.libre{background:#faeeda;color:#633806}
-.hz-cel.vac{background:#fcebeb;color:#791f1f}.hz-cel.baja{background:#fbeaf0;color:#72243e}.hz-cel.extra{background:#eeedfe;color:#3c3489}
+.hz-cel{display:flex;flex-direction:column;gap:2px;width:100%;min-height:34px;border:0;border-radius:6px;padding:4px 3px;font:700 12px inherit;font-family:inherit;cursor:pointer;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+/* Colores llenos y letra fuerte (antes eran pastel y apenas se distinguían). Todos con contraste ≥ 4.5 frente a su letra. */
+.hz-cel.trab{background:#15803d;color:#fff}.hz-cel.jefe{background:#1d4ed8;color:#fff}.hz-cel.libre{background:#facc15;color:#422006}
+.hz-cel.vac{background:#c81e1e;color:#fff}.hz-cel.baja{background:#be185d;color:#fff}.hz-cel.extra{background:#6d28d9;color:#fff}
 .hz-cel.vacio{background:transparent;color:var(--text-tertiary);border:1px dashed var(--border-md)}.hz-cel.sel{outline:2px solid var(--gold)}
 .hz-tabla td.h{font-weight:600;font-variant-numeric:tabular-nums}.hz-tabla td.h.alta{color:var(--danger-text)}
 .hz-tabla tr.cob td{font-weight:600;border-bottom:0}
-.hz-cobp{display:inline-block;min-width:28px;padding:2px 8px;border-radius:99px}
-.hz-cobp.ok{background:#e1f5ee;color:#085041}.hz-cobp.warn{background:#faeeda;color:#633806}.hz-cobp.bad{background:#fcebeb;color:#791f1f}
+.hz-cobp{display:inline-block;min-width:28px;padding:2px 8px;border-radius:99px;font-weight:700}
+.hz-cobp.ok{background:#15803d;color:#fff}.hz-cobp.warn{background:#facc15;color:#422006}.hz-cobp.bad{background:#c81e1e;color:#fff}
 .hz-editor{background:var(--bg-primary);border:1px solid var(--gold);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
 .hz-chips{display:flex;flex-wrap:wrap;gap:6px}
 .hz-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:10px}
