@@ -1,6 +1,8 @@
 # Pendientes (actualizado el 12 de noviembre de 2026, cierre del día)
 
 ## Para seguir mañana
+- [ ] Pegar `supabase/rendimiento-reglas.sql` en el SQL Editor de Supabase y pulsar Run (reglas 80 veces más rápidas con un hotel de 400 eventos; no cambia permisos). Debe salir sin_envolver = 0 y reglas_total = 32.
+- [ ] Prueba de carga hecha (13/11): la web y la carta QR aguantan; falta probar con varias máquinas o un servicio externo si se quiere más margen (150-300 invitados desde redes distintas).
 - [ ] Segundo plano (13/11): probar en el móvil «Enviar archivo» de una hoja de APPCC (mientras prepara, cambia de sección; al acabar, pulsa «Enviar» en la pastilla) y «Leer con foto» de un albarán.
 - [ ] Caché por capas (13/11): tras publicar, abre la app 2 veces con internet; a partir de la siguiente publicación saldrá la barra «Hay una versión nueva · Actualizar». Si un móvil se queda con la versión vieja, ciérrale la app del todo y ábrela.
 - [ ] Pegar `supabase/rendimiento-consultas.sql` en el SQL Editor de Supabase y pulsar Run (índices y reglas más rápidas; no cambia datos ni permisos). Debe salir 0 y 14.

@@ -1,0 +1,101 @@
+{
+ "inicio_utc": "00:58:04",
+ "fin_utc": "00:59:24",
+ "escenario": "equipo",
+ "usuarios_max": 150,
+ "duracion_s": 80,
+ "motivo_fin": "tiempo cumplido",
+ "peticiones": 6482,
+ "errores": 0,
+ "descarga_MB": 122.6,
+ "por_tipo": [
+  {
+   "tipo": "caliente:sw.js",
+   "n": 466,
+   "errores": 0,
+   "estados": "200",
+   "p50": 41,
+   "p95": 62,
+   "p99": 87,
+   "max": 196
+  },
+  {
+   "tipo": "fria:index",
+   "n": 94,
+   "errores": 0,
+   "estados": "200",
+   "p50": 56,
+   "p95": 85,
+   "p99": 99,
+   "max": 99
+  },
+  {
+   "tipo": "fria:codigo",
+   "n": 3948,
+   "errores": 0,
+   "estados": "200",
+   "p50": 42,
+   "p95": 68,
+   "p99": 95,
+   "max": 197
+  },
+  {
+   "tipo": "fria:icono",
+   "n": 1974,
+   "errores": 0,
+   "estados": "200",
+   "p50": 41,
+   "p95": 61,
+   "p99": 95,
+   "max": 247
+  },
+  {
+   "tipo": "CARGA FRIA COMPLETA",
+   "n": 94,
+   "errores": 0,
+   "estados": "200",
+   "p50": 554,
+   "p95": 635,
+   "p99": 799,
+   "max": 799
+  }
+ ],
+ "linea_de_tiempo": [
+  {
+   "desde_s": 0,
+   "rps": 57.9,
+   "p95_ms": 76,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 10,
+   "rps": 136.5,
+   "p95_ms": 67,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 20,
+   "rps": 116.6,
+   "p95_ms": 63,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 30,
+   "rps": 70.6,
+   "p95_ms": 57,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 40,
+   "rps": 138.8,
+   "p95_ms": 62,
+   "err_pct": 0
+  },
+  {
+   "desde_s": 50,
+   "rps": 127.8,
+   "p95_ms": 75,
+   "err_pct": 0
+  }
+ ]
+}
