@@ -25,7 +25,7 @@ const cubre=(tr,h)=>tr.some(([i,f])=>(h>=i&&h<f)||(h+24>=i&&h+24<f));
 function rng(seed){let a=seed>>>0;return()=>{a+=0x6D2B79F5;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 function forzado(e,fechaIso){
   const v=H().vac.find(x=>x.e===e.n&&x.i<=fechaIso&&x.f>=fechaIso);
-  return v?(v.t==='maternal'?'BAJA MATERNAL':'VACACIONES'):null}
+  return v?(v.t==='maternal'?'BAJA MATERNAL':v.t==='baja'?'BAJA':'VACACIONES'):null}
 // tramos con memoria: los mismos turnos se leen miles de veces
 const _trM=new Map();function tramosM(x){let r=_trM.get(x);if(r===undefined){r=tramos(x);_trM.set(x,r)}return r}
 function candidatos(e,forz,finPrev,R){

@@ -80,7 +80,7 @@ function tramos(t){
   const r=[];t.split('\n').forEach(seg=>{const p=seg.trim().split(/[-aA]/);if(p.length<2)return;const i=pHM(p[0]);let f=pHM(p[1]);if(isNaN(i)||isNaN(f))return;if(f<=i)f+=24;r.push([i,f])});return r}
 const horas=t=>tramos(t).reduce((s,[i,f])=>s+f-i,0);
 const trabaja=t=>tramos(t).length>0;
-function tipo(t){if(!t)return'vacio';const u=t.toUpperCase();if(u.includes('LIBRE'))return'libre';if(u.includes('VACACIONES'))return'vac';if(u.includes('BAJA'))return'baja';return'trab'}
+function tipo(t){if(!t)return'vacio';const u=t.toUpperCase();if(u.includes('LIBRE'))return'libre';if(u.includes('VACACIONES'))return'vac';if(u.includes('BAJA'))return u.includes('MATERNAL')?'baja':'bajan';return'trab'}
 const H=()=>horarios;
 function equipoSem(k){const a=fd(k),b=sumar(a,6),ia=iso(a),ib=iso(b);return H().equipo.filter(e=>(!e.desde||e.desde<=ib)&&(!e.hasta||e.hasta>=ia))}
 function fila(k,n){const s=H().semanas[k]||(H().semanas[k]={});return s[n]||(s[n]=['','','','','','',''])}
@@ -143,8 +143,8 @@ function barraIn(){const f=sumar(semana,6);return `<button class="btn-sec" data-
 function barra(){return `<div class="hz-bar">${barraIn()}</div>`}
 /* Vista de móvil: una tarjeta por día. Quien trabaja va en filas (por hora de entrada) y el resto (libre, vacaciones, baja) en chips pequeños.
    En pantallas anchas se ve la tabla de siempre; en estrechas (≤ 700 px) solo esta (CSS en horarios.css). */
-const ORDEN_ESTADO={libre:1,vac:2,baja:3,vacio:4};
-const ETQ_ESTADO={libre:'Libre',vac:'Vacaciones',baja:'Baja',vacio:'Sin turno'};
+const ORDEN_ESTADO={libre:1,vac:2,baja:3,bajan:3,vacio:4};
+const ETQ_ESTADO={libre:'Libre',vac:'Vacaciones',baja:'Baja maternal',bajan:'Baja',vacio:'Sin turno'};
 function vDias(k,eq,vacia,ed){
   const s=H().semanas[k]||{},hoyIso=iso(new Date());let h='<div class="hz-dvista">';
   for(let i=0;i<7;i++){
@@ -170,7 +170,7 @@ function editorHtml(k){
     return `<div class="hz-editor"><b>${esc(edit.e)} · ${DL[edit.i]} ${d.getDate()} ${MES[d.getMonth()]}</b>
     <label for="hz-turno" style="font-size:12px;color:var(--text-secondary)">Turno (un bloque por línea; el partido son dos líneas)</label>
     <textarea id="hz-turno" rows="2" placeholder="08:00-16:00">${esc(t)}</textarea>
-    <div class="hz-chips">${copias.map(([n,v])=>`<button class="btn-sec hz-sm hz-copia" data-q="${esc(v)}" title="${esc(v.replace('\n',' + '))}">${n}</button>`).join('')}${[['Libre','LIBRE'],['Vacaciones','VACACIONES'],['Baja','BAJA MATERNAL'],['06:30-14:30','06:30-14:30'],['08:00-16:00','08:00-16:00'],['12:00-20:00','12:00-20:00'],['14:30-22:30','14:30-22:30'],['16:00-00:00','16:00-00:00'],['Partido','12:00-16:00\n20:00-00:00']].map(([n,v])=>`<button class="btn-sec hz-sm" data-q="${esc(v)}">${n}</button>`).join('')}</div>
+    <div class="hz-chips">${copias.map(([n,v])=>`<button class="btn-sec hz-sm hz-copia" data-q="${esc(v)}" title="${esc(v.replace('\n',' + '))}">${n}</button>`).join('')}${[['Libre','LIBRE'],['Vacaciones','VACACIONES'],['Baja','BAJA'],['Baja maternal','BAJA MATERNAL'],['06:30-14:30','06:30-14:30'],['08:00-16:00','08:00-16:00'],['12:00-20:00','12:00-20:00'],['14:30-22:30','14:30-22:30'],['16:00-00:00','16:00-00:00'],['Partido','12:00-16:00\n20:00-00:00']].map(([n,v])=>`<button class="btn-sec hz-sm" data-q="${esc(v)}">${n}</button>`).join('')}</div>
     <div class="hz-bar"><button class="btn btn-p" data-a="gturno">Guardar</button><button class="btn-sec" data-a="cturno">Cancelar</button><button class="btn-sec" data-a="bturno">Borrar celda</button></div></div>`}
   return ''}
 function vPlantilla(){
