@@ -48,6 +48,7 @@
 <script src="instalar.js"></script>
 <script src="actualizar.js"></script>
 <script src="cola.js"></script>
+<script src="conjunta.js"></script>
 <script>
 // ══════════════════════════════════════
 // OÍDO COCINA · Configuración Supabase
@@ -3382,45 +3383,8 @@ function imprimirFicha(){
 }
 
 /* ---- CONJUNTA ---- */
-function initConjunta(){const hoy=new Date();const pad=n=>String(n).padStart(2,'0');const t=`${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`;ge('conj-fecha').value=t;ge('conj-semana').value=t;renderConjunta()}
 function getWeekRange(s){const d=new Date(s+'T00:00:00');const day=d.getDay();const dl=day===0?-6:1-day;const l=new Date(d);l.setDate(d.getDate()+dl);const dm=new Date(l);dm.setDate(l.getDate()+6);return{lunes:l,domingo:dm}}
-function renderConjunta(){
-  const modo=ge('conj-modo').value;
-  ge('conj-fecha-wrap').style.display=modo==='dia'?'block':'none';
-  ge('conj-semana-wrap').style.display=modo==='semana'?'block':'none';
-  ge('conj-selector').style.display=modo==='seleccion'?'block':'none';
-  let evs=[];
-  if(modo==='dia'){const f=ge('conj-fecha').value;if(!f)return;evs=eventos.filter(e=>e.fecha===f)}
-  else if(modo==='semana'){const f=ge('conj-semana').value;if(!f)return;const{lunes,domingo}=getWeekRange(f);evs=eventos.filter(e=>{const d=new Date(e.fecha+'T00:00:00');return d>=lunes&&d<=domingo})}
-  else{ge('conj-selector').innerHTML=`<p style="font-size:12px;color:var(--text-secondary);margin-bottom:5px">Selecciona eventos:</p>`+[...eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(e=>`<div class="ev-check" id="chk-${e.id}" onclick="this.classList.toggle('sel');buildConjunta(eventos.filter(ev=>document.getElementById('chk-'+ev.id)?.classList.contains('sel')))"><span style="color:var(--text-primary)">${fmtFecha(e.fecha)} · <b>${escH(e.nombre)}</b> (${e.pax} pax)</span></div>`).join('');
-    evs=eventos.filter(e=>ge('chk-'+e.id)?.classList.contains('sel'))}
-  buildConjunta(evs);
-}
-function buildConjunta(evs){
-  const cont=ge('conj-cont');
-  if(!evs.length){cont.innerHTML='<div class="empty">No hay eventos para combinar.</div>';return;}
-  const map={};
-  evs.forEach(ev=>{const f=getFactorEvento(ev);const qty=Math.round(ev.pax*f);ev.platos.forEach(p=>{const k=p.nombre.toLowerCase().trim();if(!map[k])map[k]={cat:p.cat,nombre:p.nombre,alg:p.alg||[],total:0,det:[]};map[k].total+=qty;map[k].det.push({ev:ev.nombre,qty})})});
-  const merged=Object.values(map);
-  const totalPax=evs.reduce((s,e)=>s+e.pax,0);
-  const todosAlerg=[...new Set(evs.flatMap(e=>e.alergenos_menu||[]))];
-  const alergC=evs.filter(e=>algHay(e.alergias_txt)).map(e=>`<b>${escH(e.nombre)}:</b> ${escH(e.alergias_txt)}`).join('<br>');
-  let html=`<div class="stat-g"><div class="stat"><div class="stat-l">Eventos</div><div class="stat-v">${evs.length}</div></div><div class="stat"><div class="stat-l">Pax total</div><div class="stat-v">${totalPax}</div></div></div>`;
-  if(alergC)html+=`<div class="card" style="border:.5px solid var(--warn-text);margin-bottom:10px"><div style="font-size:13px;font-weight:500;color:var(--warn-text);margin-bottom:4px"><i class="ti ti-alert-triangle"></i> Alergias (todos los eventos)</div><div style="font-size:13px;line-height:1.7">${alergC}</div></div>`;
-  if(todosAlerg.length)html+=`<div class="card" style="margin-bottom:10px"><div style="font-size:13px;font-weight:500;margin-bottom:5px"><i class="ti ti-shield-check"></i> Alérgenos presentes</div><div>${todosAlerg.map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('')}</div></div>`;
-  html+=`<div class="card" style="padding:0;overflow:hidden"><table class="ptable"><thead><tr><th>Plato</th><th>Alérgenos</th><th style="text-align:right">Total</th><th style="text-align:right;font-size:11px">Desglose</th></tr></thead><tbody>`;
-  CATS.forEach(cat=>{
-    const items=merged.filter(p=>p.cat===cat.key).sort((a,b)=>b.total-a.total);if(!items.length)return;
-    html+=`<tr><td colspan="4" class="cat-hdr" style="border-left:3px solid ${cat.color}">${cat.label}</td></tr>`;
-    items.forEach(p=>{
-      const aH=(p.alg||[]).map(a=>`<span class="alg-tag">${algIcon(a)} ${algLabel(a)}</span>`).join('');
-      const det=p.det.map(d=>`${d.ev}: ${d.qty}`).join(' · ');
-      html+=`<tr><td style="font-weight:500">${escH(p.nombre)}</td><td>${aH||'—'}</td><td style="text-align:right;font-size:18px;font-weight:500">${p.total}</td><td style="text-align:right;font-size:11px;color:var(--text-secondary)">${det}</td></tr>`;
-    });
-  });
-  html+='</tbody></table></div>';
-  cont.innerHTML=html;
-}
+/* initConjunta, renderConjunta y buildConjunta están en conjunta.js */
 
 /* ---- RECETARIO ---- (ficha, alta, edición y elaboraciones base en recetario.js) */
 function imprimirReceta(id){
