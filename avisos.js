@@ -175,6 +175,7 @@ window.avisosRefrescar = async function(){
 window.addEventListener('hashchange', () => { if(location.hash === '#avisos'){ history.replaceState(null, '', location.pathname + location.search); abrir(true); } });
 setInterval(() => { if(document.visibilityState === 'visible') window.avisosRecalcular(); }, 5 * 60e3);
 window.avisosRecalcular = () => { lista = calcular(); campana(); if(abierto) pintar(); };
+window.avisosLista = () => lista.slice(); // para la tarjeta «Hoy» (hoy.js)
 
 const CSS = `#av-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:#c9a84c;cursor:pointer;font-size:14px;min-height:34px;min-width:34px}
 #av-n{position:absolute;top:-6px;right:-6px;background:#c9a84c;color:#111;border-radius:999px;font-size:11px;font-weight:700;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center}
