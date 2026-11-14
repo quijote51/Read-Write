@@ -90,6 +90,19 @@ const trabaja = t => t && !/LIBRE|VACACIONES|BAJA/i.test(t) && /\d/.test(t);
     sem.Ana = ['10:00-18:00', '10:00-18:00', '10:00-18:00', '10:00-18:00', '10:00-18:00', 'LIBRE', 'LIBRE'];
     ok(!F.avisos('2026-11-09').some(x => /Ana: .*libre seguido/.test(x)), 'avisos: dos libres seguidos cumplen el mínimo');
     sem.Ana = ana; }
+  { const W = ['2026-08-31', '2026-09-07', '2026-09-14', '2026-09-21'], h0 = S.H(), bak = {}, tr = Array(7).fill('08:00-16:00');
+    W.forEach(w => { bak[w] = h0.semanas[w]; h0.semanas[w] = {Ana: tr.slice()}; });
+    S.enviar('hz-f-hp', {'hz-hp-cob': '3', 'hz-hp-h': '40', 'hz-hp-desc': '12', 'hz-hp-libres': '2', 'hz-hp-lf': '1', 'hz-hp-des': '1', 'hz-hp-med': '1', 'hz-hp-noc': '1', 'hz-hp-fines': '1'});
+    ok(h0.hp.finesLibres === 1 && h0.hp.maxLibreFin === 1 && h0.hp.minMed === 1, 'parámetros del horario: máximo de libres de fin de semana, mínimos por franja y fines de semana libres se guardan');
+    ok(F.avisos('2026-09-07').some(x => /Ana: solo 0 fines de semana libres en septiembre \(mínimo 1\)/i.test(x)), 'avisos: sin ningún fin de semana libre en el mes avisa');
+    h0.semanas['2026-09-14'].Ana[5] = 'LIBRE'; h0.semanas['2026-09-14'].Ana[6] = 'LIBRE';
+    ok(!F.avisos('2026-09-07').some(x => /Ana: solo .* de semana libre/.test(x)), 'avisos: con un fin de semana libre en el mes cumple el mínimo');
+    S.enviar('hz-f-hp', {'hz-hp-cob': '3', 'hz-hp-h': '40', 'hz-hp-desc': '12', 'hz-hp-libres': '2', 'hz-hp-fines': '0'});
+    W.forEach(w => { if(bak[w]) h0.semanas[w] = bak[w]; else delete h0.semanas[w]; }); }
+  S.enviar('hz-f-vp', {'hz-vp-ver': '15', 'hz-vp-inv': '15', 'hz-vp-fest': '18', 'hz-vp-primer': '15', 'hz-vp-maxf': '1'});
+  ok(S.H().vp.maxFuera === 1 && /máximo de 1 personas de vacaciones a la vez/.test(F.avisoMax({e: 'Jimena', t: 'verano', i: '2026-08-01', f: '2026-08-02', n: ''})), 'vacaciones: avisa si se pasa del máximo de personas fuera a la vez');
+  ok(F.sugerir('Jimena', 'verano', 2026).sug.every(s => s.con.length === 0), 'organizador: con máximo 1 fuera a la vez no propone fechas que coincidan con otras vacaciones');
+  S.enviar('hz-f-vp', {'hz-vp-ver': '15', 'hz-vp-inv': '15', 'hz-vp-fest': '18', 'hz-vp-primer': '15', 'hz-vp-maxf': '0'});
   ok(F.sinTurnos('2026-11-23') && !F.sinTurnos(lun16), 'sinTurnos: semana vacía y semana con datos');
   const dia = S.sb.hzDia('2026-11-17');
   ok(dia && dia.i === 1 && dia.gente.length === F.cobertura(lun16, 1), 'hzDia (lo usan Hojas y Eventos): quién trabaja el martes 17');

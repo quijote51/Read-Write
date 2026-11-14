@@ -60,12 +60,12 @@ function pre(c){
 function penal(sol,pers,R){
   let p=0;const n=sol.length,P=sol.map(pre);
   for(let d=0;d<7;d++){
-    let cov=0,lib=0,mediodia=false,noche=false,desayuno=false;
-    for(let i=0;i<n;i++){const q=P[i];if(q.cn[d]){cov++;if(pers[i].g<=1){if(q.med[d])mediodia=true;if(q.noc[d])noche=true}if(q.des[d])desayuno=true}if(sol[i].libre[d])lib++}
+    let cov=0,lib=0,medN=0,nocN=0,desN=0;
+    for(let i=0;i<n;i++){const q=P[i];if(q.cn[d]){cov++;if(pers[i].g<=1){if(q.med[d])medN++;if(q.noc[d])nocN++}if(q.des[d])desN++}if(sol[i].libre[d])lib++}
     if(cov<K.MIN_COB)p+=100*(K.MIN_COB-cov);
-    if(d>=5&&lib>1)p+=100*(lib-1);
+    if(d>=5&&lib>K.MAXLF)p+=100*(lib-K.MAXLF);
     if(lib>2)p+=10*(lib-2);
-    if(!mediodia)p+=80;if(!noche)p+=80;if(!desayuno&&R.hayDesayuno[d])p+=80;
+    if(medN<K.MIN_MED)p+=80*(K.MIN_MED-medN);if(nocN<K.MIN_NOC)p+=80*(K.MIN_NOC-nocN);if(R.hayDesayuno[d]&&desN<K.MIN_DES)p+=80*(K.MIN_DES-desN);
     R.ev[d].forEach(ev=>{const pres=sol.filter((c,i)=>pers[i].g<=3&&cubre(c.tr[d],ev.h)).length;if(pres<ev.nec)p+=60*(ev.nec-pres)});
   }
   for(let i=0;i<n;i++){const q=P[i];

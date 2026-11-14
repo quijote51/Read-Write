@@ -78,13 +78,13 @@ function vAnioVac(y,parte){
    48 días al año = 30 de vacaciones (15 de verano + 15 de invierno) + 18 de festivos que se devuelven en vacaciones («extra»).
    Los 18 festivos se dan sueltos (por días o por semanas): se apuntan con tipo «extra» en Añadir; el organizador solo propone verano e invierno.
    Se guardan en horarios.vp (se sincroniza con el resto). Verano = del 15 jun al 15 sep; invierno = el resto del año. */
-const VP0={ver:15,inv:15,fest:18,primer:15,lunes:true,vuelta:true};
+const VP0={ver:15,inv:15,fest:18,primer:15,lunes:true,vuelta:true,maxFuera:0};
 const vpGet=()=>Object.assign({},VP0,H().vp||{});
 const verano=y=>[y+'-06-15',y+'-09-15'];
 function vParam(){
   const p=vpGet(),tot=(+p.ver||0)+(+p.inv||0)+(+p.fest||0);
   return `<form class="card" id="hz-f-vp"><b>Parámetros de vacaciones</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Total al año: <b>${tot} días</b> (vacaciones ${(+p.ver||0)+(+p.inv||0)} + festivos devueltos ${+p.fest||0}). Los festivos se dan sueltos, por días o por semanas: apúntalos en «Añadir» con tipo «extra».</p>
-    <div class="hz-form"><label>Días de verano<input type="number" min="0" max="60" id="hz-vp-ver" value="${+p.ver||0}"></label><label>Días de invierno<input type="number" min="0" max="60" id="hz-vp-inv" value="${+p.inv||0}"></label><label>Festivos devueltos (tipo «extra»)<input type="number" min="0" max="60" id="hz-vp-fest" value="${+p.fest||0}"></label><label>Primer bloque (mínimo de días)<input type="number" min="1" max="60" id="hz-vp-primer" value="${+p.primer||1}"></label></div>
+    <div class="hz-form"><label>Días de verano<input type="number" min="0" max="60" id="hz-vp-ver" value="${+p.ver||0}"></label><label>Días de invierno<input type="number" min="0" max="60" id="hz-vp-inv" value="${+p.inv||0}"></label><label>Festivos devueltos (tipo «extra»)<input type="number" min="0" max="60" id="hz-vp-fest" value="${+p.fest||0}"></label><label>Primer bloque (mínimo de días)<input type="number" min="1" max="60" id="hz-vp-primer" value="${+p.primer||1}"></label><label>Máximo de personas de vacaciones a la vez (0 = sin límite)<input type="number" min="0" max="20" id="hz-vp-maxf" value="${+p.maxFuera||0}"></label></div>
     <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hz-vp-lunes"${p.lunes?' checked':''} style="width:auto;min-height:0"> Las vacaciones empiezan siempre en lunes (el organizador solo propone lunes)</label>
     <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hz-vp-vuelta"${p.vuelta?' checked':''} style="width:auto;min-height:0"> Al apuntar un bloque de verano o invierno, ofrecer que al volver libre lunes y martes (opcional: sale un botón en el aviso)</label><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`}
 // Sugiere fechas para los días de verano o invierno que le faltan a una persona: sin chocar con otras vacaciones ni con fechas sin vacaciones
@@ -102,7 +102,7 @@ function sugerir(nom,t,y){
     const fin=sumar(d,L-1),k0=iso(d),k1=iso(fin);if(k1>y+'-12-31'||!enRango(k0)||!enRango(k1))continue;
     let sc=0,bad=false;const con=new Set();
     for(let x=d;x<=fin;x=sumar(x,1)){const k=iso(x);if(bq.has(k)||prop.has(k)){bad=true;break}
-      const o=fuera[k]||[];o.forEach(n=>con.add(n));sc+=o.length*10;if(N-o.length-1<K.MIN_COB)sc+=200}
+      const o=fuera[k]||[];if((+p.maxFuera||0)>0&&o.length+1>p.maxFuera){bad=true;break}o.forEach(n=>con.add(n));sc+=o.length*10;if(N-o.length-1<K.MIN_COB)sc+=200}
     if(bad)continue;
     if(p.lunes&&d.getDay()!==1)continue;
     cand.push({i:k0,f:k1,sc,con:[...con]})}
@@ -153,6 +153,12 @@ function aplicarVac(v,poner){
   return falta}
 
 /* Al volver de un bloque de verano o invierno se OFRECE librar lunes y martes (no es obligatorio): un botón en el aviso, solo en casillas vacías */
+function avisoMax(v){
+  const mf=+vpGet().maxFuera||0;if(!mf||esBaja(v))return '';
+  const fuera={};H().vac.filter(x=>x!==v&&!esBaja(x)&&x.e!==v.e).forEach(x=>{for(let d=fd(x.i),f=fd(x.f);d<=f;d=sumar(d,1)){const k=iso(d);(fuera[k]=fuera[k]||new Set()).add(x.e)}});
+  const mal=[];for(let d=fd(v.i),f=fd(v.f);d<=f;d=sumar(d,1)){const n=(fuera[iso(d)]||new Set()).size+1;if(n>mf)mal.push(corto(d))}
+  return mal.length?`<b>Ojo:</b> se pasa del máximo de ${mf} personas de vacaciones a la vez: ${mal.slice(0,6).join(', ')}${mal.length>6?'…':''}.`:''}
+const extraVac=v=>[avisoMax(v),ofertaVuelta(v)].filter(Boolean).join('<br>');
 function ofertaVuelta(v){
   if(!vpGet().vuelta||(v.t!=='verano'&&v.t!=='invierno'))return '';
   const L0=lunes(sumar(fd(v.f),1)),dias=[0,1].filter(j=>sumar(L0,j)>fd(v.f));if(!dias.length)return '';
@@ -163,10 +169,10 @@ function ponerVuelta(nom,f){
   [0,1].forEach(j=>{if(sumar(L0,j)<=fin)return;const a=fila(k,nom);if(!a[j]||tipo(a[j])==='vacio')a[j]='LIBRE'});
   return k}
 
-K.reg({vistas:{vacaciones:vVac},util:{vVac,vAnioVac,diasEn,aplicarVac,sugerir,vOrg,vParam,ofertaVuelta,ponerVuelta}});
+K.reg({vistas:{vacaciones:vVac},util:{vVac,vAnioVac,diasEn,aplicarVac,sugerir,vOrg,vParam,ofertaVuelta,ponerVuelta,avisoMax}});
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
-  const sg=e.target.closest('[data-sug]');if(sg){const[n,t,i,f]=sg.dataset.sug.split('|'),v={e:n,t,i,f,n:''};H().vac.push(v);const falta=aplicarVac(v,true);K.msg=(falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${K.MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'')+(ofertaVuelta(v)?(falta.length?'<br>':'')+ofertaVuelta(v):'');guardar(tocadas.slice());pintar();return}
+  const sg=e.target.closest('[data-sug]');if(sg){const[n,t,i,f]=sg.dataset.sug.split('|'),v={e:n,t,i,f,n:''};H().vac.push(v);const falta=aplicarVac(v,true);K.msg=(falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${K.MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'')+(extraVac(v)?(falta.length?'<br>':'')+extraVac(v):'');guardar(tocadas.slice());pintar();return}
   const vu=e.target.closest('[data-vuelta]');if(vu){const[n,f]=vu.dataset.vuelta.split('|');const k=ponerVuelta(n,f);K.msg='';guardar([k]);pintar();return}
   const sv=e.target.closest('[data-subv]');if(sv){subVac=sv.dataset.subv;K.msg='';pintar();return}
   const vd=e.target.closest('[data-vd]');if(vd){diaSel=diaSel===vd.dataset.vd?'':vd.dataset.vd;pintar();return}
@@ -178,13 +184,13 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('submit',e=>{
   const id=e.target.id;if(id!=='hz-f-vac'&&id!=='hz-f-blq'&&id!=='hz-f-vp')return;e.preventDefault();const $=s=>document.getElementById(s);
-  if(id==='hz-f-vp'){const n=x=>Math.max(0,Math.min(60,parseInt($(x).value)||0));H().vp={ver:n('hz-vp-ver'),inv:n('hz-vp-inv'),fest:n('hz-vp-fest'),primer:Math.max(1,n('hz-vp-primer')),lunes:!!$('hz-vp-lunes').checked,vuelta:!!($('hz-vp-vuelta')||{}).checked};K.msg='';guardar();pintar();return}
+  if(id==='hz-f-vp'){const n=x=>Math.max(0,Math.min(60,parseInt($(x).value)||0));H().vp={ver:n('hz-vp-ver'),inv:n('hz-vp-inv'),fest:n('hz-vp-fest'),primer:Math.max(1,n('hz-vp-primer')),lunes:!!($('hz-vp-lunes')||{}).checked,vuelta:!!($('hz-vp-vuelta')||{}).checked,maxFuera:Math.max(0,Math.min(20,parseInt($('hz-vp-maxf')&&$('hz-vp-maxf').value)||0))};K.msg='';guardar();pintar();return}
   if(id==='hz-f-vac'){if($('hz-vf').value<$('hz-vi').value)return;
     const v={e:$('hz-ve').value,t:$('hz-vt').value,i:$('hz-vi').value,f:$('hz-vf').value,n:$('hz-vn').value.trim()};
     H().vac.push(v);const falta=aplicarVac(v,true);
     const enBloq=(H().bloqueos||[]).filter(b=>b.i<=v.f&&b.f>=v.i);
     K.msg=(falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${K.MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'')
-      +(enBloq.length?`${falta.length?'<br>':''}<b>Ojo:</b> caen en fechas sin vacaciones: ${enBloq.map(b=>esc(b.n||'sin motivo')+' ('+corto(fd(b.i))+' – '+corto(fd(b.f))+')').join(', ')}.`:'')+(ofertaVuelta(v)?(falta.length||enBloq.length?'<br>':'')+ofertaVuelta(v):'');
+      +(enBloq.length?`${falta.length?'<br>':''}<b>Ojo:</b> caen en fechas sin vacaciones: ${enBloq.map(b=>esc(b.n||'sin motivo')+' ('+corto(fd(b.i))+' – '+corto(fd(b.f))+')').join(', ')}.`:'')+(extraVac(v)?(falta.length||enBloq.length?'<br>':'')+extraVac(v):'');
     subVac='per';guardar(tocadas.slice());pintar()}
   else{const i=$('hz-bi').value,f=$('hz-bf').value;if(!i||!f||f<i)return;
     (H().bloqueos=H().bloqueos||[]).push({i,f,n:$('hz-bn').value.trim()});K.msg='';guardar();pintar()}
