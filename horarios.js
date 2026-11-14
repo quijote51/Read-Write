@@ -173,13 +173,16 @@ function editorHtml(k){
     <div class="hz-chips">${copias.map(([n,v])=>`<button class="btn-sec hz-sm hz-copia" data-q="${esc(v)}" title="${esc(v.replace('\n',' + '))}">${n}</button>`).join('')}${[['Libre','LIBRE'],['Vacaciones','VACACIONES'],['Baja','BAJA'],['Baja maternal','BAJA MATERNAL'],['06:30-14:30','06:30-14:30'],['08:00-16:00','08:00-16:00'],['12:00-20:00','12:00-20:00'],['14:30-22:30','14:30-22:30'],['16:00-00:00','16:00-00:00'],['Partido','12:00-16:00\n20:00-00:00']].map(([n,v])=>`<button class="btn-sec hz-sm" data-q="${esc(v)}">${n}</button>`).join('')}</div>
     <div class="hz-bar"><button class="btn btn-p" data-a="gturno">Guardar</button><button class="btn-sec" data-a="cturno">Cancelar</button><button class="btn-sec" data-a="bturno">Borrar celda</button></div></div>`}
   return ''}
+let modoVista='dias';try{modoVista=localStorage.getItem('hz_vista')==='tabla'?'tabla':'dias'}catch(e){}
 function vPlantilla(){
   const k=iso(semana),hoy=iso(new Date()),vacia=sinTurnos(k),eq=equipoSem(k);
   const prev=Object.keys(H().semanas).filter(x=>x<k&&!sinTurnos(x)).sort().pop();
   let h=`<div class="hz-bar">${barraIn()}<span style="flex:1"></span> ${prev&&!SOLO()?(vacia?`<button class="btn btn-p" data-a="copiar" data-p="${prev}">Copiar semana del ${corto(fd(prev))}</button>`:`<button class="btn-sec hz-sm" data-a="copiar" data-p="${prev}" title="Sustituye esta semana por la del ${corto(fd(prev))}">Repetir semana anterior</button>`):''}</div>`;
   if(vacia)h+=`<div class="hz-aviso warn">Esta semana no tiene turnos. Toca una celda para escribirlos${prev?' o copia la última semana con datos':(SOLO()?'':' o usa «Generar semanas automáticamente» más abajo')}.</div>`;
   else if(!SOLO()){const av=avisos(k);h+=av.length?`<div class="hz-aviso warn"><b>${av.length} aviso${av.length===1?'':'s'}</b><ul>${av.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:`<div class="hz-aviso ok">Sin avisos: cobertura, descansos y horas dentro de las reglas.</div>`}
-  h+=`<div class="hz-tabla hz-plan"><table><thead><tr><th class="nom">Equipo</th>${DIAS.map((n,i)=>`<th class="${iso(sumar(semana,i))===hoy?'hoy':''}">${n}<br>${sumar(semana,i).getDate()}</th>`).join('')}<th>h/sem</th></tr></thead><tbody>`;
+  const movil=window.matchMedia&&window.matchMedia('(max-width:700px)').matches,dias=modoVista!=='tabla';
+  h+=`<div class="hz-modo" role="group" aria-label="Cómo ver la plantilla"><button type="button" data-vista="dias" aria-pressed="${modoVista!=='tabla'}">Por días</button><button type="button" data-vista="tabla" aria-pressed="${modoVista==='tabla'}">Plantilla completa</button></div>`;
+  h+=`<div class="hz-tabla hz-plan${dias?' hz-ocultar':''}${movil?' hz-compacta':''}"><table><thead><tr><th class="nom">Equipo</th>${DIAS.map((n,i)=>`<th class="${iso(sumar(semana,i))===hoy?'hoy':''}">${n}<br>${sumar(semana,i).getDate()}</th>`).join('')}<th>h/sem</th></tr></thead><tbody>`;
   GRUPOS.forEach((g,gi)=>{const m=eq.filter(e=>e.g===gi);if(!m.length)return;h+=`<tr class="grp"><td colspan="9">${g}</td></tr>`;
     m.forEach(e=>{const a=fila(k,e.n),tot=a.reduce((x,t)=>x+horas(t),0);
       h+=`<tr><td class="nom"><b>${esc(e.n)}</b><small>${esc(e.rol)}</small></td>${a.map((t,i)=>{let c=tipo(t);if(c==='trab'&&e.g===0)c='jefe';
@@ -187,9 +190,9 @@ function vPlantilla(){
         const cont=c==='vacio'?(SOLO()?'':'+'):t.split('\n').map(s=>`<span>${esc(s)}</span>`).join('');
         return SOLO()?`<td><div class="hz-cel ${c}" style="cursor:default">${cont}</div></td>`:`<td><button class="hz-cel ${c}${sel}" data-e="${esc(e.n)}" data-i="${i}" aria-label="${esc(e.n)}, ${DL[i]}">${cont}</button></td>`}).join('')}<td class="h ${tot>MAX_H?'alta':''}">${tot?fmtH(tot):'–'}</td></tr>`})});
   h+=`<tr class="cob"><td class="nom">Cobertura</td>${[0,1,2,3,4,5,6].map(i=>{const c=cobertura(k,i);return`<td><span class="hz-cobp ${vacia?'':c>=MIN_COB?'ok':c===2?'warn':'bad'}">${vacia?'–':c}</span></td>`}).join('')}<td></td></tr></tbody></table></div>`;
-  const movil=window.matchMedia&&window.matchMedia('(max-width:700px)').matches,ed=editorHtml(k);
-  h+=vDias(k,eq,vacia,movil?ed:'');
-  if(!movil)h+=ed;
+  const ed=editorHtml(k);
+  if(dias)h+=vDias(k,eq,vacia,movil?ed:'');
+  if(!(dias&&movil))h+=ed;
   if(!vacia)h+=vv('cobHoras',k);
   return h+(SOLO()?'':vv('waPanel',k)+vv('panelGenerar'))}
 
@@ -289,6 +292,7 @@ if(window.matchMedia)window.matchMedia("(max-width:700px)").addEventListener("ch
 /* ---- eventos de la interfaz ---- */
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
+  {const vb=e.target.closest('[data-vista]');if(vb){modoVista=vb.dataset.vista==='tabla'?'tabla':'dias';try{localStorage.setItem('hz_vista',modoVista)}catch(x){}pintar();return}}
   if(e.target.closest('[data-mas]')){masTabs=!masTabs;pintar();return}
   const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;if(!PRINC.includes(tab))masTabs=true;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}
   const c=e.target.closest('.hz-cel,.hz-dfila,.hz-dchip');if(c){if(SOLO()||!c.dataset.e)return;edit={k:iso(semana),e:c.dataset.e,i:+c.dataset.i};pintar();const x=document.getElementById('hz-turno');if(x)x.focus();return}

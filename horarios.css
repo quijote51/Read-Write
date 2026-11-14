@@ -102,8 +102,8 @@ div.hz-dfila,div.hz-dchip{cursor:default}
 .hz-prox .hz-dt{align-self:flex-start;font-size:18px;padding:10px 18px}
 .hz-copia{border-style:dashed}
 @media(max-width:700px){
-  .hz-plan{display:none}
   .hz-dvista{display:flex}
+  .hz-plan.hz-ocultar{display:none}
   .hz-dia .hz-editor{margin:4px 0 0;border-radius:12px}.hz-editor textarea{font-size:16px}
 }
 @media(prefers-reduced-motion:reduce){.hz-cel,.hz-dfila{transition:none}.hz-cel:hover{transform:none}}
@@ -171,3 +171,11 @@ div.hz-dfila,div.hz-dchip{cursor:default}
 /* Pantalla táctil: pestañas y botones de 44 px, letra mínima 12 px (revisión de diseño 14/11) */
 @media (pointer:coarse){.hz-tabs button{min-height:44px}.hz-cel{min-height:44px}.hz-aparte{display:inline-block;padding:14px 0 14px 10px}.hz-form input,.hz-form select,.hz-eq input,.hz-eq select,.hz-dias input{min-height:44px}}
 @media screen and (pointer:coarse){.hz-tabla thead th,.hz-tabla td.nom small,.hz-tabla tr.grp td,.hz-cel.libre,.hz-cel.vac,.hz-cel.baja,.hz-cel.bajan,.hz-form label,.hz-dias label,.hz-eq label,.iv-in,.hz-dchip i,.hz-an-fila>b,.hz-an-res small{font-size:12px}}
+
+.hz-modo{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.hz-modo button{flex:1;background:var(--bg-secondary);border:0;color:var(--text-secondary);font:600 13px inherit;font-family:inherit;min-height:44px;cursor:pointer}
+.hz-modo button[aria-pressed=true]{background:var(--gold);color:#1a1a1a}
+@media(min-width:701px){.hz-modo{display:none}}
+/* Plantilla completa en el móvil: más pequeña, con desplazamiento a los lados (mejor con el móvil girado) */
+.hz-tabla.hz-compacta table{min-width:470px;font-size:10.5px}.hz-tabla.hz-compacta th,.hz-tabla.hz-compacta td{padding:3px 3px}.hz-tabla.hz-compacta .hz-cel{min-height:34px!important;font-size:10px;padding:3px 1px;border-radius:7px}.hz-tabla.hz-compacta th.nom,.hz-tabla.hz-compacta td.nom{min-width:60px}
+@media(min-width:701px) and (max-width:900px){.hz-tabla table{min-width:680px}}
