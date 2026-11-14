@@ -86,7 +86,7 @@ function vParam(){
   return `<form class="card" id="hz-f-vp"><b>Parámetros de vacaciones</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Total al año: <b>${tot} días</b> (vacaciones ${(+p.ver||0)+(+p.inv||0)} + festivos devueltos ${+p.fest||0}). Los festivos se dan sueltos, por días o por semanas: apúntalos en «Añadir» con tipo «extra».</p>
     <div class="hz-form"><label>Días de verano<input type="number" min="0" max="60" id="hz-vp-ver" value="${+p.ver||0}"></label><label>Días de invierno<input type="number" min="0" max="60" id="hz-vp-inv" value="${+p.inv||0}"></label><label>Festivos devueltos (tipo «extra»)<input type="number" min="0" max="60" id="hz-vp-fest" value="${+p.fest||0}"></label><label>Primer bloque (mínimo de días)<input type="number" min="1" max="60" id="hz-vp-primer" value="${+p.primer||1}"></label></div>
     <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hz-vp-lunes"${p.lunes?' checked':''} style="width:auto;min-height:0"> Las vacaciones empiezan siempre en lunes (el organizador solo propone lunes)</label>
-    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hz-vp-vuelta"${p.vuelta?' checked':''} style="width:auto;min-height:0"> Al volver de vacaciones, la primera semana libra lunes y martes (se pone LIBRE al apuntar el periodo)</label><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`}
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hz-vp-vuelta"${p.vuelta?' checked':''} style="width:auto;min-height:0"> Al apuntar un bloque de verano o invierno, ofrecer que al volver libre lunes y martes (opcional: sale un botón en el aviso)</label><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`}
 // Sugiere fechas para los días de verano o invierno que le faltan a una persona: sin chocar con otras vacaciones ni con fechas sin vacaciones
 function sugerir(nom,t,y){
   const p=vpGet(),need=t==='verano'?+p.ver||0:+p.inv||0,ps=H().vac.filter(v=>v.e===nom&&v.t===t&&v.i.slice(0,4)<=y&&v.f.slice(0,4)>=y),usados=ps.reduce((s,v)=>s+diasEn(v.i,v.f,y),0),falta=need-usados;
@@ -150,17 +150,24 @@ function aplicarVac(v,poner){
     if(poner)a[i]=txt;else if(/VACACIONES|BAJA/i.test(a[i]))a[i]='';
     if(poner&&!sinTurnos(k)&&cobertura(k,i)<MIN_COB)falta.push(`${DL[i]} ${d.getDate()} ${MES[d.getMonth()]} (${cobertura(k,i)})`);
   }
-  // Al volver de un bloque de verano o invierno, esa semana empieza con lunes y martes libres (solo en casillas vacías; no pisa turnos ya puestos)
-  if(poner&&(v.t==='verano'||v.t==='invierno')&&vpGet().vuelta){
-    const fin=fd(v.f),L0=lunes(sumar(fin,1)),k=iso(L0);
-    [0,1].forEach(j=>{const d=sumar(L0,j);if(d<=fin)return;const a=fila(k,v.e);if(!a[j]||tipo(a[j])==='vacio')a[j]='LIBRE';if(!tocadas.includes(k))tocadas.push(k);
-      if(!sinTurnos(k)&&cobertura(k,j)<MIN_COB)falta.push(`${DL[j]} ${d.getDate()} ${MES[d.getMonth()]} (${cobertura(k,j)}, al volver)`)})}
   return falta}
 
-K.reg({vistas:{vacaciones:vVac},util:{vVac,vAnioVac,diasEn,aplicarVac,sugerir,vOrg,vParam}});
+/* Al volver de un bloque de verano o invierno se OFRECE librar lunes y martes (no es obligatorio): un botón en el aviso, solo en casillas vacías */
+function ofertaVuelta(v){
+  if(!vpGet().vuelta||(v.t!=='verano'&&v.t!=='invierno'))return '';
+  const L0=lunes(sumar(fd(v.f),1)),dias=[0,1].filter(j=>sumar(L0,j)>fd(v.f));if(!dias.length)return '';
+  const nom=dias.map(j=>DL[j]).join(' y ');
+  return `Al volver puede librar ${nom} <button type="button" class="btn-sec hz-sm" data-vuelta="${esc(v.e)}|${v.f}">Poner LIBRE</button> <small>(opcional)</small>`}
+function ponerVuelta(nom,f){
+  const fin=fd(f),L0=lunes(sumar(fin,1)),k=iso(L0);
+  [0,1].forEach(j=>{if(sumar(L0,j)<=fin)return;const a=fila(k,nom);if(!a[j]||tipo(a[j])==='vacio')a[j]='LIBRE'});
+  return k}
+
+K.reg({vistas:{vacaciones:vVac},util:{vVac,vAnioVac,diasEn,aplicarVac,sugerir,vOrg,vParam,ofertaVuelta,ponerVuelta}});
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
-  const sg=e.target.closest('[data-sug]');if(sg){const[n,t,i,f]=sg.dataset.sug.split('|'),v={e:n,t,i,f,n:''};H().vac.push(v);const falta=aplicarVac(v,true);K.msg=falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'';guardar(tocadas.slice());pintar();return}
+  const sg=e.target.closest('[data-sug]');if(sg){const[n,t,i,f]=sg.dataset.sug.split('|'),v={e:n,t,i,f,n:''};H().vac.push(v);const falta=aplicarVac(v,true);K.msg=(falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'')+(ofertaVuelta(v)?(falta.length?'<br>':'')+ofertaVuelta(v):'');guardar(tocadas.slice());pintar();return}
+  const vu=e.target.closest('[data-vuelta]');if(vu){const[n,f]=vu.dataset.vuelta.split('|');const k=ponerVuelta(n,f);K.msg='';guardar([k]);pintar();return}
   const sv=e.target.closest('[data-subv]');if(sv){subVac=sv.dataset.subv;K.msg='';pintar();return}
   const vd=e.target.closest('[data-vd]');if(vd){diaSel=diaSel===vd.dataset.vd?'':vd.dataset.vd;pintar();return}
   const a=e.target.closest('[data-a]')?.dataset.a;
@@ -177,7 +184,7 @@ document.addEventListener('submit',e=>{
     H().vac.push(v);const falta=aplicarVac(v,true);
     const enBloq=(H().bloqueos||[]).filter(b=>b.i<=v.f&&b.f>=v.i);
     K.msg=(falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'')
-      +(enBloq.length?`${falta.length?'<br>':''}<b>Ojo:</b> caen en fechas sin vacaciones: ${enBloq.map(b=>esc(b.n||'sin motivo')+' ('+corto(fd(b.i))+' – '+corto(fd(b.f))+')').join(', ')}.`:'');
+      +(enBloq.length?`${falta.length?'<br>':''}<b>Ojo:</b> caen en fechas sin vacaciones: ${enBloq.map(b=>esc(b.n||'sin motivo')+' ('+corto(fd(b.i))+' – '+corto(fd(b.f))+')').join(', ')}.`:'')+(ofertaVuelta(v)?(falta.length||enBloq.length?'<br>':'')+ofertaVuelta(v):'');
     subVac='per';guardar(tocadas.slice());pintar()}
   else{const i=$('hz-bi').value,f=$('hz-bf').value;if(!i||!f||f<i)return;
     (H().bloqueos=H().bloqueos||[]).push({i,f,n:$('hz-bn').value.trim()});K.msg='';guardar();pintar()}
