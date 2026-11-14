@@ -30,9 +30,9 @@ function forzado(e,fechaIso){
 const _trM=new Map();function tramosM(x){let r=_trM.get(x);if(r===undefined){r=tramos(x);_trM.set(x,r)}return r}
 function candidatos(e,forz,finPrev,R){
   const menu=menuDe(e),F=[0,1,2,3,4,5,6].filter(d=>!forz[d]),out=[];
-  const pares=[];for(let d=0;d<6;d++)if(!forz[d]&&!forz[d+1])pares.push([d,d+1]);
+  const N=Math.max(1,K.LIBRES),pares=[];for(let d=0;d+N<=7;d++){const w=[];for(let j=0;j<N;j++)w.push(d+j);if(w.every(x=>!forz[x]))pares.push(w)}
   let opciones;
-  if(F.length<=2)opciones=[F];else if(pares.length&&F.length>=3)opciones=pares;else opciones=[[]];
+  if(F.length<=N)opciones=[F];else if(pares.length&&F.length>=N+1)opciones=pares;else opciones=[[]];
   opciones.forEach(libres=>{
     const trab=F.filter(d=>!libres.includes(d));
     const sh=Array(7).fill(null);

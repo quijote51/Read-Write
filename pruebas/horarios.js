@@ -82,7 +82,14 @@ const trabaja = t => t && !/LIBRE|VACACIONES|BAJA/i.test(t) && /\d/.test(t);
   S.enviar('hz-f-hp', {'hz-hp-cob': '4', 'hz-hp-h': '38', 'hz-hp-desc': '10'});
   ok(S.H().hp.minCob === 4 && S.H().hp.maxH === 38 && S.H().hp.minDesc === 10 && F.avisos('2026-11-09').some(x => /Jueves: 2 personas \(mínimo 4\)/.test(x)), 'parámetros del horario: el mínimo de personas cambia los avisos (mínimo 4)');
   ok(/Parámetros del horario/.test(S.pantalla({tab: 'parametros'})) && /value="4"/.test(S.pantalla()), 'parámetros del horario: la pantalla muestra los valores guardados');
-  S.enviar('hz-f-hp', {'hz-hp-cob': '3', 'hz-hp-h': '40', 'hz-hp-desc': '12'}); S.T.fijar({tab: 'plantilla', msg: ''});
+  S.enviar('hz-f-hp', {'hz-hp-cob': '3', 'hz-hp-h': '40', 'hz-hp-desc': '12', 'hz-hp-libres': '2'}); S.T.fijar({tab: 'plantilla', msg: ''});
+  ok(S.H().hp.libres === 2, 'parámetros del horario: días libres seguidos por defecto 2');
+  { const sem = S.H().semanas['2026-11-09'], ana = sem.Ana.slice();
+    sem.Ana = ['10:00-18:00', '10:00-18:00', 'LIBRE', '10:00-18:00', '10:00-18:00', 'LIBRE', '10:00-18:00'];
+    ok(F.avisos('2026-11-09').some(x => /Ana: solo 1 día libre seguido esta semana \(mínimo 2 seguidos\)/.test(x)), 'avisos: los libres sueltos no cuentan como días libres seguidos');
+    sem.Ana = ['10:00-18:00', '10:00-18:00', '10:00-18:00', '10:00-18:00', '10:00-18:00', 'LIBRE', 'LIBRE'];
+    ok(!F.avisos('2026-11-09').some(x => /Ana: .*libre seguido/.test(x)), 'avisos: dos libres seguidos cumplen el mínimo');
+    sem.Ana = ana; }
   ok(F.sinTurnos('2026-11-23') && !F.sinTurnos(lun16), 'sinTurnos: semana vacía y semana con datos');
   const dia = S.sb.hzDia('2026-11-17');
   ok(dia && dia.i === 1 && dia.gente.length === F.cobertura(lun16, 1), 'hzDia (lo usan Hojas y Eventos): quién trabaja el martes 17');
