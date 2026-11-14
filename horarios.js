@@ -12,8 +12,8 @@ function hzNormaliza(v){
   v.equipo=(Array.isArray(v.equipo)?v.equipo:hzSeed().equipo).filter(e=>e&&typeof e==='object'&&typeof e.n==='string'&&e.n);
   v.semanas=(v.semanas&&typeof v.semanas==='object')?v.semanas:{}; v.extras=v.extras||{}; v.practicas=v.practicas||{};
   v.vac=(Array.isArray(v.vac)?v.vac:[]).filter(hzFechasOk); v.bloqueos=(Array.isArray(v.bloqueos)?v.bloqueos:[]).filter(hzFechasOk); v.ts=v.ts||0; v.wts=v.wts||{};
-  v.vp=Object.assign({ver:15,inv:15,fest:18,primer:15,lunes:true,vuelta:true},(v.vp&&typeof v.vp==='object')?v.vp:{});
-  v.hp=Object.assign({minCob:3,maxH:40,minDesc:12,libres:2},(v.hp&&typeof v.hp==='object')?v.hp:{});
+  v.vp=Object.assign({ver:15,inv:15,fest:18,primer:15,lunes:true,vuelta:true,maxFuera:0},(v.vp&&typeof v.vp==='object')?v.vp:{});
+  v.hp=Object.assign({minCob:3,maxH:40,minDesc:12,libres:2,maxLibreFin:1,minDes:1,minMed:1,minNoc:1,finesLibres:0},(v.hp&&typeof v.hp==='object')?v.hp:{});
   // Un turno siempre es texto y cada persona de una semana, una lista (un dato raro no debe tumbar las pantallas)
   for(const k in v.semanas){const s=v.semanas[k];if(!s||typeof s!=='object'){delete v.semanas[k];continue}
     for(const n in s){if(!Array.isArray(s[n])){delete s[n];continue}s[n]=s[n].map(x=>typeof x==='string'?x:'')}}
@@ -67,9 +67,9 @@ const DL=['lunes','martes','miércoles','jueves','viernes','sábado','domingo'];
 const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const MESL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const GRUPOS=['Jefatura','Cocineros','Segunda cocina','Ayudantes','Fregantinas'];
-let MIN_COB=3, MAX_H=40, MIN_DESC=12, LIBRES=2;const VAC_ANUAL=30;
+let MIN_COB=3, MAX_H=40, MIN_DESC=12, LIBRES=2, MAXLF=1, MIN_DES=1, MIN_MED=1, MIN_NOC=1, FINES=0;const VAC_ANUAL=30;
 // Reglas de la plantilla (Plantilla → Parámetros): se leen de horarios.hp y se vuelven a leer al sincronizar y al guardar
-function hzParams(){const p=(horarios&&horarios.hp)||{};MIN_COB=+p.minCob||3;MAX_H=+p.maxH||40;MIN_DESC=+p.minDesc||12;LIBRES=+p.libres||2}
+function hzParams(){const p=(horarios&&horarios.hp)||{};MIN_COB=+p.minCob||3;MAX_H=+p.maxH||40;MIN_DESC=+p.minDesc||12;LIBRES=+p.libres||2;MAXLF=+p.maxLibreFin||1;MIN_DES=+p.minDes||1;MIN_MED=+p.minMed||1;MIN_NOC=+p.minNoc||1;FINES=+p.finesLibres||0}
 hzParams();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -141,7 +141,9 @@ function avisos(k){
   if(H().semanas[kp]&&!sinTurnos(kp))equipoSem(k).forEach(e=>{const t1=tramos((H().semanas[kp][e.n]||[])[6]),t2=tramos((s[e.n]||[])[0]);if(!t1.length||!t2.length)return;
     const d=Math.min(...t2.map(x=>x[0]))+24-Math.max(...t1.map(x=>x[1]));if(d<MIN_DESC)av.push(`${e.n}: solo ${fmtH(d)} h de descanso entre el domingo anterior y el lunes`)});
   for(let i=0;i<7;i++){const c=cobertura(k,i);if(c<MIN_COB)av.push(`${cap(DL[i])}: ${c} persona${c===1?'':'s'} (mínimo ${MIN_COB})`)}
-  [5,6].forEach(i=>{const l=equipoSem(k).filter(e=>tipo((s[e.n]||[])[i])==='libre').length;if(l>1)av.push(`${cap(DL[i])}: ${l} personas libres (máximo 1)`)});
+  [5,6].forEach(i=>{const l=equipoSem(k).filter(e=>tipo((s[e.n]||[])[i])==='libre').length;if(l>MAXLF)av.push(`${cap(DL[i])}: ${l} personas libres (máximo ${MAXLF})`)});
+  if(FINES>0){const sab=sumar(fd(k),5),ym=sab.getFullYear()+'-'+String(sab.getMonth()+1).padStart(2,'0'),sabs=[];for(let d=new Date(sab.getFullYear(),sab.getMonth(),1);d.getMonth()===sab.getMonth();d=sumar(d,1))if(d.getDay()===6)sabs.push(iso(sumar(d,-5)));
+    if(sabs.every(w=>H().semanas[w]&&!sinTurnos(w)))equipoSem(k).forEach(e=>{if(!sabs.every(w=>H().semanas[w][e.n]))return;const n=sabs.filter(w=>{const a=H().semanas[w][e.n];return tipo(a[5])!=='trab'&&tipo(a[6])!=='trab'}).length;if(n<FINES)av.push(`${e.n}: solo ${n} fin${n===1?'':'es'} de semana libre${n===1?'':'s'} en ${MESL[sab.getMonth()]} (mínimo ${FINES})`)})}
   return av}
 
 /* ---- vistas ---- */
@@ -284,10 +286,20 @@ function vMi(){
     return`<div class="card"><div class="hz-fila" style="border:0;padding:0 0 4px"><b>${tit}</b><small>${fmtH(tot)} h</small></div>${filas}</div>`};
   return `<div class="hz-bar" style="justify-content:space-between"><b style="font-size:16px">${esc(me)}</b><button class="btn-sec hz-sm" data-yo="">No soy yo</button></div>`+proximoTurno(me)+sem(k0,'Esta semana · '+corto(fd(k0))+' – '+corto(sumar(fd(k0),6)))+sem(k1,'Semana siguiente · '+corto(fd(k1))+' – '+corto(sumar(fd(k1),6)))}
 
+// «¿Falta algún parámetro?»: el usuario escribe lo que necesita y lo envía al programador con el menú de compartir (WhatsApp, correo…). Sin datos personales ni cuenta aparte.
+function pedirHtml(ctx){return `<div class="card"><b>¿Falta algún parámetro?</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Si la regla que necesitas no está, cuéntala aquí y se la envías al programador por WhatsApp o correo.</p><textarea id="hz-pide-txt" rows="3" placeholder="Ej.: máximo de días seguidos trabajando" style="width:100%"></textarea><button type="button" class="btn-sec" data-pedir="${ctx}" style="margin-top:8px">Pedir este parámetro</button></div>`}
+function pedirParametro(ctx){
+  const el=document.getElementById('hz-pide-txt'),t=String((el&&el.value)||'').trim();
+  if(!t){msg='Escribe qué parámetro necesitas.';return}
+  const txt='Petición de parámetro (Horarios · '+ctx+'): '+t;
+  try{if(navigator.share){navigator.share({title:'Petición de parámetro',text:txt}).catch(()=>{});msg='Elige a quién enviarlo (WhatsApp, correo…).';return}}catch(e){}
+  try{if(navigator.clipboard)navigator.clipboard.writeText(txt)}catch(e){}
+  msg='Texto copiado. Pégalo en un mensaje para el programador: «'+esc(t)+'»'}
+
 function vParamH(){
   const p=H().hp||{};
   return (msg?`<div class="hz-aviso ok">${msg}</div>`:'')+`<form class="card" id="hz-f-hp"><b>Parámetros del horario</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Las reglas con las que se calculan los avisos, la cobertura y el generador de semanas.</p>
-    <div class="hz-form"><label>Personas mínimas en cocina cada día<input type="number" min="1" max="20" id="hz-hp-cob" value="${+p.minCob||3}"></label><label>Horas máximas por semana<input type="number" min="10" max="80" id="hz-hp-h" value="${+p.maxH||40}"></label><label>Descanso mínimo entre turnos (horas)<input type="number" min="0" max="24" id="hz-hp-desc" value="${+p.minDesc||12}"></label><label>Días libres seguidos cada semana (mínimo)<input type="number" min="1" max="3" id="hz-hp-libres" value="${+p.libres||2}"></label></div><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`}
+    <div class="hz-form"><label>Personas mínimas en cocina cada día<input type="number" min="1" max="20" id="hz-hp-cob" value="${+p.minCob||3}"></label><label>Horas máximas por semana<input type="number" min="10" max="80" id="hz-hp-h" value="${+p.maxH||40}"></label><label>Descanso mínimo entre turnos (horas)<input type="number" min="0" max="24" id="hz-hp-desc" value="${+p.minDesc||12}"></label><label>Días libres seguidos cada semana (mínimo)<input type="number" min="1" max="3" id="hz-hp-libres" value="${+p.libres||2}"></label><label>Máximo de personas libres en sábado y domingo<input type="number" min="1" max="10" id="hz-hp-lf" value="${+p.maxLibreFin||1}"></label><label>Mínimo de personas en desayuno (mañana)<input type="number" min="1" max="10" id="hz-hp-des" value="${+p.minDes||1}"></label><label>Mínimo de jefes y cocineros a mediodía<input type="number" min="1" max="10" id="hz-hp-med" value="${+p.minMed||1}"></label><label>Mínimo de jefes y cocineros por la noche<input type="number" min="1" max="10" id="hz-hp-noc" value="${+p.minNoc||1}"></label><label>Fines de semana libres al mes (mínimo; 0 = no avisar)<input type="number" min="0" max="4" id="hz-hp-fines" value="${+p.finesLibres||0}"></label></div><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`+pedirHtml('Plantilla')}
 
 let tabIni=false;
 const PRINC=()=>SOLO()?['plantilla','mi','horas','cambios']:['plantilla','mi','eventos','vacaciones'],SUBG={get plantilla(){return [['plantilla','Horario'],['equipo','Equipo'],['extras','Extras'],['practicas','Prácticas'],['parametros','Parámetros']].concat(window.HZ_CAMB?[['cambios','Cambios']]:[])},mi:[['mi','Mi semana'],['ahora','Ahora'],['horas','Horas']]},grupoDe=t=>SOLO()?null:Object.keys(SUBG).find(g=>SUBG[g].some(x=>x[0]===t))||null;let masTabs=false;
@@ -309,6 +321,7 @@ document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.datas
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
   {const vb=e.target.closest('[data-vista]');if(vb){modoVista=vb.dataset.vista==='tabla'?'tabla':'dias';try{localStorage.setItem('hz_vista',modoVista)}catch(x){}pintar();return}}
+  {const pd=e.target.closest('[data-pedir]');if(pd){pedirParametro(pd.dataset.pedir);pintar();return}}
   {const sb=e.target.closest('[data-sub]');if(sb){tab=sb.dataset.sub;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}}
   if(e.target.closest('[data-mas]')){masTabs=!masTabs;pintar();return}
   const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;if(!PRINC().includes(tab)&&!grupoDe(tab))masTabs=true;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}
@@ -334,18 +347,18 @@ document.addEventListener('change',e=>{
 document.addEventListener('submit',e=>{
   const id=e.target.id;if(!id||!id.startsWith('hz-f-'))return;e.preventDefault();const $=s=>document.getElementById(s);
   if(id==='hz-f-pers'){const t=e.target.dataset.t,k=iso(semana);(H()[t][k]=H()[t][k]||[]).push({n:$('hz-pn').value.trim(),rol:$('hz-pr').value.trim(),t:DIAS.map((_,i)=>$('hz-pt'+i).value.trim())});guardar(k);pintar()}
-  else if(id==='hz-f-hp'){const n=(x,a,b,d)=>Math.max(a,Math.min(b,parseInt($(x)&&$(x).value)||d));H().hp={minCob:n('hz-hp-cob',1,20,3),maxH:n('hz-hp-h',10,80,40),minDesc:n('hz-hp-desc',0,24,12),libres:n('hz-hp-libres',1,3,2)};hzParams();msg='Parámetros guardados.';guardar();pintar()}
+  else if(id==='hz-f-hp'){const n=(x,a,b,d)=>Math.max(a,Math.min(b,parseInt($(x)&&$(x).value)||d));H().hp={minCob:n('hz-hp-cob',1,20,3),maxH:n('hz-hp-h',10,80,40),minDesc:n('hz-hp-desc',0,24,12),libres:n('hz-hp-libres',1,3,2),maxLibreFin:n('hz-hp-lf',1,10,1),minDes:n('hz-hp-des',1,10,1),minMed:n('hz-hp-med',1,10,1),minNoc:n('hz-hp-noc',1,10,1),finesLibres:n('hz-hp-fines',0,4,0)};hzParams();msg='Parámetros guardados.';guardar();pintar()}
   else if(id==='hz-f-eq'){const n=$('hz-en').value.trim();if(H().equipo.some(p=>p.n.toLowerCase()===n.toLowerCase())){msg=`Ya hay alguien llamado ${esc(n)} en el equipo.`;pintar();return}msg='';
     H().equipo.push({n,rol:$('hz-er').value.trim(),g:+$('hz-eg').value,desde:$('hz-ed').value,hasta:''});guardar();pintar()}
 });
 // Lo que comparten los archivos horarios-*.js: ayudas de fecha y turnos, el estado de la pantalla y dónde registrar sus pantallas
 window.hzKit={
   H,fd,iso,lunes,sumar,corto,fmtH,cap,esc,pHM,tramos,horas,tipo,trabaja,equipoSem,fila,sinTurnos,personasDia,cobertura,enHora,guardar,avisos,pintar,SOLO,root,yo,activo:e=>activo(e),
-  DIAS,DL,MES,MESL,GRUPOS,VAC_ANUAL,
+  DIAS,DL,MES,MESL,GRUPOS,VAC_ANUAL,pedirHtml,
   get semana(){return semana},set semana(v){semana=v},get anio(){return anio},set anio(v){anio=v},get msg(){return msg},set msg(v){msg=v},get edit(){return edit},set edit(v){edit=v},get tab(){return tab},
   vistas:{},util:{},
   reg(o){Object.assign(this.vistas,o.vistas||{});Object.assign(this.util,o.util||{})}};
-Object.defineProperties(window.hzKit,{MIN_COB:{get:()=>MIN_COB,enumerable:true},MAX_H:{get:()=>MAX_H,enumerable:true},MIN_DESC:{get:()=>MIN_DESC,enumerable:true},LIBRES:{get:()=>LIBRES,enumerable:true}});
+Object.defineProperties(window.hzKit,{MIN_COB:{get:()=>MIN_COB,enumerable:true},MAX_H:{get:()=>MAX_H,enumerable:true},MIN_DESC:{get:()=>MIN_DESC,enumerable:true},LIBRES:{get:()=>LIBRES,enumerable:true},MAXLF:{get:()=>MAXLF,enumerable:true},MIN_DES:{get:()=>MIN_DES,enumerable:true},MIN_MED:{get:()=>MIN_MED,enumerable:true},MIN_NOC:{get:()=>MIN_NOC,enumerable:true}});
 // Solo para las pruebas (pruebas/horarios.js): fijar el estado de la pantalla y llamar a las vistas y cálculos sin navegador
 window.hzPruebas={
   fijar(o){if('tab' in o)tab=o.tab;if('semana' in o)semana=o.semana;if('anio' in o)anio=o.anio;if('edit' in o)edit=o.edit;if('msg' in o)msg=o.msg},
