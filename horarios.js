@@ -139,7 +139,7 @@ function avisos(k){
   return av}
 
 /* ---- vistas ---- */
-function barraIn(){const f=sumar(semana,6);return `<button class="btn-sec" data-a="ant" aria-label="Semana anterior">←</button><div class="hz-sem">${corto(semana)} – ${corto(f)}</div><button class="btn-sec" data-a="sig" aria-label="Semana siguiente">→</button><button class="btn-sec" data-a="hoy">Esta semana</button>`}
+function barraIn(){const f=sumar(semana,6);return `<div class="hz-nav"><button class="btn-sec" data-a="ant" aria-label="Semana anterior">←</button><div class="hz-sem">${corto(semana)} – ${corto(f)}</div><button class="btn-sec" data-a="sig" aria-label="Semana siguiente">→</button><button class="btn-sec hz-hoy" data-a="hoy" aria-label="Ir a esta semana">Hoy</button></div>`}
 function barra(){return `<div class="hz-bar">${barraIn()}</div>`}
 /* Vista de móvil: una tarjeta por día. Quien trabaja va en filas (por hora de entrada) y el resto (libre, vacaciones, baja) en chips pequeños.
    En pantallas anchas se ve la tabla de siempre; en estrechas (≤ 700 px) solo esta (CSS en horarios.css). */
@@ -284,7 +284,7 @@ function pintar(){
   if(SOLO()&&!tabsVisibles().some(x=>x[0]===tab))tab='mi';
   const f={plantilla:vPlantilla,mi:vMi,horas:vHoras,cambios:()=>vv('cambios'),ahora:vAhora,eventos:()=>vv('eventos'),extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:()=>vv('vacaciones'),equipo:vEquipo}[tab];
   const tv=tabsVisibles(),pri=tv.filter(x=>PRINC.includes(x[0])),res=tv.filter(x=>!PRINC.includes(x[0])),abierto=masTabs,btn=([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`;
-  r.innerHTML=`<div class="hz-tabs" role="tablist"><div class="hz-tabs-p" style="--n:${pri.length||1}">${pri.map(btn).join('')}</div>${res.length?`<button type="button" class="hz-mas" data-mas aria-expanded="${abierto}">${abierto?'Menos':'Más'} opciones <i class="ti ti-chevron-${abierto?'up':'down'}" aria-hidden="true"></i></button>`:''}${res.length&&abierto?`<div class="hz-tabs-s">${res.map(btn).join('')}</div>`:''}</div>`+(window.HZ_APARTE?'':`<div style="text-align:right;margin:-6px 0 8px;font-size:12px"><a class="hz-aparte" href="/horarios.html" target="_blank" rel="noopener" style="color:var(--text-secondary)">Abrir como app aparte ↗</a></div>`)+f();
+  r.innerHTML=`<div class="hz-tabs" role="tablist"><div class="hz-tabs-p" style="--n:${pri.length||1}">${pri.map(btn).join('')}</div>${res.length?`<button type="button" class="hz-mas" data-mas aria-expanded="${abierto}">${abierto?'Menos':'Más'} opciones <i class="ti ti-chevron-${abierto?'up':'down'}" aria-hidden="true"></i></button>`:''}${res.length&&abierto?`<div class="hz-tabs-s">${res.map(btn).join('')}${window.HZ_APARTE?'':`<a class="hz-aparte" href="/horarios.html" target="_blank" rel="noopener">Abrir como app aparte ↗</a>`}</div>`:''}</div>`+f();
 }
 window.initHorarios=function(){pintar()};
 if(window.matchMedia)window.matchMedia("(max-width:700px)").addEventListener("change",()=>{try{if(root())pintar()}catch(e){}});
