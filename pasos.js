@@ -88,7 +88,7 @@ if(document.readyState === 'loading') document.addEventListener('DOMContentLoade
 
 const CSS = `#pasos-card{border:1px solid var(--gold);margin-bottom:10px}
 .pa-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.pa-cab b{font-size:15px;display:block}.pa-cab small{font-size:12px;color:var(--text-secondary)}
-.pa-ocultar,.pa-link{background:none;border:0;color:var(--text-secondary);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;min-height:36px;padding:0 4px}
+.pa-ocultar,.pa-link{background:none;border:0;color:var(--text-secondary);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;min-height:44px;padding:0 4px}
 .pa-barra{height:6px;background:var(--bg-secondary);border-radius:99px;margin:8px 0 10px;overflow:hidden}.pa-barra span{display:block;height:100%;background:var(--gold);border-radius:99px;transition:width .3s}
 .pa-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .pa-lista li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:4px 10px;align-items:start;padding:8px 0;border-top:.5px solid var(--border)}

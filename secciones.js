@@ -92,7 +92,7 @@ function iniciar(){
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 
-const CSS = `.secc-elegir{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:14px 0 4px;min-height:42px;background:none;border:1px dashed var(--border-md);border-radius:var(--radius-lg);color:var(--text-secondary);font:inherit;font-size:13px;cursor:pointer}
+const CSS = `.secc-elegir{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:14px 0 4px;min-height:44px;background:none;border:1px dashed var(--border-md);border-radius:var(--radius-lg);color:var(--text-secondary);font:inherit;font-size:13px;cursor:pointer}
 .secc-elegir small{font-size:12px}
 #secc-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1005;align-items:flex-start;justify-content:center;padding:12px 10px;overflow:auto}
 .se-caja{background:var(--bg-primary);color:var(--text-primary);border-radius:var(--radius-lg);width:100%;max-width:460px;box-shadow:0 10px 40px rgba(0,0,0,.35)}

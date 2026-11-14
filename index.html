@@ -397,11 +397,18 @@ textarea{resize:vertical;min-height:65px}
 
 /* Pantallas táctiles: botones de al menos 40 px de alto, cómodos con prisa o con guantes (revisión 11/2026) */
 @media (pointer:coarse){
-  .btn,.btn-sec,.btn-icon,.btn-d{min-height:40px!important}
-  .btn-icon,.btn-d{min-width:40px;justify-content:center;font-size:13px!important}
+  .btn,.btn-sec,.btn-icon,.btn-d{min-height:44px!important}
+  .btn-icon,.btn-d{min-width:44px;justify-content:center;font-size:13px!important}
+  #bus-btn,#av-btn,#rol-btn,header button[aria-label=Ajustes]{min-height:44px!important;min-width:44px!important}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]),select{min-height:44px}
+  .alg-cb{min-height:44px}
   .btn-sec{font-size:13px!important}
-  .sub-tab,[role=tab]{min-height:40px}
-  .link-btn{min-height:36px;padding:6px 4px!important}
+  .sub-tab,[role=tab]{min-height:44px}
+  .link-btn{min-height:44px;padding:6px 4px!important}
+}
+/* Letra de 12 px como mínimo en pantalla táctil (antes 11 px); la impresión no cambia */
+@media screen and (pointer:coarse){
+  .acc-grupo,.badge,.alg-tag,.ev-card-date-mon,.vaj-stock-ok,.vaj-stock-warn,.cat-hdr,.stat-l,.sec-label,.form-sec,.rol-card-desc{font-size:12px}
 }
 
 /* Móvil: cabecera compacta, los botones en una sola fila bajo el nombre */
