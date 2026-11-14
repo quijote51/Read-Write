@@ -164,3 +164,6 @@ div.hz-dfila,div.hz-dchip{cursor:default}
 .hz-an-bl{display:flex;align-items:center;justify-content:space-between;gap:8px;border-left:3px solid #a78bfa;background:var(--bg-secondary);border-radius:8px;padding:6px 6px 6px 10px;margin-top:6px;font-size:13px}
 .hz-an-bl small{color:var(--text-secondary);font-size:12px}.hz-an-bl .btn-sec{min-height:44px}
 .hz-an-form{margin-top:10px}.hz-an-form .hz-chips{margin-bottom:8px}
+/* Pantalla táctil: pestañas y botones de 44 px, letra mínima 12 px (revisión de diseño 14/11) */
+@media (pointer:coarse){.hz-tabs button{min-height:44px}.hz-cel{min-height:44px}.hz-aparte{display:inline-block;padding:14px 0 14px 10px}.hz-form input,.hz-form select,.hz-eq input,.hz-eq select,.hz-dias input{min-height:44px}}
+@media screen and (pointer:coarse){.hz-tabla thead th,.hz-tabla td.nom small,.hz-tabla tr.grp td,.hz-cel.libre,.hz-cel.vac,.hz-cel.baja,.hz-cel.bajan,.hz-form label,.hz-dias label,.hz-eq label,.iv-in,.hz-dchip i,.hz-an-fila>b,.hz-an-res small{font-size:12px}}

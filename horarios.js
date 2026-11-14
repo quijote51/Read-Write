@@ -279,7 +279,7 @@ function pintar(){
   if(SOLO()&&!tabIni){tab='mi';tabIni=true}
   if(SOLO()&&!tabsVisibles().some(x=>x[0]===tab))tab='mi';
   const f={plantilla:vPlantilla,mi:vMi,horas:vHoras,cambios:()=>vv('cambios'),ahora:vAhora,eventos:()=>vv('eventos'),extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:()=>vv('vacaciones'),equipo:vEquipo}[tab];
-  r.innerHTML=`<div class="hz-tabs" role="tablist">${tabsVisibles().map(([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`).join('')}</div>`+(window.HZ_APARTE?'':`<div style="text-align:right;margin:-6px 0 8px;font-size:12px"><a href="/horarios.html" target="_blank" rel="noopener" style="color:var(--text-secondary)">Abrir como app aparte ↗</a></div>`)+f();
+  r.innerHTML=`<div class="hz-tabs" role="tablist">${tabsVisibles().map(([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`).join('')}</div>`+(window.HZ_APARTE?'':`<div style="text-align:right;margin:-6px 0 8px;font-size:12px"><a class="hz-aparte" href="/horarios.html" target="_blank" rel="noopener" style="color:var(--text-secondary)">Abrir como app aparte ↗</a></div>`)+f();
 }
 window.initHorarios=function(){pintar()};
 if(window.matchMedia)window.matchMedia("(max-width:700px)").addEventListener("change",()=>{try{if(root())pintar()}catch(e){}});

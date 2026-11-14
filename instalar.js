@@ -23,13 +23,13 @@
       background:#1a1a1a;color:#f0efe9;border:1px solid #c9a84c;border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;
       box-shadow:0 6px 24px rgba(0,0,0,.35);font:14px/1.35 system-ui,-apple-system,'Segoe UI',sans-serif;max-width:520px;margin:0 auto}
       #inst-av .t{flex:1;min-width:0}#inst-av b{color:#c9a84c}
-      #inst-av button{font:inherit;cursor:pointer;border-radius:8px;min-height:40px}
+      #inst-av button{font:inherit;cursor:pointer;border-radius:8px;min-height:44px;min-width:44px}
       #inst-av .si{background:#c9a84c;color:#1a1a1a;border:0;padding:8px 14px;font-weight:600;white-space:nowrap}
       #inst-av .no{background:transparent;color:rgba(255,255,255,.7);border:0;padding:4px 8px;font-size:20px;line-height:1}
       @media print{#inst-av{display:none}}`;
     document.head.appendChild(st);
   }
-  function quitar(){ if(aviso){ aviso.remove(); aviso = null; } }
+  function quitar(){ if(aviso){ aviso.remove(); aviso = null; } if(document.body) document.body.style.paddingBottom = ''; }
   function mostrar(html, conBoton){
     if(cerrado() || !document.body) return;
     css(); quitar();
@@ -44,6 +44,8 @@
       prompt = null; quitar();
     };
     document.body.appendChild(aviso);
+    // Deja sitio debajo para que el aviso no tape el final de la pantalla
+    document.body.style.paddingBottom = (aviso.offsetHeight + 24) + 'px';
   }
   const nombre = () => (document.querySelector('meta[name="apple-mobile-web-app-title"]') || {}).content || 'Oído Cocina';
 

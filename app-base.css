@@ -47,7 +47,11 @@ header .btn-sec{color:#f0efe9;border-color:rgba(255,255,255,.25);padding:5px 10p
 
 /* Pantallas táctiles: botones de al menos 40 px de alto, cómodos con prisa o con guantes (revisión 11/2026) */
 @media (pointer:coarse){
-  .btn,.btn-sec{min-height:40px!important}
+  .btn,.btn-sec{min-height:44px!important}
   .btn-sec{font-size:13px!important}
-  [role=tab]{min-height:40px}
+  [role=tab]{min-height:44px}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=hidden]),select{min-height:44px}
+}
+@media screen and (pointer:coarse){
+  .badge,header small{font-size:12px}
 }
