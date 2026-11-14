@@ -273,13 +273,15 @@ function vMi(){
   return `<div class="hz-bar" style="justify-content:space-between"><b style="font-size:16px">${esc(me)}</b><button class="btn-sec hz-sm" data-yo="">No soy yo</button></div>`+proximoTurno(me)+sem(k0,'Esta semana · '+corto(fd(k0))+' – '+corto(sumar(fd(k0),6)))+sem(k1,'Semana siguiente · '+corto(fd(k1))+' – '+corto(sumar(fd(k1),6)))}
 
 let tabIni=false;
+const PRINC=['plantilla','mi','horas','cambios'];let masTabs=false;
 const tabsVisibles=()=>(SOLO()?[['mi','Mi semana'],['horas','Horas'],['cambios','Cambios'],['plantilla','Cuadrante'],['ahora','Ahora']]:TABS).filter(x=>x[0]!=='cambios'||window.HZ_CAMB);
 function pintar(){
   const r=root();if(!r)return;
   if(SOLO()&&!tabIni){tab='mi';tabIni=true}
   if(SOLO()&&!tabsVisibles().some(x=>x[0]===tab))tab='mi';
   const f={plantilla:vPlantilla,mi:vMi,horas:vHoras,cambios:()=>vv('cambios'),ahora:vAhora,eventos:()=>vv('eventos'),extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:()=>vv('vacaciones'),equipo:vEquipo}[tab];
-  r.innerHTML=`<div class="hz-tabs" role="tablist">${tabsVisibles().map(([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`).join('')}</div>`+(window.HZ_APARTE?'':`<div style="text-align:right;margin:-6px 0 8px;font-size:12px"><a class="hz-aparte" href="/horarios.html" target="_blank" rel="noopener" style="color:var(--text-secondary)">Abrir como app aparte ↗</a></div>`)+f();
+  const tv=tabsVisibles(),pri=tv.filter(x=>PRINC.includes(x[0])),res=tv.filter(x=>!PRINC.includes(x[0])),abierto=masTabs,btn=([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`;
+  r.innerHTML=`<div class="hz-tabs" role="tablist"><div class="hz-tabs-p" style="--n:${pri.length||1}">${pri.map(btn).join('')}</div>${res.length?`<button type="button" class="hz-mas" data-mas aria-expanded="${abierto}">${abierto?'Menos':'Más'} opciones <i class="ti ti-chevron-${abierto?'up':'down'}" aria-hidden="true"></i></button>`:''}${res.length&&abierto?`<div class="hz-tabs-s">${res.map(btn).join('')}</div>`:''}</div>`+(window.HZ_APARTE?'':`<div style="text-align:right;margin:-6px 0 8px;font-size:12px"><a class="hz-aparte" href="/horarios.html" target="_blank" rel="noopener" style="color:var(--text-secondary)">Abrir como app aparte ↗</a></div>`)+f();
 }
 window.initHorarios=function(){pintar()};
 if(window.matchMedia)window.matchMedia("(max-width:700px)").addEventListener("change",()=>{try{if(root())pintar()}catch(e){}});
@@ -287,7 +289,8 @@ if(window.matchMedia)window.matchMedia("(max-width:700px)").addEventListener("ch
 /* ---- eventos de la interfaz ---- */
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
-  const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}
+  if(e.target.closest('[data-mas]')){masTabs=!masTabs;pintar();return}
+  const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;if(!PRINC.includes(tab))masTabs=true;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}
   const c=e.target.closest('.hz-cel,.hz-dfila,.hz-dchip');if(c){if(SOLO()||!c.dataset.e)return;edit={k:iso(semana),e:c.dataset.e,i:+c.dataset.i};pintar();const x=document.getElementById('hz-turno');if(x)x.focus();return}
   const y=e.target.closest('[data-yo]');if(y){try{localStorage.setItem('hz_yo',y.dataset.yo)}catch(er){}pintar();return}
   const q=e.target.closest('[data-q]');if(q){document.getElementById('hz-turno').value=q.dataset.q;return}
