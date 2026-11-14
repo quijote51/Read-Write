@@ -54,7 +54,7 @@
 ## Alergias (4/11/2026)
 - [x] `supabase/avisos-regla-alergias.sql` aplicado (4/11/2026): los avisos del móvil ya no toman «Sin gluten» como «sin alergias».
 - [ ] Carta QR: un plato sin alérgenos apuntados dice «pregunte al personal». Revisar las recetas sin marcas antes de poner el QR.
-- [ ] La ficha de alérgenos del cliente aún dice «Sin alérgenos» si el plato tiene receta sin marcas: decidir si cambiarlo.
+- [x] La ficha de alérgenos del cliente y el texto para compartir ya no dicen «Sin alérgenos» nunca: si no hay alérgenos marcados, ponen «Consultar al personal» (igual que la carta QR) (15/11/2026).
 - [x] `pruebas/avisos.js` «eventos: solo lo suyo»: el fallo era de la prueba (leía la casilla «Temperaturas sin apuntar» de los avisos del móvil); ahora mira solo la lista de avisos (12/11/2026).
 
 ## Seguridad
