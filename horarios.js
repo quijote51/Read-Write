@@ -13,6 +13,7 @@ function hzNormaliza(v){
   v.semanas=(v.semanas&&typeof v.semanas==='object')?v.semanas:{}; v.extras=v.extras||{}; v.practicas=v.practicas||{};
   v.vac=(Array.isArray(v.vac)?v.vac:[]).filter(hzFechasOk); v.bloqueos=(Array.isArray(v.bloqueos)?v.bloqueos:[]).filter(hzFechasOk); v.ts=v.ts||0; v.wts=v.wts||{};
   v.vp=Object.assign({ver:15,inv:15,fest:18,primer:15,lunes:true,vuelta:true},(v.vp&&typeof v.vp==='object')?v.vp:{});
+  v.hp=Object.assign({minCob:3,maxH:40,minDesc:12},(v.hp&&typeof v.hp==='object')?v.hp:{});
   // Un turno siempre es texto y cada persona de una semana, una lista (un dato raro no debe tumbar las pantallas)
   for(const k in v.semanas){const s=v.semanas[k];if(!s||typeof s!=='object'){delete v.semanas[k];continue}
     for(const n in s){if(!Array.isArray(s[n])){delete s[n];continue}s[n]=s[n].map(x=>typeof x==='string'?x:'')}}
@@ -50,7 +51,7 @@ function hzElige(l,c){
   r.enviado=r.enviado||{};for(const k in (otro.enviado||{})){r.enviado[k]=r.enviado[k]||{};for(const n in otro.enviado[k]){const a=r.enviado[k][n],b=otro.enviado[k][n];if(!a||(b.ts||0)>(a.ts||0))r.enviado[k][n]=b}}
   r.ts=Math.max(l.ts||0,c.ts||0); return r}
 function hzSync(nube){
-  horarios=hzElige(horarios,nube);
+  horarios=hzElige(horarios,nube);hzParams();
   try{localStorage.setItem(HZ_KEY,JSON.stringify(horarios))}catch(e){}
   if(JSON.stringify(horarios)!==JSON.stringify(hzNormaliza(hzClon(nube)))){try{syncConfig(HZ_KEY,horarios)}catch(e){}}
 }
@@ -66,7 +67,10 @@ const DL=['lunes','martes','miércoles','jueves','viernes','sábado','domingo'];
 const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const MESL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const GRUPOS=['Jefatura','Cocineros','Segunda cocina','Ayudantes','Fregantinas'];
-const MIN_COB=3, MAX_H=40, MIN_DESC=12, VAC_ANUAL=30;
+let MIN_COB=3, MAX_H=40, MIN_DESC=12;const VAC_ANUAL=30;
+// Reglas de la plantilla (Plantilla → Parámetros): se leen de horarios.hp y se vuelven a leer al sincronizar y al guardar
+function hzParams(){const p=(horarios&&horarios.hp)||{};MIN_COB=+p.minCob||3;MAX_H=+p.maxH||40;MIN_DESC=+p.minDesc||12}
+hzParams();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const fd=s=>new Date(s+'T00:00');
@@ -279,14 +283,19 @@ function vMi(){
     return`<div class="card"><div class="hz-fila" style="border:0;padding:0 0 4px"><b>${tit}</b><small>${fmtH(tot)} h</small></div>${filas}</div>`};
   return `<div class="hz-bar" style="justify-content:space-between"><b style="font-size:16px">${esc(me)}</b><button class="btn-sec hz-sm" data-yo="">No soy yo</button></div>`+proximoTurno(me)+sem(k0,'Esta semana · '+corto(fd(k0))+' – '+corto(sumar(fd(k0),6)))+sem(k1,'Semana siguiente · '+corto(fd(k1))+' – '+corto(sumar(fd(k1),6)))}
 
+function vParamH(){
+  const p=H().hp||{};
+  return (msg?`<div class="hz-aviso ok">${msg}</div>`:'')+`<form class="card" id="hz-f-hp"><b>Parámetros del horario</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Las reglas con las que se calculan los avisos, la cobertura y el generador de semanas.</p>
+    <div class="hz-form"><label>Personas mínimas en cocina cada día<input type="number" min="1" max="20" id="hz-hp-cob" value="${+p.minCob||3}"></label><label>Horas máximas por semana<input type="number" min="10" max="80" id="hz-hp-h" value="${+p.maxH||40}"></label><label>Descanso mínimo entre turnos (horas)<input type="number" min="0" max="24" id="hz-hp-desc" value="${+p.minDesc||12}"></label></div><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`}
+
 let tabIni=false;
-const PRINC=()=>SOLO()?['plantilla','mi','horas','cambios']:['plantilla','mi','eventos','vacaciones'],SUBG={get plantilla(){return [['plantilla','Horario'],['equipo','Equipo'],['extras','Extras'],['practicas','Prácticas']].concat(window.HZ_CAMB?[['cambios','Cambios']]:[])},mi:[['mi','Mi semana'],['ahora','Ahora'],['horas','Horas']]},grupoDe=t=>SOLO()?null:Object.keys(SUBG).find(g=>SUBG[g].some(x=>x[0]===t))||null;let masTabs=false;
+const PRINC=()=>SOLO()?['plantilla','mi','horas','cambios']:['plantilla','mi','eventos','vacaciones'],SUBG={get plantilla(){return [['plantilla','Horario'],['equipo','Equipo'],['extras','Extras'],['practicas','Prácticas'],['parametros','Parámetros']].concat(window.HZ_CAMB?[['cambios','Cambios']]:[])},mi:[['mi','Mi semana'],['ahora','Ahora'],['horas','Horas']]},grupoDe=t=>SOLO()?null:Object.keys(SUBG).find(g=>SUBG[g].some(x=>x[0]===t))||null;let masTabs=false;
 const tabsVisibles=()=>(SOLO()?[['mi','Mi semana'],['horas','Horas'],['cambios','Cambios'],['plantilla','Cuadrante'],['ahora','Ahora']]:TABS).filter(x=>x[0]!=='cambios'||window.HZ_CAMB);
 function pintar(){
   const r=root();if(!r)return;
   if(SOLO()&&!tabIni){tab='mi';tabIni=true}
   if(SOLO()&&!tabsVisibles().some(x=>x[0]===tab))tab='mi';
-  const f={plantilla:vPlantilla,mi:vMi,horas:vHoras,cambios:()=>vv('cambios'),ahora:vAhora,eventos:()=>vv('eventos'),extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:()=>vv('vacaciones'),equipo:vEquipo}[tab];
+  const f={plantilla:vPlantilla,mi:vMi,horas:vHoras,cambios:()=>vv('cambios'),ahora:vAhora,eventos:()=>vv('eventos'),extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:()=>vv('vacaciones'),equipo:vEquipo,parametros:vParamH}[tab];
   const tv=tabsVisibles(),pri=tv.filter(x=>PRINC().includes(x[0])),res=tv.filter(x=>!PRINC().includes(x[0])&&!grupoDe(x[0])),abierto=masTabs,enRes=res.some(x=>x[0]===tab),nomRes=(res.find(x=>x[0]===tab)||[])[1],btn=([k,n])=>`<button role="tab" aria-selected="${k===tab||k===grupoDe(tab)}" data-t="${k}">${n}</button>`;
   const GR=[['Planificar',['ahora','eventos','vacaciones']]],usado=new Set(),grupos=GR.map(([t,ks])=>{const it=res.filter(x=>ks.includes(x[0]));it.forEach(x=>usado.add(x[0]));return it.length?`<div class="hz-gr"><span class="hz-gt">${t}</span><div class="hz-gb">${it.map(btn).join('')}</div></div>`:''}).join('')+(()=>{const o=res.filter(x=>!usado.has(x[0]));return o.length?`<div class="hz-gb">${o.map(btn).join('')}</div>`:''})();
   r.innerHTML=`<div class="hz-tabs" role="tablist"><div class="hz-tabs-p" style="--n:${pri.length||1}">${pri.map(btn).join('')}</div>${res.length?`<button type="button" class="hz-mas${enRes?' act':''}" data-mas aria-expanded="${abierto}">${enRes?nomRes:(abierto?'Menos opciones':'Más opciones')} <i class="ti ti-chevron-${abierto?'up':'down'}" aria-hidden="true"></i></button>`:''}${res.length&&abierto?`<div class="hz-tabs-s">${grupos}${window.HZ_APARTE?'':`<a class="hz-aparte" href="/horarios.html" target="_blank" rel="noopener">Abrir como app aparte ↗</a>`}</div>`:''}</div>`+(!res.length&&!window.HZ_APARTE?'<a class="hz-aparte hz-aparte-s" href="/horarios.html" target="_blank" rel="noopener">Abrir como app aparte ↗</a>':'')+(grupoDe(tab)?`<div class="hz-sub" role="group" aria-label="Dentro de ${grupoDe(tab)==='mi'?'Mi semana':'Plantilla'}">${SUBG[grupoDe(tab)].map(([k,n])=>`<button type="button" data-sub="${k}" aria-pressed="${k===tab}">${n}</button>`).join('')}</div>`:'')+f();
@@ -324,16 +333,18 @@ document.addEventListener('change',e=>{
 document.addEventListener('submit',e=>{
   const id=e.target.id;if(!id||!id.startsWith('hz-f-'))return;e.preventDefault();const $=s=>document.getElementById(s);
   if(id==='hz-f-pers'){const t=e.target.dataset.t,k=iso(semana);(H()[t][k]=H()[t][k]||[]).push({n:$('hz-pn').value.trim(),rol:$('hz-pr').value.trim(),t:DIAS.map((_,i)=>$('hz-pt'+i).value.trim())});guardar(k);pintar()}
+  else if(id==='hz-f-hp'){const n=(x,a,b,d)=>Math.max(a,Math.min(b,parseInt($(x).value)||d));H().hp={minCob:n('hz-hp-cob',1,20,3),maxH:n('hz-hp-h',10,80,40),minDesc:n('hz-hp-desc',0,24,12)};hzParams();msg='Parámetros guardados.';guardar();pintar()}
   else if(id==='hz-f-eq'){const n=$('hz-en').value.trim();if(H().equipo.some(p=>p.n.toLowerCase()===n.toLowerCase())){msg=`Ya hay alguien llamado ${esc(n)} en el equipo.`;pintar();return}msg='';
     H().equipo.push({n,rol:$('hz-er').value.trim(),g:+$('hz-eg').value,desde:$('hz-ed').value,hasta:''});guardar();pintar()}
 });
 // Lo que comparten los archivos horarios-*.js: ayudas de fecha y turnos, el estado de la pantalla y dónde registrar sus pantallas
 window.hzKit={
   H,fd,iso,lunes,sumar,corto,fmtH,cap,esc,pHM,tramos,horas,tipo,trabaja,equipoSem,fila,sinTurnos,personasDia,cobertura,enHora,guardar,avisos,pintar,SOLO,root,yo,activo:e=>activo(e),
-  DIAS,DL,MES,MESL,GRUPOS,MIN_COB,MAX_H,MIN_DESC,VAC_ANUAL,
+  DIAS,DL,MES,MESL,GRUPOS,VAC_ANUAL,
   get semana(){return semana},set semana(v){semana=v},get anio(){return anio},set anio(v){anio=v},get msg(){return msg},set msg(v){msg=v},get edit(){return edit},set edit(v){edit=v},get tab(){return tab},
   vistas:{},util:{},
   reg(o){Object.assign(this.vistas,o.vistas||{});Object.assign(this.util,o.util||{})}};
+Object.defineProperties(window.hzKit,{MIN_COB:{get:()=>MIN_COB,enumerable:true},MAX_H:{get:()=>MAX_H,enumerable:true},MIN_DESC:{get:()=>MIN_DESC,enumerable:true}});
 // Solo para las pruebas (pruebas/horarios.js): fijar el estado de la pantalla y llamar a las vistas y cálculos sin navegador
 window.hzPruebas={
   fijar(o){if('tab' in o)tab=o.tab;if('semana' in o)semana=o.semana;if('anio' in o)anio=o.anio;if('edit' in o)edit=o.edit;if('msg' in o)msg=o.msg},
