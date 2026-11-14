@@ -1,9 +1,10 @@
 /* Horarios de cocina */
 .hz-tabs{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.hz-tabs-p{display:grid;grid-template-columns:repeat(var(--n,4),1fr);gap:6px}.hz-tabs-s{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hz-tabs-p{display:grid;grid-template-columns:repeat(var(--n,4),1fr);gap:6px}.hz-tabs-s{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#111;border:1px solid rgba(201,168,76,.45);border-top:0;border-radius:0 0 12px 12px;padding:8px;margin-top:-8px}
 .hz-tabs button[role=tab]{background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;color:var(--text-secondary);font:600 13px inherit;font-family:inherit;padding:8px 4px;cursor:pointer;min-height:44px;line-height:1.15;text-align:center}
-.hz-tabs-s button[role=tab]{font-weight:500}
-.hz-mas{background:none;border:0;color:var(--text-secondary);font:inherit;font-size:12px;cursor:pointer;min-height:36px;padding:0 4px;text-align:left}
+.hz-tabs-s button[role=tab]{font-weight:500;background:#1d1d1d;border-color:#333;color:#e6e3d8}
+.hz-mas{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#111;color:#c9a84c;border:1px solid rgba(201,168,76,.45);border-radius:12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;min-height:44px;padding:0 12px}
+.hz-mas[aria-expanded=true]{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent}
 .hz-tabs button[role=tab][aria-selected="true"]{color:#1a1a1a;background:var(--gold);border-color:var(--gold)}
 .hz-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
 .hz-sem{font-weight:600;min-width:11ch;text-align:center;font-variant-numeric:tabular-nums}
