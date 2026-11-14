@@ -197,11 +197,12 @@ const trabaja = t => t && !/LIBRE|VACACIONES|BAJA/i.test(t) && /\d/.test(t);
   ok(/Verano \d+\/15 · Invierno \d+\/15 · Festivos \d+\/18/.test(F.vVac()) && /de 48 días/.test(F.vVac()), 'Vacaciones: tarjeta por persona con el saldo de 48 días (verano, invierno, festivos)');
   { const r = F.sugerir('Jimena', 'verano', 2026);
     ok(r.falta === 15 && r.sug.length >= 1 && r.sug.every(s => Math.round((new Date(s.f) - new Date(s.i)) / 864e5) + 1 === 15 && s.i >= '2026-06-15' && s.f <= '2026-09-15'), 'organizador: propone bloques de 15 días dentro del verano (' + r.sug.map(s => s.i).join(', ') + ')');
+    ok(r.sug.every(s => new Date(s.i + 'T00:00').getDay() === 1), 'organizador: todas las propuestas empiezan en lunes');
     const ri = F.sugerir('Jimena', 'invierno', 2026);
     ok(ri.sug.every(s => s.f < '2026-06-15' || s.i > '2026-09-15'), 'organizador: los bloques de invierno caen fuera del verano'); }
-  S.enviar('hz-f-vp', {'hz-vp-ver': '10', 'hz-vp-inv': '12', 'hz-vp-fest': '18', 'hz-vp-primer': '7', 'hz-vp-libra': {checked: false}});
-  ok(S.H().vp.ver === 10 && S.H().vp.inv === 12 && S.H().vp.primer === 7 && S.H().vp.libra === false, 'parámetros de vacaciones: se guardan');
-  S.H().vp = {ver: 15, inv: 15, fest: 18, primer: 15, libra: true};
+  S.enviar('hz-f-vp', {'hz-vp-ver': '10', 'hz-vp-inv': '12', 'hz-vp-fest': '18', 'hz-vp-primer': '7', 'hz-vp-lunes': {checked: false}});
+  ok(S.H().vp.ver === 10 && S.H().vp.inv === 12 && S.H().vp.primer === 7 && S.H().vp.lunes === false, 'parámetros de vacaciones: se guardan');
+  S.H().vp = {ver: 15, inv: 15, fest: 18, primer: 15, lunes: true};
   ok(F.diasEn('2026-12-24', '2026-12-31', 2026) === 8 && F.diasEn('2025-12-30', '2026-01-02', 2026) === 2, 'diasEn: días de un periodo dentro del año');
   ok(/Equipo/.test(F.vEquipo()) && /Móvil \(WhatsApp\)/.test(F.vEquipo()), 'Equipo: lista con campo de móvil');
   ok(/Horas/.test(F.vHoras()) || F.vHoras().length > 50, 'Horas: se pinta');
