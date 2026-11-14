@@ -128,7 +128,7 @@ function vVac(){
   if(K.msg)h+=`<div class="hz-aviso warn">${K.msg}</div>`;
   h+=`<div class="hz-sub hz-sub-v" role="group" aria-label="Vacaciones">${SUBV.map(([k,n])=>`<button type="button" data-subv="${k}" aria-pressed="${k===subVac}">${n}</button>`).join('')}</div>`;
   if(subVac==='cal'||subVac==='coin')h+=vAnioVac(y,subVac);
-  if(subVac==='par')h+=vParam()+vAnioVac(y,'blq');
+  if(subVac==='par')h+=vParam()+vAnioVac(y,'blq')+K.pedirHtml('Vacaciones');
   if(subVac==='org')h+=vOrg(y);
   if(subVac==='per'){h+=`<div class="hz-cols">`;
   eqY.forEach(e=>{const ps=H().vac.filter(v=>v.e===e.n&&v.i.slice(0,4)<=y&&v.f.slice(0,4)>=y);

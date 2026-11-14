@@ -286,10 +286,20 @@ function vMi(){
     return`<div class="card"><div class="hz-fila" style="border:0;padding:0 0 4px"><b>${tit}</b><small>${fmtH(tot)} h</small></div>${filas}</div>`};
   return `<div class="hz-bar" style="justify-content:space-between"><b style="font-size:16px">${esc(me)}</b><button class="btn-sec hz-sm" data-yo="">No soy yo</button></div>`+proximoTurno(me)+sem(k0,'Esta semana · '+corto(fd(k0))+' – '+corto(sumar(fd(k0),6)))+sem(k1,'Semana siguiente · '+corto(fd(k1))+' – '+corto(sumar(fd(k1),6)))}
 
+// «¿Falta algún parámetro?»: el usuario escribe lo que necesita y lo envía al programador con el menú de compartir (WhatsApp, correo…). Sin datos personales ni cuenta aparte.
+function pedirHtml(ctx){return `<div class="card"><b>¿Falta algún parámetro?</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Si la regla que necesitas no está, cuéntala aquí y se la envías al programador por WhatsApp o correo.</p><textarea id="hz-pide-txt" rows="3" placeholder="Ej.: máximo de días seguidos trabajando" style="width:100%"></textarea><button type="button" class="btn-sec" data-pedir="${ctx}" style="margin-top:8px">Pedir este parámetro</button></div>`}
+function pedirParametro(ctx){
+  const el=document.getElementById('hz-pide-txt'),t=String((el&&el.value)||'').trim();
+  if(!t){msg='Escribe qué parámetro necesitas.';return}
+  const txt='Petición de parámetro (Horarios · '+ctx+'): '+t;
+  try{if(navigator.share){navigator.share({title:'Petición de parámetro',text:txt}).catch(()=>{});msg='Elige a quién enviarlo (WhatsApp, correo…).';return}}catch(e){}
+  try{if(navigator.clipboard)navigator.clipboard.writeText(txt)}catch(e){}
+  msg='Texto copiado. Pégalo en un mensaje para el programador: «'+esc(t)+'»'}
+
 function vParamH(){
   const p=H().hp||{};
   return (msg?`<div class="hz-aviso ok">${msg}</div>`:'')+`<form class="card" id="hz-f-hp"><b>Parámetros del horario</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Las reglas con las que se calculan los avisos, la cobertura y el generador de semanas.</p>
-    <div class="hz-form"><label>Personas mínimas en cocina cada día<input type="number" min="1" max="20" id="hz-hp-cob" value="${+p.minCob||3}"></label><label>Horas máximas por semana<input type="number" min="10" max="80" id="hz-hp-h" value="${+p.maxH||40}"></label><label>Descanso mínimo entre turnos (horas)<input type="number" min="0" max="24" id="hz-hp-desc" value="${+p.minDesc||12}"></label><label>Días libres seguidos cada semana (mínimo)<input type="number" min="1" max="3" id="hz-hp-libres" value="${+p.libres||2}"></label><label>Máximo de personas libres en sábado y domingo<input type="number" min="1" max="10" id="hz-hp-lf" value="${+p.maxLibreFin||1}"></label><label>Mínimo de personas en desayuno (mañana)<input type="number" min="1" max="10" id="hz-hp-des" value="${+p.minDes||1}"></label><label>Mínimo de jefes y cocineros a mediodía<input type="number" min="1" max="10" id="hz-hp-med" value="${+p.minMed||1}"></label><label>Mínimo de jefes y cocineros por la noche<input type="number" min="1" max="10" id="hz-hp-noc" value="${+p.minNoc||1}"></label><label>Fines de semana libres al mes (mínimo; 0 = no avisar)<input type="number" min="0" max="4" id="hz-hp-fines" value="${+p.finesLibres||0}"></label></div><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`}
+    <div class="hz-form"><label>Personas mínimas en cocina cada día<input type="number" min="1" max="20" id="hz-hp-cob" value="${+p.minCob||3}"></label><label>Horas máximas por semana<input type="number" min="10" max="80" id="hz-hp-h" value="${+p.maxH||40}"></label><label>Descanso mínimo entre turnos (horas)<input type="number" min="0" max="24" id="hz-hp-desc" value="${+p.minDesc||12}"></label><label>Días libres seguidos cada semana (mínimo)<input type="number" min="1" max="3" id="hz-hp-libres" value="${+p.libres||2}"></label><label>Máximo de personas libres en sábado y domingo<input type="number" min="1" max="10" id="hz-hp-lf" value="${+p.maxLibreFin||1}"></label><label>Mínimo de personas en desayuno (mañana)<input type="number" min="1" max="10" id="hz-hp-des" value="${+p.minDes||1}"></label><label>Mínimo de jefes y cocineros a mediodía<input type="number" min="1" max="10" id="hz-hp-med" value="${+p.minMed||1}"></label><label>Mínimo de jefes y cocineros por la noche<input type="number" min="1" max="10" id="hz-hp-noc" value="${+p.minNoc||1}"></label><label>Fines de semana libres al mes (mínimo; 0 = no avisar)<input type="number" min="0" max="4" id="hz-hp-fines" value="${+p.finesLibres||0}"></label></div><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`+pedirHtml('Plantilla')}
 
 let tabIni=false;
 const PRINC=()=>SOLO()?['plantilla','mi','horas','cambios']:['plantilla','mi','eventos','vacaciones'],SUBG={get plantilla(){return [['plantilla','Horario'],['equipo','Equipo'],['extras','Extras'],['practicas','Prácticas'],['parametros','Parámetros']].concat(window.HZ_CAMB?[['cambios','Cambios']]:[])},mi:[['mi','Mi semana'],['ahora','Ahora'],['horas','Horas']]},grupoDe=t=>SOLO()?null:Object.keys(SUBG).find(g=>SUBG[g].some(x=>x[0]===t))||null;let masTabs=false;
@@ -311,6 +321,7 @@ document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.datas
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
   {const vb=e.target.closest('[data-vista]');if(vb){modoVista=vb.dataset.vista==='tabla'?'tabla':'dias';try{localStorage.setItem('hz_vista',modoVista)}catch(x){}pintar();return}}
+  {const pd=e.target.closest('[data-pedir]');if(pd){pedirParametro(pd.dataset.pedir);pintar();return}}
   {const sb=e.target.closest('[data-sub]');if(sb){tab=sb.dataset.sub;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}}
   if(e.target.closest('[data-mas]')){masTabs=!masTabs;pintar();return}
   const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;if(!PRINC().includes(tab)&&!grupoDe(tab))masTabs=true;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}
@@ -343,7 +354,7 @@ document.addEventListener('submit',e=>{
 // Lo que comparten los archivos horarios-*.js: ayudas de fecha y turnos, el estado de la pantalla y dónde registrar sus pantallas
 window.hzKit={
   H,fd,iso,lunes,sumar,corto,fmtH,cap,esc,pHM,tramos,horas,tipo,trabaja,equipoSem,fila,sinTurnos,personasDia,cobertura,enHora,guardar,avisos,pintar,SOLO,root,yo,activo:e=>activo(e),
-  DIAS,DL,MES,MESL,GRUPOS,VAC_ANUAL,
+  DIAS,DL,MES,MESL,GRUPOS,VAC_ANUAL,pedirHtml,
   get semana(){return semana},set semana(v){semana=v},get anio(){return anio},set anio(v){anio=v},get msg(){return msg},set msg(v){msg=v},get edit(){return edit},set edit(v){edit=v},get tab(){return tab},
   vistas:{},util:{},
   reg(o){Object.assign(this.vistas,o.vistas||{});Object.assign(this.util,o.util||{})}};
