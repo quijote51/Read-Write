@@ -115,8 +115,8 @@ function htmlFichaAlergenos(ev){
   const rev=revisionAlergenos(ev);
   const fecha=typeof fmtFecha==='function'&&ev.fecha?fmtFecha(ev.fecha):(ev.fecha||'');
   const grupos=ALG_CATS.map(([k,t])=>[t,platos.filter(p=>p.cat===k)]).concat([['Otros',platos.filter(p=>!ALG_CATS.some(c=>c[0]===p.cat))]]).filter(g=>g[1].length);
-  // Sin receta ni marcas no sabemos qué lleva: al cliente se le dice que consulte, nunca «sin alérgenos».
-  const fila=p=>{const a=algDePlato(p);return `<tr><td class="fa-plato">${_algEsc(p.nombre)}</td><td>${a.length?a.map(x=>`<span class="fa-alg">${algIcon(x)} ${_algEsc(algLabel(x))}</span>`).join(' '):`<span class="fa-no">${_algSinDatos(p)?'Consultar al personal':'Sin alérgenos'}</span>`}</td></tr>`};
+  // Sin alérgenos marcados no podemos asegurar que no lleve: al cliente se le dice que consulte, nunca «sin alérgenos» (igual que la carta QR).
+  const fila=p=>{const a=algDePlato(p);return `<tr><td class="fa-plato">${_algEsc(p.nombre)}</td><td>${a.length?a.map(x=>`<span class="fa-alg">${algIcon(x)} ${_algEsc(algLabel(x))}</span>`).join(' '):`<span class="fa-no">Consultar al personal</span>`}</td></tr>`};
   return `<div class="fa-ficha">
   <div class="fa-cab">${typeof hLogo==='function'&&hLogo()?'<div style="float:right">'+hLogo(44)+'</div>':''}<div class="fa-tit">Información sobre alérgenos</div>
     <div class="fa-ev">${_algEsc(ev.nombre)}</div>
@@ -143,7 +143,7 @@ const ALG_FICHA_CSS=`.fa-ficha{font-family:Georgia,'Times New Roman',serif;color
 // Texto plano para WhatsApp o correo.
 function textoFichaAlergenos(ev){
   const l=[`*Alérgenos · ${ev.nombre}*`, `${ev.fecha&&typeof fmtFecha==='function'?fmtFecha(ev.fecha):ev.fecha||''}${ev.hora?' · '+ev.hora:''}`, ''];
-  (ev.platos||[]).forEach(p=>{const a=algDePlato(p);l.push(`— ${p.nombre}: ${a.length?a.map(algLabel).join(', '):(_algSinDatos(p)?'consultar al personal':'sin alérgenos')}`)});
+  (ev.platos||[]).forEach(p=>{const a=algDePlato(p);l.push(`— ${p.nombre}: ${a.length?a.map(algLabel).join(', '):'consultar al personal'}`)});
   const pres=[...new Set((ev.platos||[]).flatMap(p=>algDePlato(p)).concat(ev.alergenos_menu||[]))];
   l.push('', `Presentes en el menú: ${pres.length?pres.map(algLabel).join(', '):'ninguno'}`);
   const rev=revisionAlergenos(ev); l.push(rev?`Revisado por ${rev.por} el ${_fechaHora(rev.fecha)}${rev.vigente?'':' (el menú cambió después)'}`:'Pendiente de revisión por cocina');
