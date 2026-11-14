@@ -12,7 +12,7 @@ function hzNormaliza(v){
   v.equipo=(Array.isArray(v.equipo)?v.equipo:hzSeed().equipo).filter(e=>e&&typeof e==='object'&&typeof e.n==='string'&&e.n);
   v.semanas=(v.semanas&&typeof v.semanas==='object')?v.semanas:{}; v.extras=v.extras||{}; v.practicas=v.practicas||{};
   v.vac=(Array.isArray(v.vac)?v.vac:[]).filter(hzFechasOk); v.bloqueos=(Array.isArray(v.bloqueos)?v.bloqueos:[]).filter(hzFechasOk); v.ts=v.ts||0; v.wts=v.wts||{};
-  v.vp=Object.assign({ver:15,inv:15,fest:18,primer:15,libra:true},(v.vp&&typeof v.vp==='object')?v.vp:{});
+  v.vp=Object.assign({ver:15,inv:15,fest:18,primer:15,lunes:true},(v.vp&&typeof v.vp==='object')?v.vp:{});
   // Un turno siempre es texto y cada persona de una semana, una lista (un dato raro no debe tumbar las pantallas)
   for(const k in v.semanas){const s=v.semanas[k];if(!s||typeof s!=='object'){delete v.semanas[k];continue}
     for(const n in s){if(!Array.isArray(s[n])){delete s[n];continue}s[n]=s[n].map(x=>typeof x==='string'?x:'')}}
