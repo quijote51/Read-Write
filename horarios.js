@@ -208,11 +208,12 @@ function vAhora(){
   const lista=(a,v)=>a.length?a.map(p=>`<div class="hz-fila"><span><b>${esc(p.n)}</b><br><small>${esc(p.rol)}</small></span><span class="hz-pill ${tipo(p.t)==='trab'?'trab':tipo(p.t)}">${esc(p.t.replace('\n',' · ')||'—')}</span></div>`).join(''):`<div class="hz-vacio">${v}</div>`;
   return`<div class="hz-cols"><div class="card"><b>En turno ahora (${en.length})</b>${lista(en,'Nadie en este momento.')}</div><div class="card"><b>Entran en menos de 2 h (${pr.length})</b>${lista(pr,'Nadie entra pronto.')}</div><div class="card"><b>Fuera hoy (${fu.length})</b>${lista(fu,'Todos están en turno.')}</div></div>`}
 
+const puestos=()=>{const u=['Cocinero','Ayudante de cocina','Fregantina'],v=new Set(u.map(x=>x.toLowerCase()));const o=[];Object.values(H().extras||{}).forEach(l=>(l||[]).forEach(p=>{const r=String((p&&p.rol)||'').trim();if(r&&!v.has(r.toLowerCase())){v.add(r.toLowerCase());o.push(r)}}));return u.concat(o)};
 function vPersonas(t){
   const k=iso(semana),lista=H()[t][k]||[],ex=t==='extras';
   let h=barra()+`<div class="card"><b>${ex?'Personal extra':'Alumnos en prácticas'} de la semana</b>`;
   h+=lista.length?lista.map((p,ix)=>`<div class="hz-fila" style="flex-wrap:wrap;align-items:flex-start"><span><b>${esc(p.n)}</b><br><small>${esc(p.rol)}</small></span><span style="display:flex;gap:4px;flex-wrap:wrap">${p.t.map((x,i)=>`<span class="hz-pill ${x?'extra':'libre'}">${DIAS[i]} ${esc((x||'—').replace('\n',' · '))}</span>`).join('')}</span><button class="btn-sec hz-sm" data-del="${ix}">Quitar</button></div>`).join(''):`<div class="hz-vacio">Nadie apuntado esta semana.</div>`;
-  h+=`</div><form class="card" id="hz-f-pers" data-t="${t}"><b>Añadir ${ex?'extra':'alumno'}</b><div class="hz-form"><label>Nombre<input id="hz-pn" required></label><label>${ex?'Puesto':'Centro educativo'}<input id="hz-pr" required></label></div><div class="hz-dias">${DIAS.map((n,i)=>`<label>${n}<input id="hz-pt${i}" placeholder="08:00-16:00"></label>`).join('')}</div><button class="btn btn-p" type="submit">Añadir</button></form>`;
+  h+=`</div><form class="card" id="hz-f-pers" data-t="${t}"><b>Añadir ${ex?'extra':'alumno'}</b><div class="hz-form"><label>Nombre<input id="hz-pn" required></label><label>${ex?'Puesto':'Centro educativo'}<input id="hz-pr" required${ex?' list="hz-puestos" autocomplete="off" placeholder="Elige o escribe"':''}></label>${ex?`<datalist id="hz-puestos">${puestos().map(p=>`<option value="${esc(p)}">`).join('')}</datalist>`:''}</div><div class="hz-dias">${DIAS.map((n,i)=>`<label>${n}<input id="hz-pt${i}" placeholder="08:00-16:00"></label>`).join('')}</div><button class="btn btn-p" type="submit">Añadir</button></form>`;
   return h}
 
 const activo=e=>!e.hasta||e.hasta>=iso(new Date());
