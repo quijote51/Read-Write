@@ -173,6 +173,7 @@ function editorHtml(k){
     <div class="hz-chips">${copias.map(([n,v])=>`<button class="btn-sec hz-sm hz-copia" data-q="${esc(v)}" title="${esc(v.replace('\n',' + '))}">${n}</button>`).join('')}${[['Libre','LIBRE'],['Vacaciones','VACACIONES'],['Baja','BAJA'],['Baja maternal','BAJA MATERNAL'],['06:30-14:30','06:30-14:30'],['08:00-16:00','08:00-16:00'],['12:00-20:00','12:00-20:00'],['14:30-22:30','14:30-22:30'],['16:00-00:00','16:00-00:00'],['Partido','12:00-16:00\n20:00-00:00']].map(([n,v])=>`<button class="btn-sec hz-sm" data-q="${esc(v)}">${n}</button>`).join('')}</div>
     <div class="hz-bar"><button class="btn btn-p" data-a="gturno">Guardar</button><button class="btn-sec" data-a="cturno">Cancelar</button><button class="btn-sec" data-a="bturno">Borrar celda</button></div></div>`}
   return ''}
+let plegAbierto={};
 let modoVista='dias';try{modoVista=localStorage.getItem('hz_vista')==='tabla'?'tabla':'dias'}catch(e){}
 function vPlantilla(){
   const k=iso(semana),hoy=iso(new Date()),vacia=sinTurnos(k),eq=equipoSem(k);
@@ -194,7 +195,8 @@ function vPlantilla(){
   if(dias)h+=vDias(k,eq,vacia,movil?ed:'');
   if(!(dias&&movil))h+=ed;
   if(!vacia)h+=vv('cobHoras',k);
-  return h+(SOLO()?'':vv('waPanel',k)+vv('panelGenerar'))}
+  const pleg=(id,tit,ico,cont)=>cont?`<details class="hz-pleg" data-pleg="${id}"${plegAbierto[id]?' open':''}><summary><i class="ti ${ico}" aria-hidden="true"></i> ${tit}</summary>${cont}</details>`:'';
+  return h+(SOLO()?'':pleg('wa','Enviar el horario por WhatsApp','ti-brand-whatsapp',vv('waPanel',k))+pleg('gen','Generar semanas automáticamente','ti-wand',vv('panelGenerar')))}
 
 function vAhora(){
   const n=new Date(),k=iso(lunes(n)),di=(n.getDay()+6)%7,hr=n.getHours()+n.getMinutes()/60;
@@ -290,6 +292,7 @@ window.initHorarios=function(){pintar()};
 if(window.matchMedia)window.matchMedia("(max-width:700px)").addEventListener("change",()=>{try{if(root())pintar()}catch(e){}});
 
 /* ---- eventos de la interfaz ---- */
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.dataset.pleg)plegAbierto[d.dataset.pleg]=d.open},true);
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
   {const vb=e.target.closest('[data-vista]');if(vb){modoVista=vb.dataset.vista==='tabla'?'tabla':'dias';try{localStorage.setItem('hz_vista',modoVista)}catch(x){}pintar();return}}
