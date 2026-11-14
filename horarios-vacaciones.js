@@ -15,7 +15,7 @@ function diasEn(i,f,y){const a=new Date(Math.max(fd(i),fd(y+'-01-01'))),b=new Da
    Una fila por mes y una casilla por día; el color es cuántas personas están fuera ese día (1 azul, 2 amarillo, 3 o más rojo).
    Las bajas maternales no cuentan (duran todo el año y taparían el resto). Tocar un día muestra quién está fuera. */
 let diaSel='';
-function vAnioVac(y){
+function vAnioVac(y,parte){
   const eqN=new Set(H().equipo.filter(e=>(!e.desde||e.desde.slice(0,4)<=y)&&(!e.hasta||e.hasta.slice(0,4)>=y)).map(e=>e.n));
   const fuera={},ini=y+'-01-01',fin=y+'-12-31';
   H().vac.filter(v=>!esBaja(v)&&eqN.has(v.e)&&v.f>=ini&&v.i<=fin).forEach(v=>{
@@ -66,25 +66,31 @@ function vAnioVac(y){
     ${choques.length?`<div class="hz-aviso warn" style="margin-top:8px"><b>Vacaciones que caen en fechas sin vacaciones</b><ul>${choques.map(c=>`<li>${esc(c.e)}: ${rango(c.ini,c.fin)} · ${esc(c.n)}</li>`).join('')}</ul></div>`:''}
     <form id="hz-f-blq" class="hz-an-form"><div class="hz-chips"><button type="button" class="btn-sec hz-sm" data-a="blqmes" data-i="${mesIni(0)}" data-f="${mesFin(0)}">Este mes</button><button type="button" class="btn-sec hz-sm" data-a="blqmes" data-i="${mesIni(1)}" data-f="${mesFin(1)}">Mes que viene</button></div>
       <div class="hz-form"><label>Desde<input type="date" id="hz-bi" required></label><label>Hasta<input type="date" id="hz-bf" required></label><label>Motivo<input id="hz-bn" placeholder="Feria, Semana Santa…"></label></div><button class="btn btn-p" type="submit">Añadir fechas sin vacaciones</button></form></div>`;
-  return `<div class="card hz-an"><b>Todo el año: quién está fuera cada día</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Cada casilla es un día. Toca una para ver quién está fuera.</p>
+  const cal=`<div class="card hz-an"><b>Todo el año: quién está fuera cada día</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Cada casilla es un día. Toca una para ver quién está fuera.</p>
     ${cab}${meses}<div class="hz-an-ley"><span class="hz-an-c n1"></span>1 <span class="hz-an-c n2"></span>2 <span class="hz-an-c n3"></span>3 o más <small>personas fuera (sin bajas maternales)</small><span class="hz-an-l"><span class="hz-an-c blq"></span>sin vacaciones</span></div>${sel}
-    <div class="hz-an-res"><div><b>${conAlguien}</b><small>días con alguien fuera</small></div><div><b>${sinNadie}</b><small>días sin nadie fuera</small></div><div><b>${conChoque}</b><small>días con coincidencia${maximo>=2?` (hasta ${maximo} a la vez, el ${fe(diaMax)})`:''}</small></div></div>
-    <div class="hz-an-lista"><b>Dónde coinciden</b>${lista}</div>
+    <div class="hz-an-res"><div><b>${conAlguien}</b><small>días con alguien fuera</small></div><div><b>${sinNadie}</b><small>días sin nadie fuera</small></div><div><b>${conChoque}</b><small>días con coincidencia${maximo>=2?` (hasta ${maximo} a la vez, el ${fe(diaMax)})`:''}</small></div></div></div>`,
+    coin=`<div class="card hz-an"><div class="hz-an-lista"><b>Dónde coinciden</b>${lista}</div>
     ${quien?`<div class="hz-an-lista"><b>Quién coincide con quién</b><p style="font-size:12px;color:var(--text-secondary);margin:2px 0 6px">Toca un nombre para ver con quién y qué días.</p>${quien}</div>`:''}
-    <div class="hz-an-lista"><b>Fechas sin nadie fuera</b><p style="font-size:12px;color:var(--text-secondary);margin:2px 0 6px">Huecos del año en los que nadie tiene vacaciones (en azul oscuro los de 14 días o más: los mejores para repartir).</p>${libres}</div>${blqHtml}</div>`}
+    <div class="hz-an-lista"><b>Fechas sin nadie fuera</b><p style="font-size:12px;color:var(--text-secondary);margin:2px 0 6px">Huecos del año en los que nadie tiene vacaciones (en azul oscuro los de 14 días o más: los mejores para repartir).</p>${libres}</div></div>`,
+    blq=`<div class="card hz-an">${blqHtml}</div>`;
+  return parte==='cal'?cal:parte==='coin'?coin:parte==='blq'?blq:cal+coin+blq}
+let subVac='cal';
+const SUBV=[['cal','Calendario'],['coin','Coincidencias'],['per','Personas'],['add','Añadir'],['blq','Sin vacaciones']];
 function vVac(){
   const y=K.anio,eqY=H().equipo.filter(e=>(!e.desde||e.desde.slice(0,4)<=y)&&(!e.hasta||e.hasta.slice(0,4)>=y));
   let h=`<div class="hz-bar"><button class="btn-sec" data-a="aant" aria-label="Año anterior">←</button><div class="hz-sem">${y}</div><button class="btn-sec" data-a="asig" aria-label="Año siguiente">→</button></div>`;
   if(K.msg)h+=`<div class="hz-aviso warn">${K.msg}</div>`;
-  h+=vAnioVac(y);
-  h+=`<div class="hz-cols">`;
+  h+=`<div class="hz-sub hz-sub-v" role="group" aria-label="Vacaciones">${SUBV.map(([k,n])=>`<button type="button" data-subv="${k}" aria-pressed="${k===subVac}">${n}</button>`).join('')}</div>`;
+  if(subVac==='cal'||subVac==='coin'||subVac==='blq')h+=vAnioVac(y,subVac);
+  if(subVac==='per'){h+=`<div class="hz-cols">`;
   eqY.forEach(e=>{const ps=H().vac.filter(v=>v.e===e.n&&v.i.slice(0,4)<=y&&v.f.slice(0,4)>=y);
     const usados=ps.filter(v=>!esBaja(v)).reduce((s,v)=>s+diasEn(v.i,v.f,y),0),res=VAC_ANUAL-usados,mat=ps.some(esBaja);
     const col=res>10?'#5dcaa5':res>=5?'#ef9f27':'#e24b4a';
     const meses=Array.from({length:12},(_,m)=>{const a=new Date(y,m,1),b=new Date(y,m+1,0);const p=ps.find(v=>fd(v.i)<=b&&fd(v.f)>=a);return`<span class="${p?({verano:'v',invierno:'i',extra:'x',maternal:'m',baja:'m'}[p.t]):''}" title="${MES[m]}"></span>`}).join('');
     h+=`<div class="card"><div class="hz-fila" style="border:0;padding:0"><b>${esc(e.n)}</b><small>${mat&&!usados?'Baja':`${res} de ${VAC_ANUAL} días`}</small></div>${mat&&!usados?'':`<div class="hz-saldo"><i style="width:${Math.max(0,Math.min(100,usados/VAC_ANUAL*100))}%;background:${col}"></i></div>`}<div class="hz-meses">${meses}</div>
     ${ps.map(v=>`<div class="hz-fila"><span><small>${esc(v.t)} · ${corto(fd(v.i))} – ${corto(fd(v.f))}${v.n?' · '+esc(v.n):''}</small></span><span style="display:flex;gap:6px;align-items:center"><small>${diasEn(v.i,v.f,y)} d</small><button class="btn-sec hz-sm" data-vdel="${H().vac.indexOf(v)}">Quitar</button></span></div>`).join('')}</div>`});
-  h+=`</div><form class="card" id="hz-f-vac"><b>Añadir periodo</b> <small style="color:var(--text-secondary)">(rellena el horario con VACACIONES o BAJA y avisa si baja la cobertura; las bajas no gastan días de vacaciones)</small><div class="hz-form"><label>Empleado<select id="hz-ve">${H().equipo.filter(activo).map(e=>`<option>${esc(e.n)}</option>`).join('')}</select></label><label>Tipo<select id="hz-vt"><option value="verano">verano</option><option value="invierno">invierno</option><option value="extra">extra</option><option value="baja">baja</option><option value="maternal">baja maternal</option></select></label><label>Desde<input type="date" id="hz-vi" required></label><label>Hasta<input type="date" id="hz-vf" required></label><label>Nota o motivo de la baja<input id="hz-vn"></label></div><button class="btn btn-p" type="submit">Añadir</button></form>`;
+  h+=`</div>`}
+  if(subVac==='add')h+=`<form class="card" id="hz-f-vac"><b>Añadir periodo</b> <small style="color:var(--text-secondary)">(rellena el horario con VACACIONES o BAJA y avisa si baja la cobertura; las bajas no gastan días de vacaciones)</small><div class="hz-form"><label>Empleado<select id="hz-ve">${H().equipo.filter(activo).map(e=>`<option>${esc(e.n)}</option>`).join('')}</select></label><label>Tipo<select id="hz-vt"><option value="verano">verano</option><option value="invierno">invierno</option><option value="extra">extra</option><option value="baja">baja</option><option value="maternal">baja maternal</option></select></label><label>Desde<input type="date" id="hz-vi" required></label><label>Hasta<input type="date" id="hz-vf" required></label><label>Nota o motivo de la baja<input id="hz-vn"></label></div><button class="btn btn-p" type="submit">Añadir</button></form>`;
   return h}
 
 /* ---- vacaciones -> horario ---- */
@@ -101,6 +107,7 @@ function aplicarVac(v,poner){
 K.reg({vistas:{vacaciones:vVac},util:{vVac,vAnioVac,diasEn,aplicarVac}});
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
+  const sv=e.target.closest('[data-subv]');if(sv){subVac=sv.dataset.subv;K.msg='';pintar();return}
   const vd=e.target.closest('[data-vd]');if(vd){diaSel=diaSel===vd.dataset.vd?'':vd.dataset.vd;pintar();return}
   const a=e.target.closest('[data-a]')?.dataset.a;
   if(a==='aant'){K.anio--;pintar()}else if(a==='asig'){K.anio++;pintar()}
@@ -116,7 +123,7 @@ document.addEventListener('submit',e=>{
     const enBloq=(H().bloqueos||[]).filter(b=>b.i<=v.f&&b.f>=v.i);
     K.msg=(falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'')
       +(enBloq.length?`${falta.length?'<br>':''}<b>Ojo:</b> caen en fechas sin vacaciones: ${enBloq.map(b=>esc(b.n||'sin motivo')+' ('+corto(fd(b.i))+' – '+corto(fd(b.f))+')').join(', ')}.`:'');
-    guardar(tocadas.slice());pintar()}
+    subVac='per';guardar(tocadas.slice());pintar()}
   else{const i=$('hz-bi').value,f=$('hz-bf').value;if(!i||!f||f<i)return;
     (H().bloqueos=H().bloqueos||[]).push({i,f,n:$('hz-bn').value.trim()});K.msg='';guardar();pintar()}
 });
