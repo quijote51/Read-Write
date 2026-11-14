@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<script src="tema.js"></script>
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="Gestión de cocina y eventos · Oído Cocina">
@@ -153,8 +154,8 @@ async function checkSupabase(){
   --shadow-md:0 4px 16px rgba(0,0,0,.1),0 2px 4px rgba(0,0,0,.05);
   --t:150ms ease;
 }
-@media(prefers-color-scheme:dark){
-  :root{
+@media all{
+  :root:not([data-tema=claro]){
     --bg-primary:#1e1e1c;--bg-secondary:#2a2a27;--bg-tertiary:#141412;
     --text-primary:#f0efe9;--text-secondary:#a8a79f;--text-tertiary:#8f8e86;
     --border:#3a3a36;--border-md:#4a4a46;
