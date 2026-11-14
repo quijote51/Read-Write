@@ -278,16 +278,16 @@ function vMi(){
   return `<div class="hz-bar" style="justify-content:space-between"><b style="font-size:16px">${esc(me)}</b><button class="btn-sec hz-sm" data-yo="">No soy yo</button></div>`+proximoTurno(me)+sem(k0,'Esta semana · '+corto(fd(k0))+' – '+corto(sumar(fd(k0),6)))+sem(k1,'Semana siguiente · '+corto(fd(k1))+' – '+corto(sumar(fd(k1),6)))}
 
 let tabIni=false;
-const PRINC=['plantilla','mi','horas','cambios'];let masTabs=false;
+const PRINC=()=>SOLO()?['plantilla','mi','horas','cambios']:['plantilla','mi','cambios'],SUBG={plantilla:[['plantilla','Horario'],['equipo','Equipo'],['extras','Extras'],['practicas','Prácticas']],mi:[['mi','Mi semana'],['ahora','Ahora'],['horas','Horas']]},grupoDe=t=>SOLO()?null:Object.keys(SUBG).find(g=>SUBG[g].some(x=>x[0]===t))||null;let masTabs=false;
 const tabsVisibles=()=>(SOLO()?[['mi','Mi semana'],['horas','Horas'],['cambios','Cambios'],['plantilla','Cuadrante'],['ahora','Ahora']]:TABS).filter(x=>x[0]!=='cambios'||window.HZ_CAMB);
 function pintar(){
   const r=root();if(!r)return;
   if(SOLO()&&!tabIni){tab='mi';tabIni=true}
   if(SOLO()&&!tabsVisibles().some(x=>x[0]===tab))tab='mi';
   const f={plantilla:vPlantilla,mi:vMi,horas:vHoras,cambios:()=>vv('cambios'),ahora:vAhora,eventos:()=>vv('eventos'),extras:()=>vPersonas('extras'),practicas:()=>vPersonas('practicas'),vacaciones:()=>vv('vacaciones'),equipo:vEquipo}[tab];
-  const tv=tabsVisibles(),pri=tv.filter(x=>PRINC.includes(x[0])),res=tv.filter(x=>!PRINC.includes(x[0])),abierto=masTabs,enRes=res.some(x=>x[0]===tab),nomRes=(res.find(x=>x[0]===tab)||[])[1],btn=([k,n])=>`<button role="tab" aria-selected="${k===tab}" data-t="${k}">${n}</button>`;
-  const GR=[['Planificar',['ahora','eventos','vacaciones']],['Personas',['equipo','extras','practicas']]],usado=new Set(),grupos=GR.map(([t,ks])=>{const it=res.filter(x=>ks.includes(x[0]));it.forEach(x=>usado.add(x[0]));return it.length?`<div class="hz-gr"><span class="hz-gt">${t}</span><div class="hz-gb">${it.map(btn).join('')}</div></div>`:''}).join('')+(()=>{const o=res.filter(x=>!usado.has(x[0]));return o.length?`<div class="hz-gb">${o.map(btn).join('')}</div>`:''})();
-  r.innerHTML=`<div class="hz-tabs" role="tablist"><div class="hz-tabs-p" style="--n:${pri.length||1}">${pri.map(btn).join('')}</div>${res.length?`<button type="button" class="hz-mas${enRes?' act':''}" data-mas aria-expanded="${abierto}">${enRes?nomRes:(abierto?'Menos opciones':'Más opciones')} <i class="ti ti-chevron-${abierto?'up':'down'}" aria-hidden="true"></i></button>`:''}${res.length&&abierto?`<div class="hz-tabs-s">${grupos}${window.HZ_APARTE?'':`<a class="hz-aparte" href="/horarios.html" target="_blank" rel="noopener">Abrir como app aparte ↗</a>`}</div>`:''}</div>`+f();
+  const tv=tabsVisibles(),pri=tv.filter(x=>PRINC().includes(x[0])),res=tv.filter(x=>!PRINC().includes(x[0])&&!grupoDe(x[0])),abierto=masTabs,enRes=res.some(x=>x[0]===tab),nomRes=(res.find(x=>x[0]===tab)||[])[1],btn=([k,n])=>`<button role="tab" aria-selected="${k===tab||k===grupoDe(tab)}" data-t="${k}">${n}</button>`;
+  const GR=[['Planificar',['ahora','eventos','vacaciones']]],usado=new Set(),grupos=GR.map(([t,ks])=>{const it=res.filter(x=>ks.includes(x[0]));it.forEach(x=>usado.add(x[0]));return it.length?`<div class="hz-gr"><span class="hz-gt">${t}</span><div class="hz-gb">${it.map(btn).join('')}</div></div>`:''}).join('')+(()=>{const o=res.filter(x=>!usado.has(x[0]));return o.length?`<div class="hz-gb">${o.map(btn).join('')}</div>`:''})();
+  r.innerHTML=`<div class="hz-tabs" role="tablist"><div class="hz-tabs-p" style="--n:${pri.length||1}">${pri.map(btn).join('')}</div>${res.length?`<button type="button" class="hz-mas${enRes?' act':''}" data-mas aria-expanded="${abierto}">${enRes?nomRes:(abierto?'Menos opciones':'Más opciones')} <i class="ti ti-chevron-${abierto?'up':'down'}" aria-hidden="true"></i></button>`:''}${res.length&&abierto?`<div class="hz-tabs-s">${grupos}${window.HZ_APARTE?'':`<a class="hz-aparte" href="/horarios.html" target="_blank" rel="noopener">Abrir como app aparte ↗</a>`}</div>`:''}</div>`+(grupoDe(tab)?`<div class="hz-sub" role="group" aria-label="Dentro de ${grupoDe(tab)==='mi'?'Mi semana':'Plantilla'}">${SUBG[grupoDe(tab)].map(([k,n])=>`<button type="button" data-sub="${k}" aria-pressed="${k===tab}">${n}</button>`).join('')}</div>`:'')+f();
 }
 window.initHorarios=function(){pintar()};
 if(window.matchMedia)window.matchMedia("(max-width:700px)").addEventListener("change",()=>{try{if(root())pintar()}catch(e){}});
@@ -297,8 +297,9 @@ document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.datas
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
   {const vb=e.target.closest('[data-vista]');if(vb){modoVista=vb.dataset.vista==='tabla'?'tabla':'dias';try{localStorage.setItem('hz_vista',modoVista)}catch(x){}pintar();return}}
+  {const sb=e.target.closest('[data-sub]');if(sb){tab=sb.dataset.sub;edit=null;msg='';pintar();return}}
   if(e.target.closest('[data-mas]')){masTabs=!masTabs;pintar();return}
-  const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;if(!PRINC.includes(tab))masTabs=true;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}
+  const t=e.target.closest('[data-t]');if(t&&t.closest('.hz-tabs')){tab=t.dataset.t;if(!PRINC().includes(tab)&&!grupoDe(tab))masTabs=true;edit=null;msg='';pintar();if(tab==='cambios'&&CH())CH().recargar().then(pintar);return}
   const c=e.target.closest('.hz-cel,.hz-dfila,.hz-dchip');if(c){if(SOLO()||!c.dataset.e)return;edit={k:iso(semana),e:c.dataset.e,i:+c.dataset.i};pintar();const x=document.getElementById('hz-turno');if(x)x.focus();return}
   const y=e.target.closest('[data-yo]');if(y){try{localStorage.setItem('hz_yo',y.dataset.yo)}catch(er){}pintar();return}
   const q=e.target.closest('[data-q]');if(q){document.getElementById('hz-turno').value=q.dataset.q;return}
