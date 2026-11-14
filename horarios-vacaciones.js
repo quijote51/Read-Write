@@ -74,20 +74,68 @@ function vAnioVac(y,parte){
     <div class="hz-an-lista"><b>Fechas sin nadie fuera</b><p style="font-size:12px;color:var(--text-secondary);margin:2px 0 6px">Huecos del año en los que nadie tiene vacaciones (en azul oscuro los de 14 días o más: los mejores para repartir).</p>${libres}</div></div>`,
     blq=`<div class="card hz-an">${blqHtml}</div>`;
   return parte==='cal'?cal:parte==='coin'?coin:parte==='blq'?blq:cal+coin+blq}
+/* ---- Parámetros de vacaciones y organizador ----
+   48 días al año = 30 de vacaciones (15 de verano + 15 de invierno) + 18 de festivos que se devuelven en vacaciones («extra»).
+   Los 18 festivos se dan sueltos (por días o por semanas): se apuntan con tipo «extra» en Añadir; el organizador solo propone verano e invierno.
+   Se guardan en horarios.vp (se sincroniza con el resto). Verano = del 15 jun al 15 sep; invierno = el resto del año. */
+const VP0={ver:15,inv:15,fest:18,primer:15,libra:true};
+const vpGet=()=>Object.assign({},VP0,H().vp||{});
+const verano=y=>[y+'-06-15',y+'-09-15'];
+function vParam(){
+  const p=vpGet(),tot=(+p.ver||0)+(+p.inv||0)+(+p.fest||0);
+  return `<form class="card" id="hz-f-vp"><b>Parámetros de vacaciones</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Total al año: <b>${tot} días</b> (vacaciones ${(+p.ver||0)+(+p.inv||0)} + festivos devueltos ${+p.fest||0}). Los festivos se dan sueltos, por días o por semanas: apúntalos en «Añadir» con tipo «extra».</p>
+    <div class="hz-form"><label>Días de verano<input type="number" min="0" max="60" id="hz-vp-ver" value="${+p.ver||0}"></label><label>Días de invierno<input type="number" min="0" max="60" id="hz-vp-inv" value="${+p.inv||0}"></label><label>Festivos devueltos (tipo «extra»)<input type="number" min="0" max="60" id="hz-vp-fest" value="${+p.fest||0}"></label><label>Primer bloque (mínimo de días)<input type="number" min="1" max="60" id="hz-vp-primer" value="${+p.primer||1}"></label></div>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hz-vp-libra"${p.libra?' checked':''} style="width:auto;min-height:0"> Que el bloque empiece justo después de sus días libres (el organizador lo prefiere)</label><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`}
+// Sugiere fechas para los días de verano o invierno que le faltan a una persona: sin chocar con otras vacaciones ni con fechas sin vacaciones
+function sugerir(nom,t,y){
+  const p=vpGet(),need=t==='verano'?+p.ver||0:+p.inv||0,ps=H().vac.filter(v=>v.e===nom&&v.t===t&&v.i.slice(0,4)<=y&&v.f.slice(0,4)>=y),usados=ps.reduce((s,v)=>s+diasEn(v.i,v.f,y),0),falta=need-usados;
+  if(falta<=0)return{falta:0,sug:[]};
+  const L=usados===0?Math.min(falta,Math.max(1,+p.primer||falta)):falta;
+  const eq=H().equipo.filter(e=>activo(e)&&(!e.desde||e.desde.slice(0,4)<=y)&&(!e.hasta||e.hasta.slice(0,4)>=y)),N=eq.length;
+  const fuera={};H().vac.filter(v=>!esBaja(v)&&v.e!==nom).forEach(v=>{for(let d=fd(v.i),f=fd(v.f);d<=f;d=sumar(d,1)){const k=iso(d);(fuera[k]=fuera[k]||[]).includes(v.e)||fuera[k].push(v.e)}});
+  const prop=new Set();H().vac.filter(v=>v.e===nom).forEach(v=>{for(let d=fd(v.i),f=fd(v.f);d<=f;d=sumar(d,1))prop.add(iso(d))});
+  const bq=new Set();(H().bloqueos||[]).forEach(b=>{for(let d=fd(b.i),f=fd(b.f);d<=f;d=sumar(d,1))bq.add(iso(d))});
+  const [vi,vf]=verano(y),enRango=k=>t==='verano'?(k>=vi&&k<=vf):(k<vi||k>vf);
+  const libreAntes=d=>{const dd=sumar(d,-1),a=H().semanas[iso(lunes(dd))],tt=a&&a[nom]&&a[nom][(dd.getDay()+6)%7];return a&&a[nom]?(!tt||tipo(tt)==='libre'):null};
+  const cand=[];
+  for(let d=fd(y+'-01-01');d<=fd(y+'-12-31');d=sumar(d,1)){
+    const fin=sumar(d,L-1),k0=iso(d),k1=iso(fin);if(k1>y+'-12-31'||!enRango(k0)||!enRango(k1))continue;
+    let sc=0,bad=false;const con=new Set();
+    for(let x=d;x<=fin;x=sumar(x,1)){const k=iso(x);if(bq.has(k)||prop.has(k)){bad=true;break}
+      const o=fuera[k]||[];o.forEach(n=>con.add(n));sc+=o.length*10;if(N-o.length-1<MIN_COB)sc+=200}
+    if(bad)continue;
+    if(p.libra){const lb=libreAntes(d);if(lb===false)sc+=15}
+    cand.push({i:k0,f:k1,sc,con:[...con]})}
+  cand.sort((a,b)=>a.sc-b.sc||(a.i<b.i?-1:1));
+  const sug=[];for(const c of cand){if(sug.every(s=>Math.abs(fd(s.i)-fd(c.i))>=7*864e5))sug.push(c);if(sug.length>=3)break}
+  return{falta,L,sug}}
+function vOrg(y){
+  const eqY=H().equipo.filter(e=>activo(e)&&(!e.desde||e.desde.slice(0,4)<=y)&&(!e.hasta||e.hasta.slice(0,4)>=y)&&!H().vac.some(v=>v.e===e.n&&esBaja(v)&&v.i.slice(0,4)<=y&&v.f.slice(0,4)>=y));
+  const fe=k=>{const d=fd(k);return d.getDate()+' '+MES[d.getMonth()]};
+  let h=`<div class="card"><b>Organizador de vacaciones ${y}</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0">Propone las mejores fechas para los días de verano e invierno que le faltan a cada persona: sin chocar con otras vacaciones, fuera de las fechas sin vacaciones y dejando al menos ${MIN_COB} personas en cocina. Tú decides: pulsa «Apuntar» en la que te guste. Los festivos devueltos se apuntan aparte, sueltos.</p></div>`;
+  let hay=false;
+  const sug1=s=>`<div class="hz-fila"><span><b>${fe(s.i)} – ${fe(s.f)}</b><br><small>${s.con.length?'Coincide con '+s.con.map(esc).join(', '):'No coincide con nadie'}</small></span><button type="button" class="btn-sec hz-sm" data-sug="${esc(e_n)}|${e_t}|${s.i}|${s.f}">Apuntar</button></div>`;
+  let e_n='',e_t='';
+  eqY.forEach(e=>{const filas=['verano','invierno'].map(t=>({t,r:sugerir(e.n,t,y)})).filter(x=>x.r.falta>0);if(!filas.length)return;hay=true;
+    h+=`<div class="card"><b>${esc(e.n)}</b>`+filas.map(({t,r})=>{e_n=e.n;e_t=t;return `<div style="margin-top:8px"><small style="color:var(--text-secondary)">${cap(t)}: faltan ${r.falta} días${r.L&&r.L<r.falta?' · primer bloque de '+r.L:''}</small>`+(r.sug.length?r.sug.map(sug1).join(''):'<div class="hz-vacio">No hay un hueco de esa duración sin problemas.</div>')+'</div>'}).join('')+'</div>'});
+  if(!hay)h+='<div class="card hz-vacio">Todos tienen ya apuntados sus días de verano e invierno.</div>';
+  return h}
 let subVac='cal';
-const SUBV=[['cal','Calendario'],['coin','Coincidencias'],['per','Personas'],['add','Añadir'],['blq','Sin vacaciones']];
+const SUBV=[['cal','Calendario'],['coin','Coincidencias'],['per','Personas'],['add','Añadir'],['org','Organizador'],['par','Parámetros']];
 function vVac(){
   const y=K.anio,eqY=H().equipo.filter(e=>(!e.desde||e.desde.slice(0,4)<=y)&&(!e.hasta||e.hasta.slice(0,4)>=y));
   let h=`<div class="hz-bar"><button class="btn-sec" data-a="aant" aria-label="Año anterior">←</button><div class="hz-sem">${y}</div><button class="btn-sec" data-a="asig" aria-label="Año siguiente">→</button></div>`;
   if(K.msg)h+=`<div class="hz-aviso warn">${K.msg}</div>`;
   h+=`<div class="hz-sub hz-sub-v" role="group" aria-label="Vacaciones">${SUBV.map(([k,n])=>`<button type="button" data-subv="${k}" aria-pressed="${k===subVac}">${n}</button>`).join('')}</div>`;
-  if(subVac==='cal'||subVac==='coin'||subVac==='blq')h+=vAnioVac(y,subVac);
+  if(subVac==='cal'||subVac==='coin')h+=vAnioVac(y,subVac);
+  if(subVac==='par')h+=vParam()+vAnioVac(y,'blq');
+  if(subVac==='org')h+=vOrg(y);
   if(subVac==='per'){h+=`<div class="hz-cols">`;
   eqY.forEach(e=>{const ps=H().vac.filter(v=>v.e===e.n&&v.i.slice(0,4)<=y&&v.f.slice(0,4)>=y);
-    const usados=ps.filter(v=>!esBaja(v)).reduce((s,v)=>s+diasEn(v.i,v.f,y),0),res=VAC_ANUAL-usados,mat=ps.some(esBaja);
-    const col=res>10?'#5dcaa5':res>=5?'#ef9f27':'#e24b4a';
+    const vp=H().vp||{},tot=(+vp.ver||0)+(+vp.inv||0)+(+vp.fest||0)||VAC_ANUAL,usados=ps.filter(v=>!esBaja(v)).reduce((s,v)=>s+diasEn(v.i,v.f,y),0),res=tot-usados,mat=ps.some(esBaja),por=t=>ps.filter(v=>v.t===t).reduce((s,v)=>s+diasEn(v.i,v.f,y),0);
+    const col=res>tot*.3?'#5dcaa5':res>=tot*.15?'#ef9f27':'#e24b4a';
     const meses=Array.from({length:12},(_,m)=>{const a=new Date(y,m,1),b=new Date(y,m+1,0);const p=ps.find(v=>fd(v.i)<=b&&fd(v.f)>=a);return`<span class="${p?({verano:'v',invierno:'i',extra:'x',maternal:'m',baja:'m'}[p.t]):''}" title="${MES[m]}"></span>`}).join('');
-    h+=`<div class="card"><div class="hz-fila" style="border:0;padding:0"><b>${esc(e.n)}</b><small>${mat&&!usados?'Baja':`${res} de ${VAC_ANUAL} días`}</small></div>${mat&&!usados?'':`<div class="hz-saldo"><i style="width:${Math.max(0,Math.min(100,usados/VAC_ANUAL*100))}%;background:${col}"></i></div>`}<div class="hz-meses">${meses}</div>
+    h+=`<div class="card"><div class="hz-fila" style="border:0;padding:0"><b>${esc(e.n)}</b><small>${mat&&!usados?'Baja':`${res} de ${tot} días`}</small></div>${mat&&!usados?'':`<div class="hz-saldo"><i style="width:${Math.max(0,Math.min(100,usados/tot*100))}%;background:${col}"></i></div>`}<div class="hz-meses">${meses}</div>${mat&&!usados?'':`<div style="font-size:11px;color:var(--text-secondary);margin:2px 0 4px">Verano ${por('verano')}/${+vp.ver||0} · Invierno ${por('invierno')}/${+vp.inv||0} · Festivos ${por('extra')}/${+vp.fest||0}</div>`}
     ${ps.map(v=>`<div class="hz-fila"><span><small>${esc(v.t)} · ${corto(fd(v.i))} – ${corto(fd(v.f))}${v.n?' · '+esc(v.n):''}</small></span><span style="display:flex;gap:6px;align-items:center"><small>${diasEn(v.i,v.f,y)} d</small><button class="btn-sec hz-sm" data-vdel="${H().vac.indexOf(v)}">Quitar</button></span></div>`).join('')}</div>`});
   h+=`</div>`}
   if(subVac==='add')h+=`<form class="card" id="hz-f-vac"><b>Añadir periodo</b> <small style="color:var(--text-secondary)">(rellena el horario con VACACIONES o BAJA y avisa si baja la cobertura; las bajas no gastan días de vacaciones)</small><div class="hz-form"><label>Empleado<select id="hz-ve">${H().equipo.filter(activo).map(e=>`<option>${esc(e.n)}</option>`).join('')}</select></label><label>Tipo<select id="hz-vt"><option value="verano">verano</option><option value="invierno">invierno</option><option value="extra">extra</option><option value="baja">baja</option><option value="maternal">baja maternal</option></select></label><label>Desde<input type="date" id="hz-vi" required></label><label>Hasta<input type="date" id="hz-vf" required></label><label>Nota o motivo de la baja<input id="hz-vn"></label></div><button class="btn btn-p" type="submit">Añadir</button></form>`;
@@ -104,9 +152,10 @@ function aplicarVac(v,poner){
   }
   return falta}
 
-K.reg({vistas:{vacaciones:vVac},util:{vVac,vAnioVac,diasEn,aplicarVac}});
+K.reg({vistas:{vacaciones:vVac},util:{vVac,vAnioVac,diasEn,aplicarVac,sugerir,vOrg,vParam}});
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
+  const sg=e.target.closest('[data-sug]');if(sg){const[n,t,i,f]=sg.dataset.sug.split('|'),v={e:n,t,i,f,n:''};H().vac.push(v);const falta=aplicarVac(v,true);K.msg=falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'';guardar(tocadas.slice());pintar();return}
   const sv=e.target.closest('[data-subv]');if(sv){subVac=sv.dataset.subv;K.msg='';pintar();return}
   const vd=e.target.closest('[data-vd]');if(vd){diaSel=diaSel===vd.dataset.vd?'':vd.dataset.vd;pintar();return}
   const a=e.target.closest('[data-a]')?.dataset.a;
@@ -116,7 +165,8 @@ document.addEventListener('click',e=>{
   const v=e.target.closest('[data-vdel]');if(v){const p=H().vac.splice(+v.dataset.vdel,1)[0];aplicarVac(p,false);K.msg='';guardar(tocadas.slice());pintar()}
 });
 document.addEventListener('submit',e=>{
-  const id=e.target.id;if(id!=='hz-f-vac'&&id!=='hz-f-blq')return;e.preventDefault();const $=s=>document.getElementById(s);
+  const id=e.target.id;if(id!=='hz-f-vac'&&id!=='hz-f-blq'&&id!=='hz-f-vp')return;e.preventDefault();const $=s=>document.getElementById(s);
+  if(id==='hz-f-vp'){const n=x=>Math.max(0,Math.min(60,parseInt($(x).value)||0));H().vp={ver:n('hz-vp-ver'),inv:n('hz-vp-inv'),fest:n('hz-vp-fest'),primer:Math.max(1,n('hz-vp-primer')),libra:!!$('hz-vp-libra').checked};K.msg='';guardar();pintar();return}
   if(id==='hz-f-vac'){if($('hz-vf').value<$('hz-vi').value)return;
     const v={e:$('hz-ve').value,t:$('hz-vt').value,i:$('hz-vi').value,f:$('hz-vf').value,n:$('hz-vn').value.trim()};
     H().vac.push(v);const falta=aplicarVac(v,true);
