@@ -197,3 +197,4 @@ div.hz-dfila,div.hz-dchip{cursor:default}
 .hz-pleg[open]>summary::after{content:'▴'}
 .hz-pleg>.card{margin:0;border:0;border-top:1px solid var(--border);border-radius:0 0 12px 12px;box-shadow:none;background:transparent}
 .hz-pleg>.card>b:first-child{display:none}
+.hz-tabs-s{display:flex;flex-direction:column;gap:10px}.hz-gr{display:flex;flex-direction:column;gap:6px}.hz-gt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#c9a84c;opacity:.85;padding-left:2px}.hz-gb{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.hz-mas.act{background:var(--gold);color:#1a1a1a;border-color:var(--gold)}
