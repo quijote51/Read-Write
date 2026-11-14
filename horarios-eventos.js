@@ -5,7 +5,7 @@
    ══════════════════════════════════════ */
 (function(){
 const K=window.hzKit;
-const {H,fd,iso,lunes,sumar,corto,fmtH,cap,esc,pHM,tramos,horas,tipo,trabaja,equipoSem,fila,sinTurnos,personasDia,cobertura,enHora,guardar,avisos,pintar,SOLO,root,yo,DIAS,DL,MES,MESL,GRUPOS,MIN_COB,MAX_H,MIN_DESC,VAC_ANUAL}=K;
+const {H,fd,iso,lunes,sumar,corto,fmtH,cap,esc,pHM,tramos,horas,tipo,trabaja,equipoSem,fila,sinTurnos,personasDia,cobertura,enHora,guardar,avisos,pintar,SOLO,root,yo,DIAS,DL,MES,MESL,GRUPOS,VAC_ANUAL}=K;
 const activo=e=>K.activo(e);
 /* ---- Cobertura por horas: cuántas personas de cocina hay a cada hora (6:00–24:00) y qué evento cae en cada hora ----
    Colores de cada hora: 1 persona naranja, 2 amarillo, 3 o más verde (la hora de un evento lleva un marco dorado).
@@ -32,7 +32,7 @@ function vCobHoras(k){
       let cls='ok',txt=`${alli.length} en cocina${alli.length?' ('+alli.map(p=>esc(p.n)).join(', ')+')':''}`;
       if(!alli.length){cls='bad';txt='nadie en turno a esa hora'}
       else if(pax/alli.length>rp){cls='warn';txt+=` · ${Math.round(pax/alli.length)} pax por persona: refuerza`}
-      else if(alli.length<MIN_COB){cls='warn';txt+=` · menos de ${MIN_COB}`}
+      else if(alli.length<K.MIN_COB){cls='warn';txt+=` · menos de ${K.MIN_COB}`}
       lineas+=`<div class="hz-ch-ev ${cls}"><b>${DIAS[i]} ${d.getDate()}${e.hora?' · '+esc(e.hora):''}</b> ${esc(e.nombre)}${pax?' · '+pax+' pax':''}<br><small>${txt}</small></div>`});
   }
   return h+`<div class="hz-ch-leyenda"><span class="n1">1</span><span class="n2">2</span><span class="n3">3+</span><small>personas de cocina</small></div>${lineas?`<div class="hz-ch-evs">${lineas}</div>`:''}</div>`}
@@ -47,9 +47,9 @@ function vEventos(){
   if(!evs.length)return`<div class="hz-vacio">No hay eventos en los próximos 21 días.</div>`;
   const rp=(typeof ajustes!=='undefined'&&ajustes&&Number(ajustes.raciones_por_persona))||80;
   const dias={};evs.forEach(e=>(dias[e.fecha]=dias[e.fecha]||[]).push(e));
-  let h=`<p style="font-size:12px;color:var(--text-secondary);margin:0 0 10px">Próximos 21 días. Referencia: una persona de cocina cubre ${rp} raciones; mínimo ${MIN_COB} personas.</p>`;
+  let h=`<p style="font-size:12px;color:var(--text-secondary);margin:0 0 10px">Próximos 21 días. Referencia: una persona de cocina cubre ${rp} raciones; mínimo ${K.MIN_COB} personas.</p>`;
   Object.keys(dias).forEach(f=>{
-    const lista=dias[f],d=fd(f),rac=lista.reduce((s,e)=>s+Math.round((Number(e.pax)||0)*factorEv(e)),0),nec=Math.max(MIN_COB,Math.ceil(rac/rp));
+    const lista=dias[f],d=fd(f),rac=lista.reduce((s,e)=>s+Math.round((Number(e.pax)||0)*factorEv(e)),0),nec=Math.max(K.MIN_COB,Math.ceil(rac/rp));
     const z=window.hzDia(f),coc=z?z.gente.filter(p=>p.g<=3):null,falta=coc?Math.max(0,nec-coc.length):null;
     const cls=!z?'b-info':falta>0?'b-danger':'b-success';
     const txt=!z?'Horario de esa semana sin cargar':falta>0?`Faltan ${falta}: hay ${coc.length}, hacen falta ${nec}`:`Cubierto: ${coc.length} en cocina (hacen falta ${nec})`;

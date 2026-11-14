@@ -6,7 +6,7 @@
    ══════════════════════════════════════ */
 (function(){
 const K=window.hzKit;
-const {H,fd,iso,lunes,sumar,corto,fmtH,cap,esc,pHM,tramos,horas,tipo,trabaja,equipoSem,fila,sinTurnos,personasDia,cobertura,enHora,guardar,avisos,pintar,SOLO,root,yo,DIAS,DL,MES,MESL,GRUPOS,MIN_COB,MAX_H,MIN_DESC,VAC_ANUAL}=K;
+const {H,fd,iso,lunes,sumar,corto,fmtH,cap,esc,pHM,tramos,horas,tipo,trabaja,equipoSem,fila,sinTurnos,personasDia,cobertura,enHora,guardar,avisos,pintar,SOLO,root,yo,DIAS,DL,MES,MESL,GRUPOS,VAC_ANUAL}=K;
 const activo=e=>K.activo(e);
 // Las bajas (maternal o de otro tipo) no son vacaciones: no gastan días ni cuentan como coincidencia
 const esBaja=v=>v.t==='maternal'||v.t==='baja';
@@ -102,7 +102,7 @@ function sugerir(nom,t,y){
     const fin=sumar(d,L-1),k0=iso(d),k1=iso(fin);if(k1>y+'-12-31'||!enRango(k0)||!enRango(k1))continue;
     let sc=0,bad=false;const con=new Set();
     for(let x=d;x<=fin;x=sumar(x,1)){const k=iso(x);if(bq.has(k)||prop.has(k)){bad=true;break}
-      const o=fuera[k]||[];o.forEach(n=>con.add(n));sc+=o.length*10;if(N-o.length-1<MIN_COB)sc+=200}
+      const o=fuera[k]||[];o.forEach(n=>con.add(n));sc+=o.length*10;if(N-o.length-1<K.MIN_COB)sc+=200}
     if(bad)continue;
     if(p.lunes&&d.getDay()!==1)continue;
     cand.push({i:k0,f:k1,sc,con:[...con]})}
@@ -112,7 +112,7 @@ function sugerir(nom,t,y){
 function vOrg(y){
   const eqY=H().equipo.filter(e=>activo(e)&&(!e.desde||e.desde.slice(0,4)<=y)&&(!e.hasta||e.hasta.slice(0,4)>=y)&&!H().vac.some(v=>v.e===e.n&&esBaja(v)&&v.i.slice(0,4)<=y&&v.f.slice(0,4)>=y));
   const fe=k=>{const d=fd(k);return d.getDate()+' '+MES[d.getMonth()]};
-  let h=`<div class="card"><b>Organizador de vacaciones ${y}</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0">Propone las mejores fechas para los días de verano e invierno que le faltan a cada persona: sin chocar con otras vacaciones, fuera de las fechas sin vacaciones, empezando siempre en lunes (se puede quitar en Parámetros) y dejando al menos ${MIN_COB} personas en cocina. Tú decides: pulsa «Apuntar» en la que te guste. Los festivos devueltos se apuntan aparte, sueltos.</p></div>`;
+  let h=`<div class="card"><b>Organizador de vacaciones ${y}</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0">Propone las mejores fechas para los días de verano e invierno que le faltan a cada persona: sin chocar con otras vacaciones, fuera de las fechas sin vacaciones, empezando siempre en lunes (se puede quitar en Parámetros) y dejando al menos ${K.MIN_COB} personas en cocina. Tú decides: pulsa «Apuntar» en la que te guste. Los festivos devueltos se apuntan aparte, sueltos.</p></div>`;
   let hay=false;
   const sug1=s=>`<div class="hz-fila"><span><b>${fe(s.i)} – ${fe(s.f)}</b><br><small>${s.con.length?'Coincide con '+s.con.map(esc).join(', '):'No coincide con nadie'}</small></span><button type="button" class="btn-sec hz-sm" data-sug="${esc(e_n)}|${e_t}|${s.i}|${s.f}">Apuntar</button></div>`;
   let e_n='',e_t='';
@@ -148,7 +148,7 @@ function aplicarVac(v,poner){
   for(let d=fd(v.i),f=fd(v.f);d<=f;d=sumar(d,1)){
     const k=iso(lunes(d)),i=(d.getDay()+6)%7,a=fila(k,v.e);if(!tocadas.includes(k))tocadas.push(k);
     if(poner)a[i]=txt;else if(/VACACIONES|BAJA/i.test(a[i]))a[i]='';
-    if(poner&&!sinTurnos(k)&&cobertura(k,i)<MIN_COB)falta.push(`${DL[i]} ${d.getDate()} ${MES[d.getMonth()]} (${cobertura(k,i)})`);
+    if(poner&&!sinTurnos(k)&&cobertura(k,i)<K.MIN_COB)falta.push(`${DL[i]} ${d.getDate()} ${MES[d.getMonth()]} (${cobertura(k,i)})`);
   }
   return falta}
 
@@ -166,7 +166,7 @@ function ponerVuelta(nom,f){
 K.reg({vistas:{vacaciones:vVac},util:{vVac,vAnioVac,diasEn,aplicarVac,sugerir,vOrg,vParam,ofertaVuelta,ponerVuelta}});
 document.addEventListener('click',e=>{
   const r=root();if(!r||!r.contains(e.target))return;
-  const sg=e.target.closest('[data-sug]');if(sg){const[n,t,i,f]=sg.dataset.sug.split('|'),v={e:n,t,i,f,n:''};H().vac.push(v);const falta=aplicarVac(v,true);K.msg=(falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'')+(ofertaVuelta(v)?(falta.length?'<br>':'')+ofertaVuelta(v):'');guardar(tocadas.slice());pintar();return}
+  const sg=e.target.closest('[data-sug]');if(sg){const[n,t,i,f]=sg.dataset.sug.split('|'),v={e:n,t,i,f,n:''};H().vac.push(v);const falta=aplicarVac(v,true);K.msg=(falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${K.MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'')+(ofertaVuelta(v)?(falta.length?'<br>':'')+ofertaVuelta(v):'');guardar(tocadas.slice());pintar();return}
   const vu=e.target.closest('[data-vuelta]');if(vu){const[n,f]=vu.dataset.vuelta.split('|');const k=ponerVuelta(n,f);K.msg='';guardar([k]);pintar();return}
   const sv=e.target.closest('[data-subv]');if(sv){subVac=sv.dataset.subv;K.msg='';pintar();return}
   const vd=e.target.closest('[data-vd]');if(vd){diaSel=diaSel===vd.dataset.vd?'':vd.dataset.vd;pintar();return}
@@ -183,7 +183,7 @@ document.addEventListener('submit',e=>{
     const v={e:$('hz-ve').value,t:$('hz-vt').value,i:$('hz-vi').value,f:$('hz-vf').value,n:$('hz-vn').value.trim()};
     H().vac.push(v);const falta=aplicarVac(v,true);
     const enBloq=(H().bloqueos||[]).filter(b=>b.i<=v.f&&b.f>=v.i);
-    K.msg=(falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'')
+    K.msg=(falta.length?`<b>Cuidado:</b> con estas vacaciones la cobertura baja de ${K.MIN_COB} en: ${falta.slice(0,8).join(', ')}${falta.length>8?'…':''}.`:'')
       +(enBloq.length?`${falta.length?'<br>':''}<b>Ojo:</b> caen en fechas sin vacaciones: ${enBloq.map(b=>esc(b.n||'sin motivo')+' ('+corto(fd(b.i))+' – '+corto(fd(b.f))+')').join(', ')}.`:'')+(ofertaVuelta(v)?(falta.length||enBloq.length?'<br>':'')+ofertaVuelta(v):'');
     subVac='per';guardar(tocadas.slice());pintar()}
   else{const i=$('hz-bi').value,f=$('hz-bf').value;if(!i||!f||f<i)return;

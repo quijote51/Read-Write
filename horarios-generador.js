@@ -6,7 +6,7 @@
    ══════════════════════════════════════ */
 (function(){
 const K=window.hzKit;
-const {H,fd,iso,lunes,sumar,corto,fmtH,cap,esc,pHM,tramos,horas,tipo,trabaja,equipoSem,fila,sinTurnos,personasDia,cobertura,enHora,guardar,avisos,pintar,SOLO,root,yo,DIAS,DL,MES,MESL,GRUPOS,MIN_COB,MAX_H,MIN_DESC,VAC_ANUAL}=K;
+const {H,fd,iso,lunes,sumar,corto,fmtH,cap,esc,pHM,tramos,horas,tipo,trabaja,equipoSem,fila,sinTurnos,personasDia,cobertura,enHora,guardar,avisos,pintar,SOLO,root,yo,DIAS,DL,MES,MESL,GRUPOS,VAC_ANUAL}=K;
 const activo=e=>K.activo(e);
 const factorEv=ev=>K.factorEv(ev);
 /* ---- generador automático de semanas ---- */
@@ -45,7 +45,7 @@ function candidatos(e,forz,finPrev,R){
         const tr=tramosM(x);
         if(menu.noDes&&iniDe(tr)<=7&&!R.sinDesayuno[d])continue;
         const prev=d===0?finPrev:(sh[d-1]&&trab.includes(d-1)?finDe(tramosM(sh[d-1])):null);
-        if(prev!=null&&iniDe(tr)+24-prev<MIN_DESC)continue;
+        if(prev!=null&&iniDe(tr)+24-prev<K.MIN_DESC)continue;
         sh[d]=x;dfs(ix+1);sh[d]=null}
     };
     dfs(0)});
@@ -62,7 +62,7 @@ function penal(sol,pers,R){
   for(let d=0;d<7;d++){
     let cov=0,lib=0,mediodia=false,noche=false,desayuno=false;
     for(let i=0;i<n;i++){const q=P[i];if(q.cn[d]){cov++;if(pers[i].g<=1){if(q.med[d])mediodia=true;if(q.noc[d])noche=true}if(q.des[d])desayuno=true}if(sol[i].libre[d])lib++}
-    if(cov<MIN_COB)p+=100*(MIN_COB-cov);
+    if(cov<K.MIN_COB)p+=100*(K.MIN_COB-cov);
     if(d>=5&&lib>1)p+=100*(lib-1);
     if(lib>2)p+=10*(lib-2);
     if(!mediodia)p+=80;if(!noche)p+=80;if(!desayuno&&R.hayDesayuno[d])p+=80;
