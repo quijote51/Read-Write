@@ -177,7 +177,7 @@ function vPlantilla(){
   const k=iso(semana),hoy=iso(new Date()),vacia=sinTurnos(k),eq=equipoSem(k);
   const prev=Object.keys(H().semanas).filter(x=>x<k&&!sinTurnos(x)).sort().pop();
   let h=`<div class="hz-bar">${barraIn()}<span style="flex:1"></span> ${prev&&!SOLO()?(vacia?`<button class="btn btn-p" data-a="copiar" data-p="${prev}">Copiar semana del ${corto(fd(prev))}</button>`:`<button class="btn-sec hz-sm" data-a="copiar" data-p="${prev}" title="Sustituye esta semana por la del ${corto(fd(prev))}">Repetir semana anterior</button>`):''}</div>`;
-  if(vacia)h+=`<div class="hz-aviso warn">Esta semana no tiene turnos. Toca una celda para escribirlos${prev?' o copia la última semana con datos':''}.</div>`;
+  if(vacia)h+=`<div class="hz-aviso warn">Esta semana no tiene turnos. Toca una celda para escribirlos${prev?' o copia la última semana con datos':(SOLO()?'':' o usa «Generar semanas automáticamente» más abajo')}.</div>`;
   else if(!SOLO()){const av=avisos(k);h+=av.length?`<div class="hz-aviso warn"><b>${av.length} aviso${av.length===1?'':'s'}</b><ul>${av.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:`<div class="hz-aviso ok">Sin avisos: cobertura, descansos y horas dentro de las reglas.</div>`}
   h+=`<div class="hz-tabla hz-plan"><table><thead><tr><th class="nom">Equipo</th>${DIAS.map((n,i)=>`<th class="${iso(sumar(semana,i))===hoy?'hoy':''}">${n}<br>${sumar(semana,i).getDate()}</th>`).join('')}<th>h/sem</th></tr></thead><tbody>`;
   GRUPOS.forEach((g,gi)=>{const m=eq.filter(e=>e.g===gi);if(!m.length)return;h+=`<tr class="grp"><td colspan="9">${g}</td></tr>`;

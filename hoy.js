@@ -66,6 +66,6 @@ const CSS = `#hoy-card{border:1px solid var(--gold);margin-bottom:10px}
 .hoy-pend{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;min-height:44px;text-align:left;background:var(--bg-secondary);border:.5px solid var(--border);border-radius:var(--radius);padding:6px 10px;margin-bottom:4px;font:inherit;color:inherit;cursor:pointer}
 .hoy-pend b{font-size:13px;display:block}.hoy-pend small{display:block;font-size:12px;color:var(--text-secondary);overflow-wrap:anywhere}
 .hoy-vacio,.hoy-man,.hoy-ok{font-size:13px;color:var(--text-secondary);margin:6px 0}.hoy-ok{color:var(--success-text)}
-.hoy-link{background:none;border:0;color:var(--text-secondary);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;min-height:44px;padding:0 4px}
-.hoy-fichar{width:100%;min-height:48px;margin-top:10px;font-size:15px}`;
+.hoy-link{background:none;border:0;color:var(--gold,#c9a84c);font:inherit;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;min-height:44px;padding:0 4px}
+.hoy-fichar{width:100%;min-height:48px;margin-top:10px;font-size:15px;background:var(--gold,#c9a84c);color:#1a1a1a;font-weight:600}`;
 })();
