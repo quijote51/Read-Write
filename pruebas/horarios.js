@@ -200,9 +200,13 @@ const trabaja = t => t && !/LIBRE|VACACIONES|BAJA/i.test(t) && /\d/.test(t);
     ok(r.sug.every(s => new Date(s.i + 'T00:00').getDay() === 1), 'organizador: todas las propuestas empiezan en lunes');
     const ri = F.sugerir('Jimena', 'invierno', 2026);
     ok(ri.sug.every(s => s.f < '2026-06-15' || s.i > '2026-09-15'), 'organizador: los bloques de invierno caen fuera del verano'); }
-  S.enviar('hz-f-vp', {'hz-vp-ver': '10', 'hz-vp-inv': '12', 'hz-vp-fest': '18', 'hz-vp-primer': '7', 'hz-vp-lunes': {checked: false}});
+  S.enviar('hz-f-vp', {'hz-vp-ver': '10', 'hz-vp-inv': '12', 'hz-vp-fest': '18', 'hz-vp-primer': '7', 'hz-vp-lunes': {checked: false}, 'hz-vp-vuelta': {checked: false}});
   ok(S.H().vp.ver === 10 && S.H().vp.inv === 12 && S.H().vp.primer === 7 && S.H().vp.lunes === false, 'parámetros de vacaciones: se guardan');
-  S.H().vp = {ver: 15, inv: 15, fest: 18, primer: 15, lunes: true};
+  S.H().vp = {ver: 15, inv: 15, fest: 18, primer: 15, lunes: true, vuelta: true};
+  S.enviar('hz-f-vac', {'hz-ve': 'Ana', 'hz-vt': 'verano', 'hz-vi': '2026-09-07', 'hz-vf': '2026-09-20', 'hz-vn': ''});
+  ok(S.H().semanas['2026-09-21'] && S.H().semanas['2026-09-21'].Ana[0] === 'LIBRE' && S.H().semanas['2026-09-21'].Ana[1] === 'LIBRE' && S.H().semanas['2026-09-21'].Ana[2] === '', 'vacaciones: al volver (lunes 21 sep) libra lunes y martes');
+  S.enviar('hz-f-vac', {'hz-ve': 'Ana', 'hz-vt': 'extra', 'hz-vi': '2026-10-05', 'hz-vf': '2026-10-05', 'hz-vn': ''});
+  ok(!S.H().semanas['2026-10-12'] || !S.H().semanas['2026-10-12'].Ana || S.H().semanas['2026-10-12'].Ana[0] !== 'LIBRE', 'vacaciones: un día suelto (extra) no pone libres al volver');
   ok(F.diasEn('2026-12-24', '2026-12-31', 2026) === 8 && F.diasEn('2025-12-30', '2026-01-02', 2026) === 2, 'diasEn: días de un periodo dentro del año');
   ok(/Equipo/.test(F.vEquipo()) && /Móvil \(WhatsApp\)/.test(F.vEquipo()), 'Equipo: lista con campo de móvil');
   ok(/Horas/.test(F.vHoras()) || F.vHoras().length > 50, 'Horas: se pinta');

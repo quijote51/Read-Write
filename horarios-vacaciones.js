@@ -78,14 +78,15 @@ function vAnioVac(y,parte){
    48 días al año = 30 de vacaciones (15 de verano + 15 de invierno) + 18 de festivos que se devuelven en vacaciones («extra»).
    Los 18 festivos se dan sueltos (por días o por semanas): se apuntan con tipo «extra» en Añadir; el organizador solo propone verano e invierno.
    Se guardan en horarios.vp (se sincroniza con el resto). Verano = del 15 jun al 15 sep; invierno = el resto del año. */
-const VP0={ver:15,inv:15,fest:18,primer:15,lunes:true};
+const VP0={ver:15,inv:15,fest:18,primer:15,lunes:true,vuelta:true};
 const vpGet=()=>Object.assign({},VP0,H().vp||{});
 const verano=y=>[y+'-06-15',y+'-09-15'];
 function vParam(){
   const p=vpGet(),tot=(+p.ver||0)+(+p.inv||0)+(+p.fest||0);
   return `<form class="card" id="hz-f-vp"><b>Parámetros de vacaciones</b><p style="font-size:12px;color:var(--text-secondary);margin:4px 0 8px">Total al año: <b>${tot} días</b> (vacaciones ${(+p.ver||0)+(+p.inv||0)} + festivos devueltos ${+p.fest||0}). Los festivos se dan sueltos, por días o por semanas: apúntalos en «Añadir» con tipo «extra».</p>
     <div class="hz-form"><label>Días de verano<input type="number" min="0" max="60" id="hz-vp-ver" value="${+p.ver||0}"></label><label>Días de invierno<input type="number" min="0" max="60" id="hz-vp-inv" value="${+p.inv||0}"></label><label>Festivos devueltos (tipo «extra»)<input type="number" min="0" max="60" id="hz-vp-fest" value="${+p.fest||0}"></label><label>Primer bloque (mínimo de días)<input type="number" min="1" max="60" id="hz-vp-primer" value="${+p.primer||1}"></label></div>
-    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hz-vp-lunes"${p.lunes?' checked':''} style="width:auto;min-height:0"> Las vacaciones empiezan siempre en lunes (el organizador solo propone lunes)</label><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`}
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hz-vp-lunes"${p.lunes?' checked':''} style="width:auto;min-height:0"> Las vacaciones empiezan siempre en lunes (el organizador solo propone lunes)</label>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hz-vp-vuelta"${p.vuelta?' checked':''} style="width:auto;min-height:0"> Al volver de vacaciones, la primera semana libra lunes y martes (se pone LIBRE al apuntar el periodo)</label><button class="btn btn-p" type="submit">Guardar parámetros</button></form>`}
 // Sugiere fechas para los días de verano o invierno que le faltan a una persona: sin chocar con otras vacaciones ni con fechas sin vacaciones
 function sugerir(nom,t,y){
   const p=vpGet(),need=t==='verano'?+p.ver||0:+p.inv||0,ps=H().vac.filter(v=>v.e===nom&&v.t===t&&v.i.slice(0,4)<=y&&v.f.slice(0,4)>=y),usados=ps.reduce((s,v)=>s+diasEn(v.i,v.f,y),0),falta=need-usados;
@@ -149,6 +150,11 @@ function aplicarVac(v,poner){
     if(poner)a[i]=txt;else if(/VACACIONES|BAJA/i.test(a[i]))a[i]='';
     if(poner&&!sinTurnos(k)&&cobertura(k,i)<MIN_COB)falta.push(`${DL[i]} ${d.getDate()} ${MES[d.getMonth()]} (${cobertura(k,i)})`);
   }
+  // Al volver de un bloque de verano o invierno, esa semana empieza con lunes y martes libres (solo en casillas vacías; no pisa turnos ya puestos)
+  if(poner&&(v.t==='verano'||v.t==='invierno')&&vpGet().vuelta){
+    const fin=fd(v.f),L0=lunes(sumar(fin,1)),k=iso(L0);
+    [0,1].forEach(j=>{const d=sumar(L0,j);if(d<=fin)return;const a=fila(k,v.e);if(!a[j]||tipo(a[j])==='vacio')a[j]='LIBRE';if(!tocadas.includes(k))tocadas.push(k);
+      if(!sinTurnos(k)&&cobertura(k,j)<MIN_COB)falta.push(`${DL[j]} ${d.getDate()} ${MES[d.getMonth()]} (${cobertura(k,j)}, al volver)`)})}
   return falta}
 
 K.reg({vistas:{vacaciones:vVac},util:{vVac,vAnioVac,diasEn,aplicarVac,sugerir,vOrg,vParam}});
@@ -165,7 +171,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('submit',e=>{
   const id=e.target.id;if(id!=='hz-f-vac'&&id!=='hz-f-blq'&&id!=='hz-f-vp')return;e.preventDefault();const $=s=>document.getElementById(s);
-  if(id==='hz-f-vp'){const n=x=>Math.max(0,Math.min(60,parseInt($(x).value)||0));H().vp={ver:n('hz-vp-ver'),inv:n('hz-vp-inv'),fest:n('hz-vp-fest'),primer:Math.max(1,n('hz-vp-primer')),lunes:!!$('hz-vp-lunes').checked};K.msg='';guardar();pintar();return}
+  if(id==='hz-f-vp'){const n=x=>Math.max(0,Math.min(60,parseInt($(x).value)||0));H().vp={ver:n('hz-vp-ver'),inv:n('hz-vp-inv'),fest:n('hz-vp-fest'),primer:Math.max(1,n('hz-vp-primer')),lunes:!!$('hz-vp-lunes').checked,vuelta:!!($('hz-vp-vuelta')||{}).checked};K.msg='';guardar();pintar();return}
   if(id==='hz-f-vac'){if($('hz-vf').value<$('hz-vi').value)return;
     const v={e:$('hz-ve').value,t:$('hz-vt').value,i:$('hz-vi').value,f:$('hz-vf').value,n:$('hz-vn').value.trim()};
     H().vac.push(v);const falta=aplicarVac(v,true);
