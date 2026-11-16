@@ -1,8 +1,13 @@
-# Pendientes (actualizado el 14 de noviembre de 2026)
+# Pendientes (actualizado el 16 de noviembre de 2026)
+
+## Estado al 16/11/2026
+- La web en vivo está en la versión **v105** (PR hasta la 93). Hecho el 14-16/11: Horarios reorganizado y con Parámetros, copiar evento anterior, avisos claros de error de guardado, guía `GUIA-PRUEBA-MOVIL.md` y Horarios como app instalable aparte (`manifest-horarios-app.json`).
+- **Vercel:** las PR 87 a 92 no se publicaron solas (la web se quedó en v97) y se lanzó la publicación de `main` a mano con el conector de Vercel. Tras fusionar una PR, comprobar con `curl https://oidococina-xu7i.vercel.app/sw.js` que `CACHE` coincide con el de `main`; si no, lanzar la publicación a mano. La pantalla de 2FA de Vercel es gratis y se puede saltar con «Skip Setup».
+- Esperan a cocina o a una persona: alérgenos del almuerzo de jubilación (abajo), los 10 fichajes de prueba, datos de la metre para Horarios de sala, probar con datos reales del Seda (organizador de vacaciones, parámetros, avisos nuevos).
 
 ## Lo más importante ahora (13/11/2026)
 - [x] **Sincronización de Horarios entre móviles** arreglada el 13-14/11 (PR 63): se junta dato a dato (`hzElige`/`hzListas`) y cada caso medido es ahora una prueba de `pruebas/horarios.js`. Falta probarlo con dos móviles reales a la vez.
-- [ ] **Semana del 9 al 15 nov:** la foto del cuadrante es la buena. Pegar en el SQL Editor el SQL de corregirla (copia + `update` de `semanas.2026-11-09`) y comprobar en la app que Ana el lunes tiene 12:00-16:00 y 20:00-00:00 y David el domingo 10:00-18:00. El conector de Supabase del asistente daba error ese día.
+- [x] **Semana del 9 al 15 nov:** comprobada en la nube el 14/11 con capturas del SQL Editor: está bien (Rosa ya no está en la plantilla, la sustituye Jimena; no hizo falta cambiar datos).
 - [x] PR 61 a 69 fusionadas (fichaje programado/fichado, horarios en archivos, sincronización, generador rápido, datos raros, bajas, diseño táctil y contraste). Tras publicar: abrir la app dos veces con internet y pulsar «Actualizar».
 - [ ] Decidir dónde guardar los móviles del equipo (hoy están dentro de `seda_horarios`, que leen cocina, sala y eventos): moverlos a algo solo para jefes.
   - **Diseño pensado el 15/11 (sin programar):** clave nueva `seda_horarios_tel` = {nombre: móvil}, solo admin, dirección y chef (añadirla a `puede_config` en el SQL y a `puedeConfig` de `equipo.js`). En `horarios.js`/index: quitar `tel` de `equipo` al SUBIR `seda_horarios` (`_subirConfig`, `subir` de `horarios.html`) y subir el mapa aparte; al BAJAR, volver a poner cada `tel` en su persona (y quitarlos si el rol no es jefe). Orden seguro: 1) SQL de permisos, 2) publicar el código, 3) SQL que copia los móviles al clave nueva y los quita de `seda_horarios` (con `hacer_copia` antes). **Hace falta probarlo con PostgreSQL local y con las pruebas de nube (Playwright), que no hay en el ordenador de casa: hacerlo en la sesión que los tenga.**
