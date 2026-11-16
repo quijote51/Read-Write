@@ -51,7 +51,7 @@ function hzElige(l,c){
   r.enviado=r.enviado||{};for(const k in (otro.enviado||{})){r.enviado[k]=r.enviado[k]||{};for(const n in otro.enviado[k]){const a=r.enviado[k][n],b=otro.enviado[k][n];if(!a||(b.ts||0)>(a.ts||0))r.enviado[k][n]=b}}
   r.ts=Math.max(l.ts||0,c.ts||0); return r}
 function hzSync(nube){
-  horarios=hzElige(horarios,nube);hzParams();
+  horarios=hzElige(horarios,nube);try{if(typeof window!=='undefined'&&window.hzParams)window.hzParams()}catch(e){}
   try{localStorage.setItem(HZ_KEY,JSON.stringify(horarios))}catch(e){}
   if(JSON.stringify(horarios)!==JSON.stringify(hzNormaliza(hzClon(nube)))){try{syncConfig(HZ_KEY,horarios)}catch(e){}}
 }
@@ -70,7 +70,7 @@ const GRUPOS=['Jefatura','Cocineros','Segunda cocina','Ayudantes','Fregantinas']
 let MIN_COB=3, MAX_H=40, MIN_DESC=12, LIBRES=2, MAXLF=1, MIN_DES=1, MIN_MED=1, MIN_NOC=1, FINES=0;const VAC_ANUAL=30;
 // Reglas de la plantilla (Plantilla → Parámetros): se leen de horarios.hp y se vuelven a leer al sincronizar y al guardar
 function hzParams(){const p=(horarios&&horarios.hp)||{};MIN_COB=+p.minCob||3;MAX_H=+p.maxH||40;MIN_DESC=+p.minDesc||12;LIBRES=+p.libres||2;MAXLF=+p.maxLibreFin||1;MIN_DES=+p.minDes||1;MIN_MED=+p.minMed||1;MIN_NOC=+p.minNoc||1;FINES=+p.finesLibres||0}
-hzParams();
+hzParams();window.hzParams=hzParams; // hzSync (fuera de este bloque) lo llama al traer los horarios de la nube
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const fd=s=>new Date(s+'T00:00');
