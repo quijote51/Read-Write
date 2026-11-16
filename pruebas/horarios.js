@@ -365,5 +365,13 @@ if(arg('golden')){
   ok(!dist.length, 'las pantallas se ven igual que en la huella' + (dist.length ? ': cambian ' + dist.join(', ') : ' (' + Object.keys(g).length + ' pantallas)'));
 }
 console.log('\nScripts cargados: ' + SCRIPTS.join(', '));
+// ── 2e. Traer los horarios de la nube (hzSync) no se rompe y aplica los parámetros ──
+{ const S = entorno(), F = S.F;
+  const nube = JSON.parse(JSON.stringify(S.H())); nube.hp = {minCob: 5}; nube.ts = (nube.ts || 0) + 1;
+  let fallo = null; try{ S.sb.hzSync(nube); }catch(e){ fallo = e; }
+  ok(!fallo, "hzSync: al traer los horarios de la nube no da error" + (fallo ? " (" + fallo.message + ")" : ""));
+  ok(S.H().hp && S.H().hp.minCob === 5 && F.avisos("2026-11-09").some(x => /mínimo 5/.test(x)), "hzSync: los parámetros de la nube se aplican (mínimo 5 en los avisos)");
+}
+
 console.log(fallos ? fallos + ' FALLOS' : 'TODO BIEN');
 process.exit(fallos ? 1 : 0);
