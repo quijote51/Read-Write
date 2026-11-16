@@ -65,7 +65,7 @@ async function cargarNube(claves){
     const m={}; cf.data.forEach(r=>m[r.key]=r.value);
     if(!rc.error&&rc.data&&rc.data.length&&typeof recDeFila==='function'){recetas=rc.data.filter(f=>!f.borrado).map(recDeFila);LS('seda_rec',recetas)}
     else if(Array.isArray(m.seda_rec)){recetas=m.seda_rec;LS('seda_rec',recetas)}
-    Object.entries(claves||{}).forEach(([k,fn])=>{if(m[k]!==undefined&&m[k]!==null){if(typeof cfgFijarBase==='function')cfgFijarBase(k,m[k]);fn(m[k])}});
+    Object.entries(claves||{}).forEach(([k,fn])=>{if(m[k]!==undefined&&m[k]!==null){fn(m[k]);if(typeof cfgFijarBase==='function')cfgFijarBase(k,m[k])}});
     estado(true); return true;
   }catch(e){console.warn('Carga',e);estado(false);return false}
 }
