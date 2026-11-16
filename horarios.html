@@ -103,6 +103,11 @@ const $=id=>document.getElementById(id);
 const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 
 function estado(ok,txt){const e=$('sync');e.className=ok?'':'mal';e.textContent=txt||(ok?'☁ Sincronizado':(_uid?'Sin conexión':'Solo este dispositivo'))}
+// Al tocar «Sin conexión» sale el motivo (últimos avisos de carga o de subida); no cambia cómo se carga ni se guarda
+const _mot=[],_w0=console.warn.bind(console);
+console.warn=function(){try{const a=[].slice.call(arguments);if(typeof a[0]==='string'&&/^(Carga|Sync)/.test(a[0])){_mot.unshift(a.map(x=>typeof x==='string'?x:(x&&(x.message||x.details||x.code))||'error').join(' · ').slice(0,220));_mot.length=Math.min(_mot.length,3)}}catch(e){}return _w0.apply(console,arguments)};
+document.addEventListener('click',ev=>{try{const el=ev.target&&ev.target.closest&&ev.target.closest('#sync');if(!el||/Sincronizado/.test(el.textContent))return;
+  alert(!_uid?'Solo este dispositivo: no has entrado con tu cuenta, así que no se sincroniza.':navigator.onLine===false?'Sin conexión: el móvil dice que no tiene internet.':_mot.length?'Sin conexión. Último fallo: '+_mot[0]+(_mot[1]?' | '+_mot[1]:''):'Sin conexión, pero no hay ningún fallo apuntado.')}catch(e){}});
 function syncConfig(key,val){if(window.HZ_SOLO_LEER)return;clearTimeout(_t[key]);_t[key]=setTimeout(()=>subir(key,val),700)}
 async function subir(key,val){
   if(window.HZ_SOLO_LEER)return;

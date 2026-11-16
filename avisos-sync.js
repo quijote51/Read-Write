@@ -57,6 +57,32 @@
     timerOk = setTimeout(() => { d.style.display = 'none'; }, 3000);
   }
 
+  // Motivo del icono «Sin conexión»: se recuerdan los últimos avisos de carga o de subida que la app escribe en la consola,
+  // y al tocar el icono sale la barra con el motivo. No cambia cómo se carga ni se guarda nada.
+  const motivos = [];
+  const txtErr = x => typeof x === 'string' ? x : (x && (x.message || x.details || x.hint || x.code)) ? [x.code, x.message || x.details || x.hint].filter(Boolean).join(' ') : (() => { try{ return JSON.stringify(x); }catch(e){ return String(x); } })();
+  const warn0 = console.warn.bind(console);
+  console.warn = function(){
+    try{
+      const a = Array.prototype.slice.call(arguments);
+      if(typeof a[0] === 'string' && /^(Carga|Sync)/.test(a[0])){ motivos.unshift(a.map(txtErr).join(' · ').slice(0, 220)); motivos.length = Math.min(motivos.length, 3); }
+    }catch(e){}
+    return warn0.apply(console, arguments);
+  };
+  function motivoTexto(){
+    if(typeof _uid !== 'undefined' && !_uid) return 'Solo este dispositivo: no has entrado con tu cuenta, así que no se sincroniza.';
+    if(typeof navigator !== 'undefined' && navigator.onLine === false) return 'Sin conexión: el móvil dice que no tiene internet.';
+    if(motivos.length) return 'Sin conexión. Último fallo: ' + motivos[0] + (motivos[1] ? ' | ' + motivos[1] : '');
+    return 'Sin conexión, pero no hay ningún fallo apuntado. Pulsa «Reintentar».';
+  }
+  document.addEventListener('click', ev => {
+    try{
+      const el = ev.target && ev.target.closest && ev.target.closest('#sync-indicator');
+      if(!el || /Sincronizado|Conectando/.test(el.title || '')) return;
+      cerradoHasta = 0; texto(motivoTexto());
+    }catch(e){}
+  });
+
   function enganchar(){
     const f0 = window._fallo, m0 = window.mostrarSync;
     if(typeof f0 === 'function') window._fallo = function(clave, err){ const r = f0.apply(this, arguments); try{ registrar(clave, tipoDe(err)); }catch(e){} return r; };
