@@ -373,5 +373,26 @@ console.log('\nScripts cargados: ' + SCRIPTS.join(', '));
   ok(S.H().hp && S.H().hp.minCob === 5 && F.avisos("2026-11-09").some(x => /mínimo 5/.test(x)), "hzSync: los parámetros de la nube se aplican (mínimo 5 en los avisos)");
 }
 
+// ── 2f. Un aparato nuevo (o con los horarios vacíos) NO borra el equipo ni las vacaciones de la nube ──
+{ const S = entorno();
+  const nube = {equipo: [{n: "Ana", g: "Cocineros"}, {n: "Darío", g: "Cocineros"}], semanas: {}, extras: {}, practicas: {}, vac: [{e: "Ana", t: "verano", i: "2026-12-01", f: "2026-12-07", n: ""}], ts: 1794816399403};
+  const vacio = {equipo: [], semanas: {}, extras: {}, practicas: {}, vac: [], ts: 0};
+  const juntar = (local, ref) => { S.sb.cfgBase = () => ref; return S.sb.hzElige(local, nube); };
+  let r = juntar(vacio, undefined);
+  ok(r.equipo.length === 2 && r.vac.length === 1, "aparato nuevo (sin base): se queda con el equipo y las vacaciones de la nube");
+  r = juntar(vacio, {equipo: [], semanas: {}, extras: {}, practicas: {}, vac: []});
+  ok(r.equipo.length === 2 && r.vac.length === 1, "aparato con base vacía y datos vacíos: recibe el equipo y las vacaciones de la nube");
+  r = juntar(JSON.parse(JSON.stringify(nube)), JSON.parse(JSON.stringify(nube)));
+  ok(r.equipo.length === 2 && r.vac.length === 1, "aparato al día: no cambia nada");
+  // Quitar de verdad a alguien sigue funcionando: la base lo tenía, este aparato lo quitó y la nube sigue igual
+  const sinDario = JSON.parse(JSON.stringify(nube)); sinDario.equipo = sinDario.equipo.filter(e => e.n !== "Darío"); sinDario.ts = nube.ts + 5;
+  r = juntar(sinDario, JSON.parse(JSON.stringify(nube)));
+  ok(r.equipo.length === 1 && r.equipo[0].n === "Ana", "borrar a una persona en este aparato sigue valiendo");
+  // El orden de las páginas: la base se fija DESPUÉS de juntar (si no, lo que falta aquí parece borrado)
+  const html = fs.readFileSync(path.join(RAIZ, "horarios.html"), "utf8"), idx = fs.readFileSync(path.join(RAIZ, "index.html"), "utf8");
+  ok(html.indexOf("hzSync(m.seda_horarios)") > -1 && html.indexOf("hzSync(m.seda_horarios)") < html.indexOf("cfgFijarBase('seda_horarios',m.seda_horarios)"), "horarios.html: junta con hzSync antes de fijar la base");
+  ok(idx.includes("set(m[k]);if(k!=='seda_horarios')setLS(k,m[k]); cfgFijarBase(k,m[k]);"), "index.html: aplica lo de la nube antes de fijar la base");
+}
+
 console.log(fallos ? fallos + ' FALLOS' : 'TODO BIEN');
 process.exit(fallos ? 1 : 0);

@@ -148,7 +148,7 @@ async function cargar(){
       eventos=e.data.map(x=>({...x,pax:Number(x.pax)||0}));
       LS('hz_cache',{eventos,ajustes,tipos:tiposServicio});
     }
-    if(m.seda_horarios){if(!solo)cfgFijarBase('seda_horarios',m.seda_horarios);hzSync(m.seda_horarios)}
+    if(m.seda_horarios){hzSync(m.seda_horarios);if(!solo)cfgFijarBase('seda_horarios',m.seda_horarios)} // la base se fija DESPUÉS de juntar: con la base nueva, lo que falta aquí parecería borrado
     else if(!solo)subir('seda_horarios',horarios); // primera vez
     estado(true);
   }catch(err){console.warn('Carga',err);estado(false)}
