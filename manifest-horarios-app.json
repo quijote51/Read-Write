@@ -4,7 +4,7 @@
   "description": "Turnos, vacaciones y cobertura de la cocina · Oído Cocina",
   "id": "/horarios.html",
   "start_url": "/horarios.html",
-  "scope": "/",
+  "scope": "/horarios.html",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#1a1a1a",
