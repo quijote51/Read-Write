@@ -65,6 +65,7 @@ App web (PWA) para la gestión de la cocina y los eventos de hoteles y restauran
 ## Reglas del código
 - Los datos de ejemplo de la primera vez (`_semilla`) solo se guardan en el aparato: nunca se suben solos (pisaban la nube en un móvil nuevo).
 - Nunca se sube un inventario vacío (`_subirConfig`, `subirConfig` de `app-base.js` y `subir` de `inventario.html`); en la base de datos lo impide además el trigger de `supabase/proteger-inventario.sql`.
+- Lo mismo con el equipo de Horarios: `supabase/proteger-horarios.sql` (trigger `config_proteger_horarios`) ignora un `seda_horarios` con el equipo vacío si el de la nube tenía gente. En la app, la base de la nube (`cfgFijarBase`) se fija DESPUÉS de juntar (`hzSync`), nunca antes.
 - En `cargarNube`, cada tabla y cada clave de config van en su propio `try`: un fallo en una no corta las demás.
 - Escapar todo texto del usuario con `escH()` (principal) o `esc()` / `_algEsc()` (módulos). Los mensajes de WhatsApp, el CSV y `textContent` van sin escapar.
 - Los eventos de demostración (`id < 1e6`) nunca se suben a la nube.
