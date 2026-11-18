@@ -2,7 +2,7 @@
 Solo lo abierto. Lo hecho y las notas largas están en `PENDIENTES-HISTORIAL.md` (no hace falta leerlo al empezar).
 
 ## Estado
-- Web en vivo en v108 (comprobar tras cada PR con `curl https://oidococina-xu7i.vercel.app/sw.js` que `CACHE` coincide con `main`; si no, lanzar la publicación a mano con el conector de Vercel). Protección del equipo de Horarios activa en la base de datos.
+- Web en vivo en v109 (comprobar tras cada PR con `curl https://oidococina-xu7i.vercel.app/sw.js` que `CACHE` coincide con `main`; si no, lanzar la publicación a mano con el conector de Vercel). Protección del equipo de Horarios activa en la base de datos. 18/11: móviles del equipo solo para jefes (`seda_horarios_tel`) aplicado y publicado; aún no había ningún móvil puesto, así que la migración no tuvo nada que mover.
 - 16/11: los 10 fichajes de prueba (3/11 Álvaro ×4 y Fabián; 13/11 Darío y Ana) quedaron anulados con el motivo «prueba de la app».
 
 ## Esperan una respuesta
@@ -12,7 +12,6 @@ Solo lo abierto. Lo hecho y las notas largas están en `PENDIENTES-HISTORIAL.md`
 - [ ] Alérgenos del almuerzo de jubilación del 13/11: confirmar con cocina los platos sin receta y los choques con alergias (lo lleva otra sesión).
 
 ## Por programar
-- [ ] Móviles del equipo solo para jefes (programado el 18/11, PR abierta): 1) pegar `supabase/moviles-jefes-permisos.sql` en el SQL Editor; 2) fusionar la PR; 3) pegar `supabase/moviles-jefes-migracion.sql` (hace la copia de seguridad antes). Después, quitar esta línea.
 - [ ] Horarios: calendario del año calculado una sola vez (queda de la prueba de tiempos).
 - [ ] Ideas de diseño: iconos en vez de emojis y agrupar el formulario de evento.
 - [ ] Ideas por decidir: foto de receta con IA (de pago), hotel de pruebas para enseñar la app, cliente piloto.
