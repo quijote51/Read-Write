@@ -49,6 +49,15 @@ function aplicar(t,q){
   if((q.op==='upsert'||q.op==='update')&&COLS[t]){const k=columnasMal(t,[].concat(q.v));if(k){rechazos.push(t+'.'+k);return {data:null,error:{message:`Could not find the '${k}' column of '${t}'`}}}}
   let filas=DB[t]||(DB[t]=[]);
   const miHotel=hotelDe(q.yo||HOTEL);
+  // Claves de config que solo leen y cambian algunos roles (como puede_config de la base de datos)
+  if(t==='config'){const rol=(PERFILES[q.yo||HOTEL]||{rol:'admin'}).rol||'admin',veo=k=>!CFG_ROLES[k]||CFG_ROLES[k].includes(rol);
+    if(q.op==='select'){const r=aplicarSinRol(t,q);if(r&&Array.isArray(r.data))r.data=r.data.filter(x=>veo(x.key));else if(r&&r.data&&!veo(r.data.key))r.data=null;return r}
+    const claves=[].concat(q.v||[]).map(x=>x&&x.key).concat(q.f.filter(f=>f[1]==='key').map(f=>f[2])).filter(Boolean);
+    if(claves.some(k=>!veo(k))){log.push('config rechazado '+claves.join(',')+' ('+rol+')');return {data:null,error:{code:'42501',message:'new row violates row-level security policy for table "config"'}}}}
+  return aplicarSinRol(t,q,miHotel,filas)}
+const CFG_ROLES={seda_horarios_tel:['admin','direccion','chef']};
+function aplicarSinRol(t,q,miHotel,filas){
+  miHotel=miHotel||hotelDe(q.yo||HOTEL);filas=filas||DB[t]||(DB[t]=[]);
   if(['config','recetas','eventos','plantillas','vajilla','proveedores','personal'].includes(t)){
     q.f=q.f.concat([['eq','hotel_id',miHotel]]);
     if(q.op==='upsert'||q.op==='insert')q.v=[].concat(q.v).map(r=>({...r,hotel_id:miHotel}));

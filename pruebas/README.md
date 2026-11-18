@@ -6,10 +6,11 @@ jsonb como Postgres y rechaza columnas inexistentes (`nube.js`).
 ```
 python3 -m http.server 8765 &          # desde la raíz del proyecto
 cd pruebas
-for f in recetas recetas-mismo-dato tablas plantillas inventario-vacio config config-a-la-vez movil-nuevo fotos equipo clientes desperdicio cartas avisos rendimiento apps-nuevas fichaje hojas prevision logo albaran-foto albaran-ocr; do
+for f in recetas recetas-mismo-dato tablas plantillas inventario-vacio config config-a-la-vez movil-nuevo fotos equipo clientes desperdicio cartas avisos rendimiento apps-nuevas fichaje hojas prevision logo albaran-foto albaran-ocr moviles; do
   echo "== $f"; NODE_PATH=$(npm root -g) node $f.js
 done
 ```
+`moviles.js` (18/11/2026): los móviles del equipo van en `seda_horarios_tel` (solo jefes); la nube simulada aplica esa regla (`CFG_ROLES` en `nube.js`).
 Cada prueba imprime ✔ / ✘ y «TODO BIEN» o el número de fallos. Pasarlas todas antes de cada PR que toque la sincronización.
 
 ## Prueba de carga (13/11/2026)

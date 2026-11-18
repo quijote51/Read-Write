@@ -100,11 +100,14 @@ async function _subirConfig(key, valor){
   if(!_uid){ mostrarSync(false); return; }
   // Nunca se sube un inventario vacío: si este aparato no ha podido cargarlo, no puede borrar el de la nube
   if(key==='seda_inventario' && !(valor && Array.isArray(valor.articulos) && valor.articulos.length)){ console.warn('Inventario vacío: no se sube'); return; }
+  // Horarios: los móviles no van en seda_horarios (lo lee todo el equipo) sino aparte, en seda_horarios_tel (solo jefes; horarios.js)
+  if(key==='seda_horarios'){ valor=hzSinTel(valor); if(hzVeoTel()) syncConfig('seda_horarios_tel', hzTelMapa(horarios)); }
+  if(key==='seda_horarios_tel' && !(valor && Object.keys(valor).length)) return; // nunca se sube una lista de móviles vacía
   try {
     // Se junta dato a dato con lo que haya en la nube (config-nube.js); si cambia lo de aquí, se aplica
     await cfgSubir(key, valor, v=>{
       const e=_cfgLista().find(x=>x[0]===key); if(!e) return;
-      if(key==='seda_horarios'){ horarios=v; try{localStorage.setItem(key,JSON.stringify(v))}catch{} const t=document.getElementById('tab-horarios'); if(t&&t.offsetParent!==null&&typeof initHorarios==='function') initHorarios(); return; }
+      if(key==='seda_horarios'||key==='seda_horarios_tel'){ if(key==='seda_horarios_tel') hzTelAplicar(v); else { horarios=hzPonTel(v,hzVeoTel()?hzTelMapa(horarios):{}); try{localStorage.setItem(key,JSON.stringify(horarios))}catch{} } const t=document.getElementById('tab-horarios'); if(t&&t.offsetParent!==null&&typeof initHorarios==='function') initHorarios(); return; }
       e[2](v); if(key!=='seda_pin') try{localStorage.setItem(key,JSON.stringify(v))}catch{}
     });
     _okSync();
@@ -2184,7 +2187,7 @@ function importarDatos(input){
 function resetearTodo(){
   if(!confirm('⚠️ ¿Borrar TODOS los datos? Esta acción no se puede deshacer.'))return;
   if(!confirm('¿Estás seguro? Se borrarán todos los eventos, recetas, plantillas y configuración.'))return;
-  ['seda_ev','seda_rec','seda_rec_sync','seda_sync_eventos','seda_sync_plantillas','seda_sync_vajilla','seda_sync_proveedores','seda_sync_personal','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_inventario','seda_alg_rev','seda_appcc','seda_compras','seda_desperdicio','seda_prevision'].forEach(k=>localStorage.removeItem(k));
+  ['seda_ev','seda_rec','seda_rec_sync','seda_sync_eventos','seda_sync_plantillas','seda_sync_vajilla','seda_sync_proveedores','seda_sync_personal','seda_plt','seda_vaj','seda_prov','seda_bodega','seda_precios','seda_tipos','seda_personal','seda_ajustes','seda_contactos','seda_horarios','seda_horarios_tel','seda_inventario','seda_alg_rev','seda_appcc','seda_compras','seda_desperdicio','seda_prevision'].forEach(k=>localStorage.removeItem(k));
   Object.keys(localStorage).filter(k=>k.startsWith('seda_cfgbase_')).forEach(k=>localStorage.removeItem(k));
   location.reload();
 }
@@ -4832,6 +4835,7 @@ function _cfgLista(){ return [
     ['seda_bodega',()=>bodegaBase,v=>{bodegaBase=v}],
     ['seda_contactos',()=>contactosInternos,v=>{contactosInternos=v}],
     ['seda_horarios',()=>horarios,v=>{hzSync(v)}],
+    ['seda_horarios_tel',()=>{ if(!hzVeoTel()) return null; const m=hzTelMapa(horarios); return Object.keys(m).length?m:null; },v=>{hzTelSync(v)}], // móviles: solo jefes (después de seda_horarios)
     ['seda_inventario',()=>inventario,v=>{inventario=v;const t=document.getElementById('tab-inventario');if(t&&t.offsetParent!==null&&typeof initInventario==='function')initInventario()}],
     ['seda_pin',()=>getPinCfg(),v=>{}],
     ['seda_alg_rev',()=>algRevisiones,v=>{setAlgRevisiones(v)}],
@@ -4878,7 +4882,7 @@ async function cargarNube(){
     else{
       const m={}; cfg.data.forEach(r=>m[r.key]=r.value);
       cfgs.forEach(([k,get,set])=>{ try{
-        if(m[k]!==undefined&&m[k]!==null){ const antes=get(); if(antes!=null&&JSON.stringify(antes)!==JSON.stringify(m[k])) setLS('seda_prenube_'+k,antes); set(m[k]);if(k!=='seda_horarios')setLS(k,m[k]); cfgFijarBase(k,m[k]); /* la base se fija DESPUÉS de aplicar: Horarios junta con la base anterior (si no, lo que falta aquí parece borrado) */ }
+        if(m[k]!==undefined&&m[k]!==null){ const antes=get(); if(antes!=null&&JSON.stringify(antes)!==JSON.stringify(m[k])) setLS('seda_prenube_'+k,antes); set(m[k]);if(k!=='seda_horarios'&&k!=='seda_horarios_tel')setLS(k,m[k]); cfgFijarBase(k,m[k]); /* la base se fija DESPUÉS de aplicar: Horarios junta con la base anterior (si no, lo que falta aquí parece borrado) */ }
         else { cfgFijarBase(k,null); if(get()!=null) syncConfig(k,get()); } // nube vacía (se recuerda) y primera vez: sube lo local
       }catch(e){ ok=false; console.warn('Carga',k,e); } }); // un fallo en un dato no corta los demás
     }
@@ -4898,7 +4902,7 @@ async function reenviarTodo(){
     await Promise.all([
       tabSubir('eventos'), tabSubir('plantillas'), tabSubir('vajilla'), tabSubir('proveedores'), tabSubir('personal'),
       recSubir(), _subirConfig('seda_precios',preciosIng), _subirConfig('seda_tipos',tiposServicio),
-      _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos), _subirConfig('seda_horarios',horarios), ...(inventario?[_subirConfig('seda_inventario',inventario)]:[]),
+      _subirConfig('seda_ajustes',ajustes), _subirConfig('seda_bodega',bodegaBase), _subirConfig('seda_contactos',contactosInternos), _subirConfig('seda_horarios',horarios), ...(hzVeoTel()&&Object.keys(hzTelMapa(horarios)).length?[_subirConfig('seda_horarios_tel',hzTelMapa(horarios))]:[]), ...(inventario?[_subirConfig('seda_inventario',inventario)]:[]),
       ...(getPinCfg()?[_subirConfig('seda_pin',getPinCfg())]:[]),
       ...(Object.keys(algRevisiones).length?[_subirConfig('seda_alg_rev',algRevisiones)]:[]),
       ...(appcc?[appccSubir()]:[]),

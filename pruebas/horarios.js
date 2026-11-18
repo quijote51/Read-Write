@@ -153,7 +153,7 @@ const trabaja = t => t && !/LIBRE|VACACIONES|BAJA/i.test(t) && /\d/.test(t);
   r = E(m1, m2);
   ok(r.vac.length === 3, 'sincronización: vacaciones añadidas en dos móviles se suman (' + r.vac.length + ')');
   // 3) Una vacación borrada en un móvil no vuelve desde el otro
-  const m3 = clon(ref), m4 = clon(ref); m3.ts = 3000; m4.ts = 2000; m3.vac = []; m4.equipo[0].tel = '600';
+  const m3 = clon(ref), m4 = clon(ref); m3.ts = 3000; m4.ts = 2000; m3.vac = []; m4.equipo[0].rol = 'Otro puesto';
   r = E(m3, m4);
   ok(r.vac.length === 0, 'sincronización: una vacación borrada no resucita');
   r = E(m4, m3);
@@ -391,7 +391,41 @@ console.log('\nScripts cargados: ' + SCRIPTS.join(', '));
   // El orden de las páginas: la base se fija DESPUÉS de juntar (si no, lo que falta aquí parece borrado)
   const html = fs.readFileSync(path.join(RAIZ, "horarios.html"), "utf8"), idx = fs.readFileSync(path.join(RAIZ, "index.html"), "utf8");
   ok(html.indexOf("hzSync(m.seda_horarios)") > -1 && html.indexOf("hzSync(m.seda_horarios)") < html.indexOf("cfgFijarBase('seda_horarios',m.seda_horarios)"), "horarios.html: junta con hzSync antes de fijar la base");
-  ok(idx.includes("set(m[k]);if(k!=='seda_horarios')setLS(k,m[k]); cfgFijarBase(k,m[k]);"), "index.html: aplica lo de la nube antes de fijar la base");
+  ok(/set\(m\[k\]\);if\(k!=='seda_horarios'[^;]*\)setLS\(k,m\[k\]\); cfgFijarBase\(k,m\[k\]\);/.test(idx), "index.html: aplica lo de la nube antes de fijar la base");
+  ok(idx.indexOf("['seda_horarios',") > -1 && idx.indexOf("['seda_horarios',") < idx.indexOf("['seda_horarios_tel',"), "index.html: los móviles se bajan después de los horarios");
+}
+
+// ── 2g. Móviles del equipo: solo para jefes (en la nube van aparte, en seda_horarios_tel) ──
+{ const conRol = rol => { const S = entorno(); S.claves = []; S.sb.syncConfig = (k, v) => S.claves.push([k, JSON.parse(JSON.stringify(v))]);
+    S.sb.puedeConfig = k => k !== 'seda_horarios_tel' || ['admin', 'direccion', 'chef'].includes(rol); return S; };
+  const F = conRol('chef').sb;
+  const conTel = {equipo: [{n: 'Ana', tel: '600'}, {n: 'Rubén'}], ts: 1};
+  ok(!F.hzSinTel(conTel).equipo.some(e => 'tel' in e) && conTel.equipo[0].tel === '600', 'hzSinTel: quita los móviles sin tocar los datos de este aparato');
+  ok(JSON.stringify(F.hzTelMapa({equipo: [{n: 'Ana', tel: ' 600 '}, {n: 'Rubén', tel: ''}, {n: 'Darío'}]})) === '{"Ana":"600"}', 'hzTelMapa: solo los móviles puestos, por nombre');
+  // Un jefe: trae los horarios sin móviles y luego los móviles; quedan en cada persona y WhatsApp los usa
+  let S = conRol('chef');
+  const nube = JSON.parse(JSON.stringify(S.H())); nube.equipo.forEach(e => delete e.tel); nube.ts = (nube.ts || 0) + 1;
+  S.sb.hzSync(nube);
+  ok(S.H().equipo.find(e => e.n === 'Ana').tel === '600 11 22 33', 'jefe: al traer horarios sin móviles conserva el móvil de Ana');
+  ok(!S.claves.some(([k]) => k === 'seda_horarios'), 'jefe: traer horarios sin móviles no hace subir los horarios');
+  S.sb.hzTelSync({'Ana': '600 11 22 33', 'Darío': '611 22 33 44'});
+  ok(S.H().equipo.find(e => e.n === 'Darío').tel === '611 22 33 44', 'jefe: recibe de la nube el móvil de Darío');
+  S.T.fijar({semana: S.fecha(lun16), tab: 'plantilla'});
+  S.clic({'[data-a]': {dataset: {a: 'wasend'}}, '[data-n]': {dataset: {n: 'Darío'}}});
+  ok(S.abiertas.length === 1 && S.abiertas[0].startsWith('https://wa.me/34611223344?text='), 'jefe: envía el horario a Darío por WhatsApp con el móvil de la nube');
+  // La nube antigua (móviles dentro de seda_horarios): el jefe los recoge
+  S = conRol('direccion'); const vieja = JSON.parse(JSON.stringify(S.H())); vieja.equipo.find(e => e.n === 'Rubén').tel = '622';
+  S.sb.hzSync(vieja);
+  ok(S.H().equipo.find(e => e.n === 'Rubén').tel === '622', 'jefe: recoge los móviles que aún estén dentro de seda_horarios');
+  // Cocina: no se queda con ningún móvil aunque vinieran de la nube antigua ni sube nada de móviles
+  S = conRol('cocina'); const v2 = JSON.parse(JSON.stringify(S.H())); v2.equipo.find(e => e.n === 'Rubén').tel = '622'; v2.ts += 1;
+  S.sb.hzSync(v2); S.sb.hzTelSync({'Ana': '600'});
+  ok(!S.H().equipo.some(e => e.tel), 'cocina: no guarda ningún móvil en el aparato');
+  ok(!S.claves.some(([k]) => k === 'seda_horarios_tel'), 'cocina: no sube la lista de móviles');
+  // Lista de móviles: con la versión anterior de la nube se junta dato a dato
+  S = conRol('chef'); S.sb.cfgBase = k => k === 'seda_horarios_tel' ? {'Ana': '600 11 22 33'} : undefined;
+  S.sb.hzTelSync({'Ana': '600 11 22 33', 'Rosa': '655'});
+  ok(S.H().equipo.find(e => e.n === 'Rosa').tel === '655' && S.H().equipo.find(e => e.n === 'Ana').tel === '600 11 22 33', 'jefe: un móvil nuevo en la nube se suma sin perder los de aquí');
 }
 
 console.log(fallos ? fallos + ' FALLOS' : 'TODO BIEN');

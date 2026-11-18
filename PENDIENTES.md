@@ -1,4 +1,4 @@
-# Pendientes (actualizado el 16 de noviembre de 2026)
+# Pendientes (actualizado el 18 de noviembre de 2026)
 Solo lo abierto. Lo hecho y las notas largas están en `PENDIENTES-HISTORIAL.md` (no hace falta leerlo al empezar).
 
 ## Estado
@@ -12,7 +12,7 @@ Solo lo abierto. Lo hecho y las notas largas están en `PENDIENTES-HISTORIAL.md`
 - [ ] Alérgenos del almuerzo de jubilación del 13/11: confirmar con cocina los platos sin receta y los choques con alergias (lo lleva otra sesión).
 
 ## Por programar
-- [ ] Móviles del equipo solo para jefes: clave nueva `seda_horarios_tel` (admin, dirección, chef) en vez de dentro de `seda_horarios`. Orden: 1) SQL de permisos, 2) código (quitar `tel` al subir, ponerlo al bajar solo para jefes), 3) SQL que los copia y los quita (con `hacer_copia`). Probar antes con PostgreSQL local y las pruebas de nube (Playwright), que no hay en el ordenador de casa.
+- [ ] Móviles del equipo solo para jefes (programado el 18/11, PR abierta): 1) pegar `supabase/moviles-jefes-permisos.sql` en el SQL Editor; 2) fusionar la PR; 3) pegar `supabase/moviles-jefes-migracion.sql` (hace la copia de seguridad antes). Después, quitar esta línea.
 - [ ] Horarios: calendario del año calculado una sola vez (queda de la prueba de tiempos).
 - [ ] Ideas de diseño: iconos en vez de emojis y agrupar el formulario de evento.
 - [ ] Ideas por decidir: foto de receta con IA (de pago), hotel de pruebas para enseñar la app, cliente piloto.
