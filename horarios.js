@@ -50,10 +50,38 @@ function hzElige(l,c){
   r.bloqueos=Array.isArray(r.bloqueos)?r.bloqueos:[];if(!r.bloqueos.length&&Array.isArray(otro.bloqueos)&&otro.bloqueos.length)r.bloqueos=hzClon(otro.bloqueos);
   r.enviado=r.enviado||{};for(const k in (otro.enviado||{})){r.enviado[k]=r.enviado[k]||{};for(const n in otro.enviado[k]){const a=r.enviado[k][n],b=otro.enviado[k][n];if(!a||(b.ts||0)>(a.ts||0))r.enviado[k][n]=b}}
   r.ts=Math.max(l.ts||0,c.ts||0); return r}
+/* Móviles del equipo: solo los ven y los cambian admin, dirección y chef. En el aparato van en cada persona (e.tel),
+   pero en la nube NO van dentro de seda_horarios (que lee todo el equipo): van aparte en seda_horarios_tel = {nombre: móvil},
+   que la base de datos solo deja leer y cambiar a los jefes (supabase/moviles-jefes-permisos.sql).
+   Al subir horarios se quita el tel (hzSinTel) y se sube el mapa (hzTelMapa); al bajar se vuelve a poner (hzPonTel). */
+const HZ_TEL_KEY='seda_horarios_tel';
+const hzVeoTel=()=>typeof puedeConfig!=='function'||puedeConfig(HZ_TEL_KEY);
+function hzTelMapa(v){const m={};((v&&Array.isArray(v.equipo))?v.equipo:[]).forEach(e=>{if(e&&typeof e==='object'&&e.n&&e.tel&&String(e.tel).trim())m[e.n]=String(e.tel).trim()});return m}
+function hzSinTel(v){if(!v||typeof v!=='object'||!Array.isArray(v.equipo))return v;const r=Object.assign({},v);
+  r.equipo=v.equipo.map(e=>{if(!e||typeof e!=='object'||!('tel' in e))return e;const o=Object.assign({},e);delete o.tel;return o});return r}
+// Pone a cada persona su móvil del mapa (y se lo quita si no está). Cambia v y lo devuelve.
+function hzPonTel(v,m){if(!v||!Array.isArray(v.equipo))return v;m=(m&&typeof m==='object')?m:{};
+  v.equipo.forEach(e=>{if(!e||typeof e!=='object')return;if(typeof m[e.n]==='string'&&m[e.n])e.tel=m[e.n];else delete e.tel});return v}
+// Pone el mapa que viene de la nube tal cual (tras guardar: ya está juntado)
+function hzTelAplicar(m){hzPonTel(horarios,hzVeoTel()?m:{});try{localStorage.setItem(HZ_KEY,JSON.stringify(horarios))}catch(e){}}
+// Al bajar seda_horarios_tel: se junta con lo de aquí (con la última versión conocida de la nube, dato a dato; sin ella,
+// la nube manda y se suman los que solo hay aquí) y, si queda distinto de la nube, se sube.
+function hzTelSync(nube){
+  if(!hzVeoTel()){hzTelAplicar({});return}
+  nube=(nube&&typeof nube==='object'&&!Array.isArray(nube))?nube:{};
+  const loc=hzTelMapa(horarios);let base;try{base=typeof cfgBase==='function'?cfgBase(HZ_TEL_KEY):undefined}catch(e){}
+  let r;if(base&&typeof base==='object'&&typeof cfgMezcla==='function'){try{r=cfgMezcla(base,loc,nube,[],[])}catch(e){r=null}}
+  if(!r||typeof r!=='object')r=Object.assign({},loc,nube);
+  hzTelAplicar(r);
+  const fin=hzTelMapa(horarios);
+  if(Object.keys(fin).length&&JSON.stringify(Object.entries(fin).sort())!==JSON.stringify(Object.entries(nube).sort())){try{syncConfig(HZ_TEL_KEY,fin)}catch(e){}}
+}
 function hzSync(nube){
-  horarios=hzElige(horarios,nube);try{if(typeof window!=='undefined'&&window.hzParams)window.hzParams()}catch(e){}
+  // Los móviles no se juntan aquí: se guardan aparte y se vuelven a poner (los de la nube antigua, dentro de seda_horarios, se recogen)
+  const tel=hzVeoTel()?Object.assign({},hzTelMapa(nube),hzTelMapa(horarios)):{};
+  horarios=hzPonTel(hzElige(hzSinTel(horarios),hzSinTel(nube)),tel);try{if(typeof window!=='undefined'&&window.hzParams)window.hzParams()}catch(e){}
   try{localStorage.setItem(HZ_KEY,JSON.stringify(horarios))}catch(e){}
-  if(JSON.stringify(horarios)!==JSON.stringify(hzNormaliza(hzClon(nube)))){try{syncConfig(HZ_KEY,horarios)}catch(e){}}
+  if(JSON.stringify(hzSinTel(horarios))!==JSON.stringify(hzNormaliza(hzSinTel(hzClon(nube))))){try{syncConfig(HZ_KEY,horarios)}catch(e){}}
 }
 function hzLoad(){
   try{const g=JSON.parse(localStorage.getItem(HZ_KEY)||'null'); if(g) return hzNormaliza(g)}catch(e){}

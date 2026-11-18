@@ -112,9 +112,12 @@ function syncConfig(key,val){if(window.HZ_SOLO_LEER)return;clearTimeout(_t[key])
 async function subir(key,val){
   if(window.HZ_SOLO_LEER)return;
   if(!_uid||!supa){estado(false);try{localStorage.setItem('hz_pendiente','1')}catch(e){}return}
+  // Los móviles no van en seda_horarios (lo lee todo el equipo) sino aparte, en seda_horarios_tel (solo jefes; horarios.js)
+  if(key==='seda_horarios'){val=hzSinTel(val);if(hzVeoTel())syncConfig(HZ_TEL_KEY,hzTelMapa(horarios))}
+  if(key===HZ_TEL_KEY&&!(val&&Object.keys(val).length))return; // nunca se sube una lista de móviles vacía
   try{
     // Se junta dato a dato con lo que haya en la nube (config-nube.js): dos personas con semanas distintas no se pisan
-    await cfgSubir(key,val,v=>{horarios=v;LS('seda_horarios',v);initHorarios()});
+    await cfgSubir(key,val,v=>{if(key===HZ_TEL_KEY)hzTelAplicar(v);else{horarios=hzPonTel(v,hzVeoTel()?hzTelMapa(horarios):{});LS('seda_horarios',horarios)}initHorarios()});
     try{localStorage.removeItem('hz_pendiente')}catch(e){}estado(true)}
   catch(e){console.warn('Sync',e);try{localStorage.setItem('hz_pendiente','1')}catch(e2){}estado(false)}
 }
@@ -140,7 +143,7 @@ async function cargar(){
   try{
     const ayer=new Date(Date.now()-864e5).toISOString().slice(0,10);
     const solo=window.HZ_SOLO_LEER===true;
-    const[c,e]=await Promise.all([supa.from('config').select('key,value').in('key',solo?['seda_horarios']:['seda_horarios','seda_ajustes','seda_tipos']),solo?Promise.resolve({data:[]}):supa.from('eventos').select('*').gte('fecha',ayer).order('fecha')]);
+    const[c,e]=await Promise.all([supa.from('config').select('key,value').in('key',solo?['seda_horarios']:['seda_horarios','seda_horarios_tel','seda_ajustes','seda_tipos']),solo?Promise.resolve({data:[]}):supa.from('eventos').select('*').gte('fecha',ayer).order('fecha')]);
     if(c.error)throw c.error;if(e.error)throw e.error;
     const m={};c.data.forEach(r=>m[r.key]=r.value);
     if(!solo){
@@ -150,6 +153,9 @@ async function cargar(){
     }
     if(m.seda_horarios){hzSync(m.seda_horarios);if(!solo)cfgFijarBase('seda_horarios',m.seda_horarios)} // la base se fija DESPUÉS de juntar: con la base nueva, lo que falta aquí parecería borrado
     else if(!solo)subir('seda_horarios',horarios); // primera vez
+    // Móviles del equipo (solo jefes), después de los horarios y con la misma regla: la base se fija después de juntar
+    if(!solo&&hzVeoTel()){if(m[HZ_TEL_KEY]){hzTelSync(m[HZ_TEL_KEY]);cfgFijarBase(HZ_TEL_KEY,m[HZ_TEL_KEY])}
+      else{cfgFijarBase(HZ_TEL_KEY,null);const t=hzTelMapa(horarios);if(Object.keys(t).length)subir(HZ_TEL_KEY,t)}}
     estado(true);
   }catch(err){console.warn('Carga',err);estado(false)}
 }

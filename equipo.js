@@ -52,8 +52,9 @@ function puedeTabla(t){ return !PERM_TABLA[t] || rolEn(PERM_TABLA[t]); }
 function puedeConfig(k){
   if((k === 'seda_precios' || k === 'seda_inventario' || k === 'seda_compras') && !moduloActivo('costes')) return false;
   if((k === 'seda_appcc' || k === 'seda_alg_rev' || k === 'seda_desperdicio') && !moduloActivo('seguridad')) return false;
-  if(k === 'seda_horarios' && !moduloActivo('equipo')) return false;
-  if(k === 'seda_precios' || k === 'seda_inventario' || k === 'seda_compras' || k === 'seda_horarios') return rolEn(['admin', 'direccion', 'chef']);
+  if((k === 'seda_horarios' || k === 'seda_horarios_tel') && !moduloActivo('equipo')) return false;
+  // seda_horarios_tel (móviles del equipo): solo los jefes la ven y la cambian
+  if(k === 'seda_precios' || k === 'seda_inventario' || k === 'seda_compras' || k === 'seda_horarios' || k === 'seda_horarios_tel') return rolEn(['admin', 'direccion', 'chef']);
   if(k === 'seda_appcc' || k === 'seda_desperdicio') return rolEn(['admin', 'direccion', 'chef', 'cocina']);
   if(k === 'seda_alg_rev') return rolEn(['admin', 'direccion', 'chef', 'eventos']);
   if(k === 'seda_prevision') return rolEn(['admin', 'direccion', 'chef', 'eventos', 'cocina']);
