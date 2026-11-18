@@ -1,6 +1,6 @@
 // Apps sueltas de Desperdicio y Carta QR: abren, guardan en la misma nube y respetan rol y módulo.
 const {chromium}=require('playwright');const N=require('./nube.js');const fs=require('fs');const H='http://localhost:8765/';
-const NM=process.env.QR_NM||'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/qr/node_modules';
+const NM=process.env.QR_NM||N.TMP+'/qr/node_modules';
 (async()=>{const b=await chromium.launch();let f=0;const ok=(c,t)=>{if(!c)f++;console.log((c?'✔':'✘ FALLO')+' '+t)};
 N.DB.recetas.push({hotel_id:'h1',id:'r1',nombre:'Tarta de queso',cat:'Postres',emoji:'🍰',alg:['lacteo','gluten'],ingredientes:[],img:null,base:false,rinde:null,extra:{},borrado:false});
 N.DB.config.push({hotel_id:'h1',key:'seda_ajustes',updated_at:'2026-11-03T10:00:00.000Z',value:{hotel_nombre:'Seda Club Hotel',hotel_ciudad:'Granada',lugares:[]}});
@@ -31,5 +31,5 @@ const Pd=await N.pagina(b,H+'cartas.html',{yo:'u-pepe'});await Pd.waitForTimeout
 // Enlaces en Ajustes
 const A=await N.pagina(b,H+'index.html');ok(await A.evaluate(()=>!!document.querySelector('a[href="/desperdicio.html"]')&&!!document.querySelector('a[href="/cartas.html"]')),'enlaces en Ajustes → Apps con acceso directo');
 for(const [n,p] of [['D',D],['C',C],['Kd',Kd],['Kc',Kc],['Ec',Ec],['Ed',Ed],['Pd',Pd],['A',A]]){const sw=await p.evaluate(()=>document.documentElement.scrollWidth);ok(!p.errs.length&&sw<=390,`${n}: sin errores (${p.errs.join(';')}) ancho ${sw}`)}
-await D.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/app-dp.png'});await C.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/app-cq.png'});
+await D.screenshot({path:N.TMP+'/app-dp.png'});await C.screenshot({path:N.TMP+'/app-cq.png'});
 console.log(f?f+' FALLOS':'TODO BIEN');await b.close()})();

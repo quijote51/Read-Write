@@ -1,6 +1,6 @@
 // Logo de cada cliente: subir en Ajustes (al almacén), cabecera, hoja impresa, ficha de alérgenos, carta QR y quitar.
 const {chromium}=require('playwright');const N=require('./nube.js');const U='http://localhost:8765/index.html';
-const LOGO=process.env.LOGO||'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/logo.png';
+const LOGO=process.env.LOGO||require('path').join(__dirname,'..','icon-512.png');
 (async()=>{const b=await chromium.launch();let f=0;const ok=(c,t)=>{if(!c)f++;console.log((c?'✔':'✘ FALLO')+' '+t)};
 const A=await N.pagina(b,U);await A.waitForTimeout(600);
 await A.evaluate(()=>{rolActual='admin';aplicarRol('admin');showTab('ajustes')});await A.waitForTimeout(300);
@@ -15,7 +15,7 @@ ok(await A.evaluate(()=>!!document.querySelector('#marca-cuadro img.marca-logo')
 ok(await A.evaluate(()=>!!document.querySelector('#print-hotel-logo img')),'hoja impresa: logo');
 ok(await A.evaluate(()=>!!document.querySelector('#aj-logo-vista img'))&&await A.isVisible('#aj-logo-quitar'),'Ajustes: vista previa y «Quitar»');
 ok(await A.evaluate(()=>/<img/.test(htmlFichaAlergenos(eventos[0]))),'ficha de alérgenos: logo');
-await A.evaluate(()=>scrollTo(0,0));await A.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/logo-cab.png',clip:{x:0,y:0,width:390,height:140}});
+await A.evaluate(()=>scrollTo(0,0));await A.screenshot({path:N.TMP+'/logo-cab.png',clip:{x:0,y:0,width:390,height:140}});
 // Seguridad: un logo raro no se pinta
 ok(await A.evaluate(()=>logoValido('javascript:alert(1)')===''&&logoValido('https://malo.com/x.png')===''&&logoValido('https://x.supabase.co/storage/v1/object/public/fotos/a" onerror="x')===''),'solo imágenes propias');
 // Quitar

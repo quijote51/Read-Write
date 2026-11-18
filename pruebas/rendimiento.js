@@ -15,7 +15,7 @@ const respuestas=['1000','500'];A.on('dialog',d=>d.accept(respuestas.shift()));
 await fila('Merluza').locator('.rd-calc').click();await A.waitForTimeout(1500);
 ok(await fila('Merluza').locator('.rd-in').inputValue()==='50','calculadora: 50 %');
 ok(await coste()===3.82,'escandallo con la merluza al 50 %: 3,82 € ('+await coste()+')');
-ok(await fila('Merluza').locator('input[type=number]').inputValue()==='0.012','el precio de compra no cambia');
+ok(await fila('Merluza').locator('input[type=number]').inputValue()==='12','el precio de compra no cambia (12 €/kg en pantalla = 0,012 €/g guardado)');
 const nube=(N.DB.config.find(c=>c.key==='seda_precios')||{}).value||{};
 ok(nube.Merluza&&nube.Merluza.rend===50&&nube.Merluza.precio===0.012,'guardado en la nube con el precio');
 // Típico con un toque
@@ -34,5 +34,5 @@ await A.evaluate(()=>switchEsc('precios'));await A.waitForTimeout(200);
 await fila('Merluza').locator('.rd-in').fill('');await fila('Merluza').locator('.rd-in').press('Tab');await A.waitForTimeout(200);
 ok(await A.evaluate(()=>preciosIng.Merluza.rend===undefined)&&await coste()===2.024,'vacío = 100 % (el ajo sigue al 85 %): '+await coste());
 const sw=await A.evaluate(()=>document.documentElement.scrollWidth);ok(!A.errs.length&&sw<=390,`sin errores (${A.errs.join(';')}) ancho ${sw}`);
-await A.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/rd.png',fullPage:false});
+await A.screenshot({path:N.TMP+'/rd.png',fullPage:false});
 console.log(f?f+' FALLOS':'TODO BIEN');await b.close()})();

@@ -20,14 +20,16 @@ for(const url of ['index.html','albaranes.html']){
   ok(v.arts.join('|')==='PRESA|CHORIZO CULAR'&&v.cant.join('|')==='5,2|2'&&v.imp.join('|')==='124,28|31','rellena las líneas ('+v.arts.join('|')+')');
   ok(/Revisa/.test(v.msg)&&/1 no están en el inventario/.test(v.msg)&&/sin IVA/.test(v.msg),'avisa de revisar, del artículo nuevo y de la nota');
   ok(await p.isVisible('[data-co="altaart"]'),'la línea nueva ofrece «Añadirlo al inventario»');
-  if(url==='index.html'){await p.locator('#co-root .card').first().screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/alb-foto.png'})}
+  if(url==='index.html'){await p.locator('#co-root .card').first().screenshot({path:N.TMP+'/alb-foto.png'})}
   ok(!p.errs.length&&await p.evaluate(()=>document.documentElement.scrollWidth)<=390,url+': sin errores ('+p.errs.join(';')+')');
 }
 // Error del servidor (p. ej. sin activar): mensaje claro
 N.FUNCIONES['leer-albaran']=()=>({error:'La lectura con foto no está activada todavía.'});
 const q=await N.pagina(b,'http://localhost:8765/albaranes.html');await q.waitForTimeout(800);
 await q.setInputFiles('#co-foto',{name:'a.png',mimeType:'image/png',buffer:big});await q.waitForTimeout(1200);
-await q.route(/cdn\.jsdelivr/,r=>r.abort());ok(/no se ha podido descargar|internet/i.test(await q.textContent('#co-root')),'IA sin activar y sin poder descargar el lector gratis: lo explica');
+// La foto se lee en segundo plano (cola.js): el aviso sale en la pastilla de abajo, no en el formulario
+await q.waitForFunction(()=>/No se pudo/.test(document.body.innerText),null,{timeout:15000}).catch(()=>{});
+ok(/no se ha podido descargar[\s\S]*internet/i.test(await q.evaluate(()=>document.body.innerText))&&/Reintentar/.test(await q.evaluate(()=>document.body.innerText)),'IA sin activar y sin poder descargar el lector gratis: lo explica (con «Reintentar»)');
 // Sin cuenta: no sale el botón
 const s=await N.pagina(b,'about:blank');await s.route(/supabase-js/,r=>r.abort());await s.goto('http://localhost:8765/index.html');
 const sin=s.locator('text=Seguir sin cuenta');if(await sin.isVisible().catch(()=>false))await sin.click();await s.waitForTimeout(600);

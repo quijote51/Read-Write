@@ -98,4 +98,6 @@ async function pagina(b,url,{w=390,yo=HOTEL}={}){
   await p.evaluate(()=>{const m=document.getElementById('rol-modal');if(m)m.style.display='none'});
   return p;
 }
-module.exports={FUNCIONES,LLAMADAS,PERFILES,CLIENTES,INVIT,setRpc:v=>{rpcActivo=v},ALMACEN,setAlmacen:v=>{almacenListo=v},rechazos,get DB(){return DB},set DB(v){DB=v},nuevaDB,log,pagina,setFallar:f=>{fallar=f},HOTEL};
+// Carpeta para capturas y librerías de las pruebas (QR, OCR): PRUEBAS_TMP o la temporal del sistema
+const TMP=process.env.PRUEBAS_TMP||require('path').join(require('os').tmpdir(),'oido-pruebas');try{require('fs').mkdirSync(TMP,{recursive:true})}catch(e){}
+module.exports={TMP,FUNCIONES,LLAMADAS,PERFILES,CLIENTES,INVIT,setRpc:v=>{rpcActivo=v},ALMACEN,setAlmacen:v=>{almacenListo=v},rechazos,get DB(){return DB},set DB(v){DB=v},nuevaDB,log,pagina,setFallar:f=>{fallar=f},HOTEL};

@@ -1,5 +1,7 @@
 # Pruebas automáticas (nube simulada)
 
+**Todas de una vez:** `bash pruebas/todas.sh` desde la raíz (instala sola la primera vez las librerías de QR y OCR en `PRUEBAS_TMP`, arranca el servidor y dice «TODAS BIEN» o cuáles fallan). GitHub la pasa en cada PR a `main` (`.github/workflows/pruebas.yml`).
+
 Simulan varios móviles sobre una misma nube de Supabase (tablas, `config` y almacén de fotos), que reordena los
 jsonb como Postgres y rechaza columnas inexistentes (`nube.js`).
 

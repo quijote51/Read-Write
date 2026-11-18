@@ -20,7 +20,7 @@ await A.selectOption('#eq-rol','chef');await A.fill('#eq-nombre','Darío');await
 await A.selectOption('#eq-rol','cocina');await A.fill('#eq-nombre','Rubén');await A.click('[data-eq-crear]');await A.waitForTimeout(600);
 const cods=Object.values(N.INVIT);ok(cods.length===2&&cods.every(i=>i.hotel_id==='h1'),'dueño: crea 2 códigos para su hotel ('+cods.map(i=>i.codigo+' '+i.rol).join(', ')+')');
 ok(/Código .* creado/.test(await A.textContent('#eq-msg')),'aviso con el código creado');
-await A.locator('#equipo-card').screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/equipo.png'});
+await A.locator('#equipo-card').screenshot({path:N.TMP+'/equipo.png'});
 const cChef=cods.find(i=>i.rol==='chef').codigo, cCoc=cods.find(i=>i.rol==='cocina').codigo;
 // 3) Alta con código desde la pantalla de entrada (persona nueva)
 const R=await N.pagina(b,U+'index.html',{yo:'nadie'});await R.waitForTimeout(500);
@@ -42,7 +42,7 @@ ok(await C.evaluate(()=>document.getElementById('equipo-card').style.display)===
 // 5) Cocina: ve horarios, producción, recetario y APPCC
 N.PERFILES['u-coc']={hotel:'h1',rol:'cocina',nombre:'Rubén',hotel_nombre:'Seda Club Hotel'};
 const K=await N.pagina(b,U+'index.html',{yo:'u-coc'});await K.waitForTimeout(1000);
-ok(await visibles(K)==='produccion,recetario,horarios,appcc,desperdicio,fichaje,hojas','cocina: ve '+await visibles(K));
+ok((await visibles(K)).split(',').sort().join(',')==='appcc,desperdicio,fichaje,hojas,horarios,produccion,recetario','cocina: ve '+await visibles(K)+' (da igual el orden)');
 // 6) Cuenta sin equipo: pide el código; con el código entra
 const S=await N.pagina(b,U+'index.html',{yo:'u-sin'});await S.waitForTimeout(800);
 ok(await S.isVisible('#eq-unirse'),'cuenta sin equipo: pide el código');

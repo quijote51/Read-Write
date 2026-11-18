@@ -1,7 +1,7 @@
 // Carta QR de alérgenos: crear desde el recetario y desde un evento, QR, página del comensal (filtro), retirar y permisos.
 // El generador de QR se sirve desde una copia local (QR_NM: carpeta node_modules con qrcode-generator@1.4.4).
 const {chromium}=require('playwright');const N=require('./nube.js');const fs=require('fs');const U='http://localhost:8765/index.html';
-const NM=process.env.QR_NM||'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/qr/node_modules';
+const NM=process.env.QR_NM||N.TMP+'/qr/node_modules';
 (async()=>{const b=await chromium.launch();let f=0;const ok=(c,t)=>{if(!c)f++;console.log((c?'✔':'✘ FALLO')+' '+t)};
 const hoy=new Date().toISOString().slice(0,10);
 const rec=(id,nombre,cat,alg,base)=>({hotel_id:'h1',id,nombre,cat,emoji:'🍽',alg,ingredientes:[{n:'Secreto',q:1,u:'kg'}],img:null,base:!!base,rinde:base?{cant:1,ud:'kg'}:null,extra:{},borrado:false});
@@ -27,7 +27,7 @@ ok(c1.contenido.hotel==='Seda Club Hotel','nombre del hotel en la carta');
 ok(N.rechazos.length===0,'sin columnas que no existen ('+N.rechazos.join(',')+')');
 ok(!!(await A.$('#cq-poster svg')),'cartel con el QR');
 const url=await A.inputValue('#cq-url');ok(url.endsWith('/carta.html?c='+c1.id),'enlace del QR: '+url);
-await A.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/cq-qr.png'});
+await A.screenshot({path:N.TMP+'/cq-qr.png'});
 // 2) Página del comensal (sin cuenta, fetch a la función carta_publica)
 const C=await (await b.newContext({viewport:{width:390,height:800},serviceWorkers:'block',locale:'es-ES'})).newPage();C.errs=[];C.on('pageerror',e=>C.errs.push(e.message));
 let llamadas=0;
@@ -44,7 +44,7 @@ ok(await C.textContent('.est.duda')==='Consultar'&&!(await C.$('.est.si')),'el p
 await C.click('[data-l="en"]');await C.waitForTimeout(100);t=await C.textContent('#app');
 ok(/I am allergic or intolerant to/.test(t)&&/Gluten/.test(t)&&/Ask staff/.test(t)&&/Tarta de queso/.test(t)&&/Dish names are shown in Spanish/.test(t)&&await C.evaluate(()=>document.documentElement.lang)==='en','idioma inglés');
 await C.click('[data-l="es"]');await C.waitForTimeout(100);
-await C.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/cq-comensal.png',fullPage:true});
+await C.screenshot({path:N.TMP+'/cq-comensal.png',fullPage:true});
 const swC=await C.evaluate(()=>document.documentElement.scrollWidth);ok(!C.errs.length&&swC<=390,`comensal: sin errores (${C.errs.join(';')}) ancho ${swC}`);
 // 3) Retirar
 await A.click('[data-cq="volver"]');await A.waitForTimeout(200);

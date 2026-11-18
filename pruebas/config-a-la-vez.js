@@ -9,5 +9,5 @@ console.log('base antes:',JSON.stringify(await A.evaluate(()=>cfgBase('seda_prec
 await A.evaluate(()=>{preciosIng['Salmón'].precio=0.03;return _subirConfig('seda_precios',preciosIng)});
 const v=N.DB.config.find(x=>x.key==='seda_precios').value;
 console.log('subidas:',N.log.join(' | '));
-console.log(v['Salmón'].precio===0.03&&v['Nata'].precio===0.009?'✔ el otro se adelantó entre leer y guardar: se nota, se vuelve a juntar y quedan los dos cambios':'✘ FALLO '+JSON.stringify(v));
-await b.close()})();
+const bien=v['Salmón'].precio===0.03&&v['Nata'].precio===0.009;console.log(bien?'✔ el otro se adelantó entre leer y guardar: se nota, se vuelve a juntar y quedan los dos cambios':'✘ FALLO '+JSON.stringify(v));
+console.log(bien?'TODO BIEN':'1 FALLOS');process.exitCode=bien?0:1;await b.close()})();
