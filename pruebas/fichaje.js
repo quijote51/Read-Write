@@ -60,6 +60,6 @@ ok(/Ana/.test(t)&&/Trabajando/.test(t)&&!/Rubén/.test(t),'«Ahora»: Ana dentro
 const P=await N.pagina(b,H+'fichaje.html',{yo:'u-pepe'});await P.waitForTimeout(800);ok(/no está incluida en vuestro plan/.test(await P.textContent('main')),'sin módulo Equipo: no incluida');
 ok(await A.evaluate(()=>!!document.querySelector('a[href="/fichaje.html"]')),'enlace en Ajustes');
 for(const [n,p] of [['R',R],['A',A],['C',C],['P',P]]){const sw=await p.evaluate(()=>document.documentElement.scrollWidth);ok(!p.errs.length&&sw<=390,`${n}: sin errores (${p.errs.join(';')}) ancho ${sw}`)}
-await R.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/fh1.png'});
-await A.click('[data-fhv="informe"]');await A.waitForTimeout(500);await A.selectOption('#fh-quien','Rubén');await A.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/fh2.png',fullPage:true});
+await R.screenshot({path:N.TMP+'/fh1.png'});
+await A.click('[data-fhv="informe"]');await A.waitForTimeout(500);await A.selectOption('#fh-quien','Rubén');await A.screenshot({path:N.TMP+'/fh2.png',fullPage:true});
 console.log(f?f+' FALLOS':'TODO BIEN');await b.close()})();

@@ -16,7 +16,7 @@ await A.fill('#cl-nombre','Bar Pepe');await A.fill('#cl-ciudad','Sevilla');
 await A.uncheck('[data-cl-mod="nuevo"][value="costes"]');await A.uncheck('[data-cl-mod="nuevo"][value="equipo"]');
 await A.click('[data-cl-crear]');await A.waitForTimeout(600);
 const cod=Object.keys(N.CLIENTES)[0];ok(cod&&N.CLIENTES[cod].modulos.join('+')==='base+seguridad','código de cliente creado: Bar Pepe con base + seguridad');
-await A.locator('#clientes-card').screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/clientes.png'});
+await A.locator('#clientes-card').screenshot({path:N.TMP+'/clientes.png'});
 // 2) El cliente se registra con el código
 const R=await N.pagina(b,U+'index.html',{yo:'nadie'});await R.waitForTimeout(500);
 await R.click('#reg-ver');await R.fill('#login-email','pepe@x');await R.fill('#login-pass','contraseña-larga');await R.fill('#reg-codigo',cod);await R.fill('#reg-nombre','Pepe');

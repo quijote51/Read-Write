@@ -19,7 +19,7 @@ ok(/Sin gluten, 2 pax/.test(t),'«Sin gluten, 2 pax» SÍ es una alergia y avisa
 ok(await A.evaluate(()=>['Sin gluten','sin lactosa','No hay gluten','Sin alergias salvo huevo'].every(x=>!algSinAlergias(x))&&['','Sin alergias registradas','Ninguna','No hay alergias','Sin alergias conocidas.'].every(algSinAlergias)),'qué cuenta como «sin alergias»');
 ok(/Hoy hay alergias/.test(t)&&/1 pax marisco/.test(t),'hoy con alergias');
 ok(/1 cambio de turno espera tu aprobación/.test(t),'cambio de turno que espera aprobación');
-await A.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/av-panel.png'});
+await A.screenshot({path:N.TMP+'/av-panel.png'});
 // Ir al aviso
 await A.click('.av-item:has-text("Limpiezas")');await A.waitForTimeout(300);
 ok(await A.evaluate(()=>document.querySelector('#acc-appcc').classList.contains('open')&&getComputedStyle(document.getElementById('av-modal')).display==='none'),'tocar el aviso abre APPCC');

@@ -1,7 +1,7 @@
 // Lectura GRATIS en el móvil: foto de un albarán impreso → texto real con Tesseract → proveedor, número, fecha y líneas.
 // La librería y el diccionario se sirven desde node_modules (sin internet en las pruebas).
 const path=require('path'),fs=require('fs');const {chromium}=require('playwright');const N=require('./nube.js');
-const NM=process.env.OCR_NM||'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/ocr/node_modules';
+const NM=process.env.OCR_NM||N.TMP+'/ocr/node_modules';
 (async()=>{const b=await chromium.launch();let f=0;const ok=(c,t)=>{if(!c)f++;console.log((c?'✔':'✘ FALLO')+' '+t)};
 const T='2026-11-03T10:00:00.000Z';
 N.DB.config.push({hotel_id:'h1',key:'seda_inventario',updated_at:T,value:{articulos:[{s:'Carne',n:'PRESA',u:'KG',p:23.9},{s:'Carne',n:'SOLOMILLO CERDO',u:'KG',p:8.25},{s:'Lácteos',n:'MANTEQUILLA',u:'KG',p:10.89},{s:'Verdura',n:'CHALOTAS',u:'KG',p:2.95}],conteos:{'2026-10-26':{c:{0:1}}},ts:1}});

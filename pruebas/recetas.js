@@ -1,6 +1,6 @@
 const {chromium}=require('playwright');const N=require('./nube.js');
 const U='http://localhost:8765/';
-(async()=>{const b=await chromium.launch();const ok=(c,t)=>console.log((c?'✔':'✘ FALLO')+' '+t);
+(async()=>{const b=await chromium.launch();let f=0;const ok=(c,t)=>{if(!c)f++;console.log((c?'✔':'✘ FALLO')+' '+t)};
 // Nube con el estado actual del hotel: 3 recetas en config.seda_rec, tabla vacía
 N.DB.config.push({hotel_id:'h1',key:'seda_rec',value:[
  {id:'presa-iberica',nombre:'Presa ibérica',cat:'M',emoji:'🥩',alg:['sulfitos'],ingredientes:[{nombre:'Presa ibérica',cant:180,ud:'g',alg:[]}]},
@@ -54,4 +54,4 @@ ok(await A.evaluate(()=>algDeRecetaCompleta(recetas.find(r=>r.id==='c-9')).inclu
 const C=await N.pagina(b,U+'alergenos.html');
 await C.waitForTimeout(1000);const nc=await C.evaluate(()=>recetas.map(r=>r.nombre).sort().join(', '));ok(nc==='Croquetas de jamón, Fondo oscuro de ternera, Presa ibérica','la app suelta de Alérgenos lee las recetas de la tabla: '+nc);
 for(const [n,p] of [['A',A],['B',B],['Alérgenos',C]]){const sw=await p.evaluate(()=>document.documentElement.scrollWidth);ok(!p.errs.length&&sw<=390,`${n}: sin errores (${p.errs.join(';')}) y ancho ${sw}`)}
-await b.close()})();
+console.log(f?f+' FALLOS':'TODO BIEN');process.exitCode=f?1:0;await b.close()})();

@@ -39,6 +39,6 @@ N.PERFILES['u-sala']={hotel:'h1',rol:'sala',nombre:'Ana',hotel_nombre:'Hotel'};
 const S=await N.pagina(b,U,{yo:'u-sala'});await S.waitForTimeout(800);
 ok(await S.evaluate(()=>puedeConfig('seda_prevision'))===false,'sala: no puede cerrar eventos');
 const sw=await A.evaluate(()=>document.documentElement.scrollWidth);
-await A.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/prevision.png',fullPage:true});
+await A.screenshot({path:N.TMP+'/prevision.png',fullPage:true});
 ok(!A.errs.length&&!S.errs.length&&sw<=390,`sin errores (${A.errs.concat(S.errs).join(';')}) ancho ${sw}`);
 console.log(f?f+' FALLOS':'TODO BIEN');await b.close()})();

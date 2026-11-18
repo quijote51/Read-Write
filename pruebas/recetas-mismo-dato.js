@@ -1,5 +1,5 @@
 const {chromium}=require('playwright');const N=require('./nube.js');
-(async()=>{const b=await chromium.launch();const ok=(c,t)=>console.log((c?'✔':'✘ FALLO')+' '+t);
+(async()=>{const b=await chromium.launch();let fallos=0;const ok=(c,t)=>{if(!c)fallos++;console.log((c?'✔':'✘ FALLO')+' '+t)};
 N.DB.recetas.push({hotel_id:'h1',id:'r1',nombre:'Tarta',cat:'P',emoji:'🍰',alg:[],ingredientes:[{nombre:'Queso',cant:80,ud:'g',alg:[]}],img:null,base:false,rinde:null,extra:{},borrado:false});
 const A=await N.pagina(b,'http://localhost:8765/index.html'),B=await N.pagina(b,'http://localhost:8765/index.html');
 await A.evaluate(()=>{recetas[0].ingredientes[0].cant=90;saveRec(recetas)});await A.waitForTimeout(1200);
@@ -7,5 +7,5 @@ await B.evaluate(()=>{recetas[0].ingredientes[0].cant=100;recetas[0].nombre='Tar
 const f=N.DB.recetas[0];
 ok(f.ingredientes[0].cant===100&&f.nombre==='Tarta de queso','mismo dato a la vez: queda el último ('+f.ingredientes[0].cant+' g, '+f.nombre+')');
 ok(/otra persona cambió lo mismo/.test(await B.evaluate(()=>document.body.innerText)),'se avisa en pantalla al segundo');
-await B.screenshot({path:'conflicto.png'});
-await b.close()})();
+await B.screenshot({path:N.TMP+'/conflicto.png'});
+console.log(fallos?fallos+' FALLOS':'TODO BIEN');process.exitCode=fallos?1:0;await b.close()})();

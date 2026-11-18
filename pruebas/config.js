@@ -10,6 +10,7 @@ await A.evaluate(()=>{preciosIng['Salmón'].precio=0.025;savePrecios(preciosIng)
 await B.evaluate(()=>{preciosIng['Nata'].precio=0.004;savePrecios(preciosIng)});
 await A.waitForTimeout(1600);
 ok(cfg('seda_precios')['Salmón'].precio===0.025&&cfg('seda_precios')['Nata'].precio===0.004,'precios: se guardan los dos cambios (salmón de A y nata de B)');
+await B.waitForFunction(()=>preciosIng['Salmón'].precio===0.025,null,{timeout:6000}).catch(()=>{}); // B guarda después que A: puede tardar un poco más
 ok(await B.evaluate(()=>preciosIng['Salmón'].precio)===0.025,'B se queda con lo juntado (ve el salmón de A)');
 // 2) Contar artículos distintos del mismo inventario a la vez + cambiar un precio
 await A.evaluate(()=>{inventario.conteos['2026-11-03'].c[0]=5;inventario.articulos[3].p=99;syncConfig('seda_inventario',inventario)});

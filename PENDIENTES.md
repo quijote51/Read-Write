@@ -39,7 +39,7 @@ Solo lo abierto. Lo hecho y las notas largas están en `PENDIENTES-HISTORIAL.md`
 - [ ] Los miembros con rol «cocina» no pueden usar APPCC con su propia cuenta (haría falta una tabla con permisos).
 
 ## Otros
-- [ ] Las copias de seguridad no incluyen fichajes, cartas QR ni avisos.
+- [ ] Copias con fichajes y cartas QR: pegar `supabase/copias-completas.sql` en el SQL Editor (18/11). Las suscripciones de avisos no se copian (se reactivan con un toque).
 - [ ] Vercel gratis: máximo 100 publicaciones al día.
 - [ ] Opcional: pasar Inventario a `app-base.js`; cuenta de revisor de solo lectura; más prueba de carga desde varias redes.
 - Estudio de mercado: https://claude.ai/artifact/1r653St1bewnFA4Z395pcV

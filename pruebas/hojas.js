@@ -40,5 +40,5 @@ await A.evaluate(()=>{rolActual='sala';aplicarRol('sala');showTab('hojas');initH
 ok(await A.isVisible('[data-hjd="montaje"]')&&!(await A.$('[data-hjd="cocina"]'))&&/Hoja de sala/.test(await hoja()),'sala: sala y montaje');
 const sw=await A.evaluate(()=>document.documentElement.scrollWidth);ok(!A.errs.length&&sw<=390,`sin errores (${A.errs.join(';')}) ancho ${sw}`);
 await A.evaluate(()=>{rolActual='admin';aplicarRol('admin');showTab('hojas');initHojas()});await A.click('[data-hjd="cocina"]');
-await (await A.$('#tab-hojas')).screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/hj.png'});
+await (await A.$('#tab-hojas')).screenshot({path:N.TMP+'/hj.png'});
 console.log(f?f+' FALLOS':'TODO BIEN');await b.close()})();

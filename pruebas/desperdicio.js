@@ -20,7 +20,7 @@ const res=await A.textContent('#dp-root');
 ok(/10,5 kg/.test(res),'resumen: 10,5 kg en el mes');
 ok(/62 %/.test(res),'resumen: 62 % aprovechado (6,5 donados de 10,5)');
 ok(/100 g/.test(res)&&/Boda Peps/.test(res),'resumen: 100 g por persona en la boda (4 kg / 40 pax)');
-await A.screenshot({path:'/tmp/claude-0/-home-user-Read-Write/9fb26a66-dda6-56b4-a9d5-014c50dc7b1a/scratchpad/dp-res.png',fullPage:false});
+await A.screenshot({path:N.TMP+'/dp-res.png',fullPage:false});
 // Anular
 await A.click('[data-dpv="reg"]');A.on('dialog',d=>d.accept('pesado dos veces'));await A.click('[data-dp="anular"]');await A.waitForTimeout(1500);
 ok(nube().filter(r=>r.anulado).length===1,'anular deja constancia del motivo');
