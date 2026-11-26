@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════
    OÍDO COCINA · Horarios: ayuda con preguntas
-   Barra «¿Cómo se hace…?» arriba de Horarios para quien aún no conoce la app: escribe una pregunta o una palabra
+   Lupa en la cabecera de Horarios para quien aún no conoce la app: escribe una pregunta o una palabra
    («vacaciones», «móvil», «cambiar un turno») y salen los pasos, con botón «Llévame» a la pantalla.
    Todo en el aparato, sin conexión y sin IA. Quien solo consulta (cocina, sala…) solo ve lo suyo (`s`).
    Parte de Horarios (horarios.js): usa window.hzKit (irTab, SOLO, esc) y registra la barra con reg().
@@ -60,7 +60,7 @@ function abrir(){
   if(!m){
     if(!document.getElementById('hza-css')){const st=document.createElement('style');st.id='hza-css';st.textContent=CSS;document.head.appendChild(st)}
     m=document.createElement('div');m.id='hza-modal';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-label','Ayuda de Horarios');
-    m.innerHTML=`<div class="hza-caja"><div class="hza-cab"><input id="hza-q" type="search" placeholder="¿Qué quieres hacer? Escribe aquí…" autocomplete="off" aria-label="Pregunta o busca en la ayuda"><button type="button" class="hza-x" data-hza-x aria-label="Cerrar">✕</button></div><div class="hza-cuerpo" id="hza-res" aria-live="polite"></div></div>`;
+    m.innerHTML=`<div class="hza-caja"><div class="hza-cab"><input id="hza-q" type="search" placeholder="Pregunta o busca ayuda…" autocomplete="off" aria-label="Pregunta o busca en la ayuda"><button type="button" class="hza-x" data-hza-x aria-label="Cerrar">✕</button></div><div class="hza-cuerpo" id="hza-res" aria-live="polite"></div></div>`;
     m.addEventListener('click',e=>{
       if(e.target===m||e.target.closest('[data-hza-x]'))return cerrar();
       const b=e.target.closest('[data-hza-ir]');if(b){const t=acciones[+b.dataset.hzaIr];cerrar();if(t&&typeof K.irTab==='function')K.irTab(t)}});
@@ -68,11 +68,21 @@ function abrir(){
     m.addEventListener('keydown',e=>{if(e.key==='Escape')cerrar()});
     document.body.appendChild(m)}
   m.style.display='flex';const q=document.getElementById('hza-q');q.value='';pintarRes();setTimeout(()=>q.focus(),50)}
-// La barra va arriba de las pestañas de Horarios
-K.reg({vistas:{ayudaBarra:()=>`<button type="button" class="hza-barra" data-hza-abrir aria-haspopup="dialog"><span class="hza-i" aria-hidden="true">?</span><span>¿Cómo se hace…? Pregunta o busca ayuda</span></button>`},util:{ayudaBuscar:buscar,ayudaEntradas:()=>ENTRADAS.slice()}});
-document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-hza-abrir]'))abrir()});
-const CSS=`.hza-barra{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 10px;padding:10px 12px;min-height:44px;text-align:left;font:inherit;font-size:13px;color:var(--text-secondary,#777);background:var(--bg-secondary,#f4f3ee);border:1px dashed var(--border-md,#bbb);border-radius:var(--radius,8px);cursor:pointer}
-.hza-i{display:inline-flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px;border-radius:50%;background:#c9a84c;color:#1a1a1a;font-weight:700;font-size:13px}
+// Lupa en la cabecera de Horarios (como la de Oído Cocina); abre la ayuda
+function boton(){
+  if(document.getElementById('hza-btn'))return;
+  const cab=document.querySelector('header');if(!cab)return;
+  if(!document.getElementById('hza-css')){const st=document.createElement('style');st.id='hza-css';st.textContent=CSS;document.head.appendChild(st)}
+  const b=document.createElement('button');b.id='hza-btn';b.type='button';b.setAttribute('aria-label','Buscar y ayuda');b.setAttribute('aria-haspopup','dialog');
+  // Lupa dibujada aquí: se ve aunque no cargue la fuente de iconos
+  b.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m21 21-6-6"/></svg>';
+  b.onclick=abrir;
+  const ref=document.getElementById('sync');ref&&ref.parentNode===cab?cab.insertBefore(b,ref):cab.appendChild(b)}
+K.reg({vistas:{},util:{ayudaBuscar:buscar,ayudaEntradas:()=>ENTRADAS.slice(),ayudaAbrir:abrir}});
+window.horariosAyudaAbrir=abrir;
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boton);else boton();
+setInterval(boton,3000);
+const CSS=`#hza-btn{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:#c9a84c;cursor:pointer;min-height:34px;min-width:34px}
 #hza-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1100;align-items:flex-start;justify-content:center;padding:16px 10px}
 .hza-caja{background:var(--bg-primary,#fff);color:var(--text-primary,#1a1a1a);border-radius:var(--radius-lg,12px);width:100%;max-width:520px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.35);overflow:hidden}
 .hza-cab{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:.5px solid var(--border,#ddd)}
