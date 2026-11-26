@@ -1,8 +1,9 @@
-# Pendientes (actualizado el 18 de noviembre de 2026)
+# Pendientes (actualizado el 26 de noviembre de 2026)
 Solo lo abierto. Lo hecho y las notas largas están en `PENDIENTES-HISTORIAL.md` (no hace falta leerlo al empezar).
 
 ## Estado
 - Web en vivo en v109 (comprobar tras cada PR con `curl https://oidococina-xu7i.vercel.app/sw.js` que `CACHE` coincide con `main`; si no, lanzar la publicación a mano con el conector de Vercel). Protección del equipo de Horarios activa en la base de datos. 18/11: móviles del equipo solo para jefes (`seda_horarios_tel`) aplicado y publicado; aún no había ningún móvil puesto, así que la migración no tuvo nada que mover. 18/11: las copias guardan también fichajes, cartas QR, datos del hotel e invitaciones (`copias-completas.sql` aplicado) y GitHub pasa todas las pruebas en cada PR (`pruebas/todas.sh`).
+- 26/11: ayuda «¿Cómo se hace…?» en la app suelta de Horarios (`horarios-ayuda.js`, rama `claude/horarios-ayuda`, v110), pendiente de fusionar. Semanas del 23/11 y del 30/11 cargadas desde las fotos del usuario (copias nº 19 y 20); falta dar de alta en Vacaciones las de Rubén (30/11–6/12) y Darío (23–29/11).
 - 16/11: los 10 fichajes de prueba (3/11 Álvaro ×4 y Fabián; 13/11 Darío y Ana) quedaron anulados con el motivo «prueba de la app».
 
 ## Esperan una respuesta
@@ -18,6 +19,7 @@ Solo lo abierto. Lo hecho y las notas largas están en `PENDIENTES-HISTORIAL.md`
 
 ## Por probar con datos reales del Seda
 - [ ] Horarios: envío por WhatsApp (poner antes el móvil de cada uno en Equipo), vista por días, año de vacaciones, organizador, parámetros y avisos nuevos. Probar con dos móviles a la vez.
+- [ ] Horarios (app suelta): probar la barra «¿Cómo se hace…?» con un móvil de cocina (solo consulta) y con un jefe; apuntar qué pregunta no encuentra.
 - [ ] Dictado de recetas con el micrófono, «Leer receta de foto» con ficha impresa, Primeros pasos.
 - [ ] Fichar entrada y salida con cuenta real; carta QR escaneada con otro móvil; avisos en el móvil; imprimir hojas; PDF de APPCC por WhatsApp; «Enviar archivo» y «Leer con foto» en segundo plano.
 - [ ] Tras publicar: abrir la app dos veces con internet y pulsar «Actualizar». Si un móvil se queda con la versión vieja, cerrarla del todo y abrirla.
