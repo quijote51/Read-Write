@@ -18,8 +18,8 @@ function eventosSemana(k){
 function vCobHoras(k){
   const evs=eventosSemana(k),hoyI=iso(new Date()),rp=(typeof ajustes!=='undefined'&&ajustes&&Number(ajustes.raciones_por_persona))||80;
   const horasCab=Array.from({length:CH_1-CH_0},(_,j)=>`<i>${(CH_0+j)%3===0?CH_0+j:''}</i>`).join('');
-  let h=`<div class="card hz-ch"><b>Cobertura por horas</b><p class="hz-ch-ay">Cuántas personas de cocina hay a cada hora. El marco dorado es la hora de un evento.</p>
-    <div class="hz-ch-fila hz-ch-esc" aria-hidden="true"><span></span><div class="hz-ch-celdas">${horasCab}</div></div>`;
+  let h=`<div class="card hz-ch"><b>Cobertura por horas</b><p class="hz-ch-ay">Cuántas personas de cocina hay a cada hora. Los números de arriba son las horas del día (6 = las 6:00) y los de cada casilla, las personas. El marco dorado es la hora de un evento.</p>
+    <div class="hz-ch-fila hz-ch-esc" aria-hidden="true"><span style="font-size:10px;color:var(--text-secondary)">Horas →</span><div class="hz-ch-celdas">${horasCab}</div></div>`;
   let lineas='';
   for(let i=0;i<7;i++){
     const gente=personasDia(k,i).filter(p=>p.g<=3),d=sumar(fd(k),i),horasEv=new Set(evs[i].map(e=>e.hora?Math.floor(pHM(e.hora)):-1));
